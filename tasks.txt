@@ -1,0 +1,284 @@
+1. Fundamenty koloru i skali (krytyczne)
+
+
+Gradient suwaka liczony w OKLCH, zależny od:
+
+L i C koloru bazowego
+realnie osiągalnego zakresu hue
+gamut sRGB (brak kolorów nieosiągalnych)
+
+
+
+Gradient suwaka przygaszony lub wzmocniony zgodnie z kolorem bazowym
+(jeśli kolor bazowy ma niską chromę → gradient też ma niską chromę).
+
+
+Gradient różny zależnie od roli koloru
+(dominant ≠ secondary ≠ accent).
+
+
+Gradient zależny od trybu light / dark.
+
+
+Widoczny zakres minimalny i maksymalny hue
+(użytkownik widzi, że pewne kolory są niedostępne – brak domyślnego 360°).
+
+
+Symetryczna paleta względem koloru bazowego:
+
+kolor bazowy = anchor
+generacja jasnych i ciemnych kroków wokół anchora
+zachowanie proporcji L i C
+brak „szarzenia”
+
+
+
+Różne krzywe dla jasnych i ciemnych kroków
+(jasne ≠ ciemne, nie lustrzane).
+
+
+Symetria wpływa wyłącznie na relację tonalną, nie zmienia relacji między kolorami dodatkowymi.
+
+
+Wyraźna różnica między trybem absolute a symmetric, nie tylko flaga w logice.
+
+
+Kolor bazowy zawsze jest elementem skali:
+
+jeśli wypada między progami → osobny swatch
+posiada proporcjonalny numer (np. 428)
+jest wizualnie wyróżniony (ale ≠ 500)
+
+
+
+
+2. Suwaki i interakcja
+
+
+Suwaki są stabilne:
+
+brak resetów
+brak utraty focusu
+brak znikania z DOM
+
+
+
+Zmiana suwaka nie powoduje pełnego re-renderu
+(render różnicowy, pełny render tylko na mouseup / commit).
+
+
+Input zmienia tylko parametr koloru, nie przebudowuje UI.
+
+
+
+3. Kolory dodatkowe (primary / secondary / accent)
+
+
+Każdy kolor dodatkowy ma stały, jednoznaczny preview:
+
+osobny swatch
+pokazuje dokładnie ten hue, który steruje paletą
+NIE jest środkiem skali
+
+
+
+Możliwość usuwania kolorów, nie tylko dodawania.
+
+
+Kolejność kolorów ma znaczenie:
+
+możliwość ręcznego reorderu / sortowania.
+
+
+
+Locki parametrów koloru:
+
+lock Lightness (L)
+lock Chroma (C)
+
+
+
+
+4. Relacje kolorystyczne
+
+
+Relacje działają jako constraint system, nie sugestia:
+
+zmiana jednego koloru → system koryguje inne
+albo jasno komunikuje brak możliwości
+
+
+
+Jasno określone limity relacji:
+
+triadic = 3
+complementary = 2
+tetradic itd.
+
+
+
+Przy przekroczeniu limitu użytkownik dostaje wybór:
+
+zmiana relacji
+lub redukcja liczby kolorów
+
+
+
+Brak “magii UI”:
+
+żadnych cichych obcięć
+każda automatyczna decyzja musi być zakomunikowana
+
+
+
+
+5. Palety specjalne
+Paleta funkcjonalna
+
+
+Paleta funkcjonalna wizualnie odróżniona od main i badge.
+
+
+Stałe, przewidywalne progi funkcjonalne:
+
+wyłącznie: 0 / 200 / 400 / 600 / 800
+
+
+
+Znaczenie semantyczne zawsze spójne:
+
+success zawsze „bezpieczny”
+warning zawsze „ostrzegawczy”
+
+
+
+Paleta funkcjonalna niezależna od:
+
+liczby kolorów głównych
+relacji kolorystycznych (analogous, triadic itd.)
+
+
+
+Paleta tęczowa (badge)
+
+
+Paleta badge służy wyłącznie do badge.
+
+
+Stała liczba hue i progi co 200.
+
+
+Paleta badge wizualnie inna niż functional i main.
+
+
+
+6. UI / UX
+
+
+Jednoznaczna kolejność interakcji w UI:
+
+kolor bazowy
+liczba kolorów
+relacja
+kolory
+suwaki
+
+
+
+Poprawny layout inputów:
+
+input tekstowy + picker w jednej grupie
+liczba kolorów NAD listą kolorów
+
+
+
+Walidacja inputu tekstowego koloru:
+
+błędny HEX/RGB → jasny komunikat
+brak „cichego psucia” preview
+
+
+
+Jawne komunikaty systemowe:
+
+o limitach
+o redukcjach
+o automatycznych decyzjach
+
+
+
+
+7. Role i hierarchia (60–30–10)
+
+
+Role mają realny wpływ na system, nie tylko na chromę.
+
+
+Hierarchia wizualna jest czytelna:
+
+dominant faktycznie dominuje
+
+
+
+Mapowanie ról na użycie w UI
+(nie tylko abstrakcyjna etykieta).
+
+
+
+8. Accessibility
+
+
+Sprawdzanie kontrastu AA / AAA.
+
+
+Preview kontrastu na light i dark background.
+
+
+Sugestie alternatywnych kolorów w tej samej rodzinie.
+
+
+Brak automatycznych “auto-fixów” kontrastu
+(decyzja zawsze po stronie użytkownika).
+
+
+
+9. Architektura i wydajność
+
+
+Engine jest jedynym źródłem prawdy:
+
+UI nie mutuje stanu
+UI tylko wysyła eventy i renderuje wynik
+
+
+
+Zamrożony, jednoznaczny kontrakt engine ↔ UI
+(typy, brak domysłów).
+
+
+Memoizacja skal kolorów.
+
+
+Wydajność przy bardzo dużej liczbie kolorów.
+
+
+Brak mutacji stanu poza engine.
+
+
+
+10. Drobne, ale wymagane
+
+
+HEX widoczny przy każdym swatchu (wszędzie).
+
+
+Numer skali zawsze widoczny.
+
+
+Dynamiczny kontrast ramek względem tła (light/dark).
+
+
+Spójność językowa labeli.
+
+
+Spójność jednostek w całym systemie (0–1000).
