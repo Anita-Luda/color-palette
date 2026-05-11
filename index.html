@@ -21,6 +21,9 @@
       <input type="color" id="baseColor" value="#7c6cff" />
     </div>
 
+    <h3>Liczba kolorów</h3>
+    <div id="batchContainer"></div>
+
     <h3>Kolory dodatkowe</h3>
     <button id="addColor">Dodaj kolor</button>
     <div id="colorList"></div>
@@ -62,19 +65,19 @@
   <main id="output" class="preview-light"></main>
 
   <script type="module">
-    import { initControls } from './ui/ui-controls.js';
-    import { renderAllPalettes } from './ui/ui-render.js';
-    import { renderAllGradients } from './ui/ui-gradients.js';
-    import { renderMessages } from './ui/ui-messages.js';
-
-    function renderAll() {
-      renderAllPalettes();
-      renderAllGradients();
-      renderMessages();
-    }
+    import { initControls } from './ui/ui.controls.js';
+    import { renderAllPalettes } from './ui/ui.render.js';
+    import { renderAllGradients } from './ui/ui.gradients.js';
+    import { renderMessages } from './ui/ui.messages.js';
 
     initControls();
-    renderAll();
+    if (window.refreshUI) {
+        window.refreshUI();
+    } else {
+        renderAllPalettes();
+        renderAllGradients();
+        renderMessages();
+    }
 
     // reaguj na zmiany tła preview
     document.getElementById('previewBg')?.addEventListener('change', e => {
