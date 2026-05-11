@@ -8,6 +8,8 @@ import {
   getBadgePalettes
 } from '../engine/engine.palettes.js';
 
+import { previewContrast } from '../engine/engine.accessibility.js';
+
 /* ---------- ROOT ---------- */
 const root = document.getElementById('output');
 
@@ -19,6 +21,17 @@ function el(tag, cls, text){
   return n;
 }
 
+function showCopyToast(text) {
+  let toast = document.querySelector('.copy-toast');
+  if (!toast) {
+    toast = el('div', 'copy-toast');
+    document.body.appendChild(toast);
+  }
+  toast.textContent = `Skopiowano: ${text}`;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
 function renderSwatch(swatch, opts = {}){
   const d = el('div', 'swatch');
   if (swatch.step % 50 === 0) d.classList.add('major');
@@ -28,10 +41,29 @@ function renderSwatch(swatch, opts = {}){
 
   d.style.background = swatch.hex;
 
-  const step = el('div', 'swatch-step', String(swatch.step));
-  const hex  = el('div', 'swatch-hex', swatch.hex);
+  // Dynamic contrast for text on swatch
+  const contrast = previewContrast(swatch.hex);
+  const onWhite = contrast.light.ratio;
+  const onBlack = contrast.dark.ratio;
+  d.style.color = onWhite > onBlack ? '#fff' : '#000';
 
-  d.append(step, hex);
+  const step = el('div', 'swatch-step', String(Math.round(swatch.step)));
+  const hex  = el('div', 'swatch-hex', swatch.hex.toUpperCase());
+
+  // Contrast info for current background
+  const bgMode = document.getElementById('previewBg')?.value || 'light';
+  const info = contrast[bgMode];
+  const contrastEl = el('div', 'swatch-contrast', `${info.ratio} ${info.level}`);
+
+  d.append(step, hex, contrastEl);
+
+  // Click to copy
+  d.addEventListener('click', () => {
+    navigator.clipboard.writeText(swatch.hex.toUpperCase()).then(() => {
+      showCopyToast(swatch.hex.toUpperCase());
+    });
+  });
+
   return d;
 }
 
@@ -75,7 +107,7 @@ function renderAdditional(){
 /* ---------- FUNCTIONAL ---------- */
 function renderFunctional(){
   const palettes = getFunctionalPalettes();
-  const sec = section('Paleta funkcjonalna', '0 / 200 / 400 / 600 / 800');
+  const sec = section('Paleta funkcjonalna', 'Semantyczna • 0 / 200 / 400 / 600 / 800');
 
   Object.entries(palettes).forEach(([name, p]) => {
     const row = el('div', 'functional-row');
@@ -90,7 +122,7 @@ function renderFunctional(){
 /* ---------- BADGE ---------- */
 function renderBadge(){
   const list = getBadgePalettes();
-  const sec = section('Paleta badge', 'stałe hue • 0 / 200 / 400 / 600 / 800');
+  const sec = section('Paleta badge', 'Stałe Hue • 0 / 200 / 400 / 600 / 800');
 
   list.forEach(p => {
     const row = el('div', 'badge-row');
