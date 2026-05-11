@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>OKLCH Palette System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <aside id="sidebar">
+    <h3>Kolor bazowy</h3>
+
+    <div class="group">
+      <div id="basePreview" class="big-swatch"></div>
+
+      <label>HEX / RGB</label>
+      <input id="textColor" placeholder="#7c6cff lub rgb(124,108,255)" />
+
+      <label>Picker</label>
+      <input type="color" id="baseColor" value="#7c6cff" />
+    </div>
+
+    <h3>Kolory dodatkowe</h3>
+    <button id="addColor">Dodaj kolor</button>
+    <div id="colorList"></div>
+
+    <h3>Typ skali</h3>
+    <label class="radio">
+      <input type="radio" name="scaleMode" value="absolute" checked />
+      Absolute
+    </label>
+    <label class="radio">
+      <input type="radio" name="scaleMode" value="symmetric" />
+      Symmetric (from base)
+    </label>
+
+    <h3>Relacja</h3>
+    <select id="harmony">
+      <option value="custom">Custom</option>
+      <option value="analogous">Analogous</option>
+      <option value="complementary">Complementary</option>
+      <option value="split">Split complementary</option>
+      <option value="triadic">Triadic</option>
+      <option value="tetradic">Tetradic</option>
+      <option value="warmcool">Warm / cool</option>
+    </select>
+
+    <h3>Tryb palety</h3>
+    <select id="mode">
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
+
+    <h3>Podgląd tła</h3>
+    <select id="previewBg">
+      <option value="light">Jasne</option>
+      <option value="dark">Ciemne</option>
+    </select>
+  </aside>
+
+  <main id="output" class="preview-light"></main>
+
+  <script type="module">
+    import { initControls } from './ui/ui-controls.js';
+    import { renderAllPalettes } from './ui/ui-render.js';
+    import { renderAllGradients } from './ui/ui-gradients.js';
+    import { renderMessages } from './ui/ui-messages.js';
+
+    function renderAll() {
+      renderAllPalettes();
+      renderAllGradients();
+      renderMessages();
+    }
+
+    initControls();
+    renderAll();
+
+    // reaguj na zmiany tła preview
+    document.getElementById('previewBg')?.addEventListener('change', e => {
+      const out = document.getElementById('output');
+      out.className = e.target.value === 'dark' ? 'preview-dark' : 'preview-light';
+    });
+  </script>
+</body>
+</html>
