@@ -1,0 +1,230 @@
+/* =========================================================
+   STYLES.CSS — OKLCH PALETTE SYSTEM (STABLE)
+   ========================================================= */
+
+:root{
+  --bg-dark:#0f1115;
+  --bg-light:#f4f5f7;
+  --panel:#171a21;
+  --border:#2a2f3c;
+
+  --text-dark:#e6e8ee;
+  --text-light:#111;
+
+  --grey-90:#e6e6e6;
+  --grey-70:#b3b3b3;
+  --grey-40:#6b6b6b;
+  --grey-25:#404040;
+}
+
+/* RESET */
+*{
+  box-sizing:border-box;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+}
+body{
+  margin:0;
+  display:grid;
+  grid-template-columns:420px 1fr;
+  height:100vh;
+}
+
+/* LAYOUT */
+aside{
+  background:var(--panel);
+  color:var(--text-dark);
+  padding:16px;
+  overflow:auto;
+}
+main{
+  padding:16px;
+  overflow:auto;
+}
+
+/* HEADINGS */
+h3{
+  margin:16px 0 8px;
+  font-size:14px;
+}
+
+/* FORMS */
+label{
+  font-size:12px;
+  color:#9aa0b3;
+  margin-top:8px;
+  display:block;
+}
+input,select,button{
+  width:100%;
+  padding:6px 8px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background:#0f1115;
+  color:#e6e8ee;
+}
+button{
+  cursor:pointer;
+  margin-top:8px;
+}
+
+/* GROUP */
+.group{
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px;
+  margin-bottom:12px;
+}
+
+/* BASE COLOR PREVIEW */
+.big-swatch{
+  height:90px;
+  border-radius:8px;
+  border:4px solid var(--grey-70);
+  margin-bottom:8px;
+}
+
+/* PREVIEW MODES */
+.preview-light{
+  background:var(--bg-light);
+  color:var(--text-light);
+}
+.preview-dark{
+  background:var(--bg-dark);
+  color:var(--text-dark);
+}
+
+/* PALETTES */
+.palette{
+  margin-bottom:40px;
+}
+.palette-title{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-bottom:8px;
+}
+.palette-subtitle{
+  font-size:11px;
+  color:#9aa0b3;
+}
+
+/* SWATCH GRID */
+.swatches{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(78px,1fr));
+  gap:10px;
+}
+
+/* SWATCH */
+.swatch{
+  font-size:10px;
+  padding:6px 6px 8px;
+  border-radius:6px;
+  border:1px solid rgba(0,0,0,.25);
+  position:relative;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.swatch.compact{
+  padding:4px;
+  font-size:9px;
+}
+
+/* NUMBER + HEX */
+.swatch-step{
+  font-weight:600;
+}
+.swatch-hex{
+  font-size:9px;
+  opacity:0.85;
+}
+
+/* MAJOR STEP (co 50) */
+.swatch.major{
+  border:3px solid var(--grey-70);
+}
+
+/* CENTER STEP (500) — NEUTRAL, BEZ ŻÓŁTEGO */
+.swatch.ref{
+  border:4px solid var(--grey-90);
+}
+
+/* SYMMETRIC ANCHOR (bazowy) */
+.swatch.base-color{
+  outline:3px dashed var(--grey-40);
+  outline-offset:-3px;
+}
+
+/* FUNCTIONAL PALETTE */
+.functional-row{
+  margin-bottom:12px;
+}
+.functional-row .swatches{
+  grid-template-columns:repeat(auto-fill,minmax(64px,1fr));
+}
+
+/* BADGE PALETTE */
+.badge-row{
+  margin-bottom:10px;
+}
+.badge-row .swatches{
+  grid-template-columns:repeat(auto-fill,minmax(56px,1fr));
+}
+
+/* ROLE TAG */
+.role-tag{
+  font-size:10px;
+  text-transform:uppercase;
+  color:#9aa0b3;
+  margin-bottom:4px;
+  display:inline-block;
+}
+
+/* COLOR CARDS (controls) */
+.color-card{
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px;
+  margin-bottom:12px;
+}
+.color-card strong{
+  display:block;
+  margin-bottom:6px;
+}
+
+/* SLIDER */
+.color-card input[type="range"]{
+  width:100%;
+  height:22px;
+  margin:6px 0;
+  cursor:pointer;
+}
+
+/* HUE GRADIENT (from JS) */
+.hue-gradient{
+  height:14px;
+  border-radius:7px;
+  margin:6px 0 10px;
+  background:transparent; /* JS sets background */
+}
+
+/* SYSTEM MESSAGES */
+#system-messages{
+  margin-top:16px;
+}
+.message{
+  font-size:12px;
+  padding:6px 8px;
+  border-radius:6px;
+  margin-top:6px;
+}
+.message-warning{
+  background:#2a1f1f;
+  border:1px solid #663333;
+  color:#ffcccc;
+}
+.message-empty{
+  color:#9aa0b3;
+}
