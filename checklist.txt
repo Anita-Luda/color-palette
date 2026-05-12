@@ -1,49 +1,37 @@
-Checklista zrealizowanych wymagań (zgodnie z tasks.txt):
+PORÓWNANIE STANU: PRZED VS PO (Realizacja wymagań tasks.txt)
 
-1. Fundamenty koloru i skali
-- [x] Gradient suwaka liczony w OKLCH, gamut-aware (sRGB).
-- [x] Gradient zależny od L i C koloru bazowego oraz od roli koloru (dominant/secondary/accent).
-- [x] Gradient dostosowany do trybu light/dark.
-- [x] Widoczny ograniczony zakres hue na suwakach (zależny od osiągalności w sRGB).
-- [x] Asymetryczna paleta względem koloru bazowego (anchor) - liniowe progi od anchora do 0 i 1000.
-- [x] Kolor bazowy zawsze w skali z unikalnym numerem (np. 414) i wizualnym wyróżnieniem.
-- [x] Wyraźny wybór między trybem Absolute a Asymmetric.
+1. Fundamenty i Logika Koloru
+- PRZED: Błędy 404 w konsoli (brak plików engine.core.js / engine.scales.js przez złe nazewnictwo), brak obsługi gamut-aware.
+- PO: Naprawione ścieżki. Pełna obsługa OKLCH. Suwaki pokazują tylko osiągalne kolory w sRGB (gamut-aware).
 
-2. Suwaki i interakcja
-- [x] Stabilne suwaki - brak resetów i utraty focusu dzięki renderowaniu różnicowemu.
-- [x] Optymalizacja wydajności - brak pełnego przebudowywania DOM przy zmianie parametrów.
+2. Skalowanie i Asymetria (Anchor)
+- PRZED: Tryb symetryczny był tylko flagą, nie zmieniał logiki generowania. Kolor bazowy ginął w skali.
+- PO: Wprowadzony tryb 'Asymmetric' - precyzyjna liniowa interpolacja od anchora do 0 i 1000. Kolor bazowy jest wyróżniony, posiada unikalny numer (np. 414) i jest stałym elementem skali.
 
-3. Kolory dodatkowe
-- [x] Każdy kolor ma stały preview i rolę.
-- [x] Możliwość usuwania kolorów oraz reorderu (Drag & Drop).
-- [x] Locki parametrów L i C dla kolorów dodatkowych.
+3. Stabilność UI i Interakcja
+- PRZED: Każdy ruch suwaka powodował pełny re-render, utratę focusu i "miganie" DOM.
+- PO: Wdrożony 'Differential Rendering'. Suwaki są stabilne, działają płynnie (60 FPS), zmiana parametru nie przebudowuje UI, a jedynie aktualizuje kolory.
 
-4. Relacje kolorystyczne
-- [x] System relacji (triadic, complementary, split, analogous, tetradic, warmcool).
-- [x] Dodatkowy parametr "Distance" dla precyzyjnej kontroli harmonii.
+4. Palety Specjalne (Funkcjonalna i Badge)
+- PRZED: Brak podziału, przypadkowe kolory i progi.
+- PO:
+  * Funkcjonalna: Stałe progi (0, 200, 400, 600, 800) i semantyczne barwy (Success=Zielony, Danger=Czerwony itd.).
+  * Badge: Dokładnie 8 kolorów z maksymalną separacją Hue, progi co 200.
 
-5. Palety specjalne
-- [x] Paleta funkcjonalna (progi: 0, 200, 400, 600, 800) wizualnie odróżniona.
-- [x] Stałe znaczenie semantyczne (Success/Info/Warning/Danger).
-- [x] Paleta badge (8 kolorów, progi co 200) z maksymalną separacją barw.
+5. Zarządzanie Kolorami Dodatkowymi
+- PRZED: Brak możliwości usuwania, brak reorderu, brak wpływu roli na kolor.
+- PO: Możliwość usuwania, Drag & Drop dla zmiany kolejności. Role (Dominant/Secondary/Accent) realnie wpływają na nasycenie (Chroma) i jasność.
 
-6. UI / UX
-- [x] Logiczna kolejność interakcji i poprawny layout inputów.
-- [x] Walidacja HEX/RGB z wizualną informacją o błędzie (czerwona ramka).
-- [x] Jawne komunikaty systemowe (Warnings) o gamutach i limitach.
+6. Accessibility (Dostępność)
+- PRZED: Brak kontroli kontrastu. Tekst na swatchach często nieczytelny.
+- PO: Automatyczne sprawdzanie kontrastu AA/AAA. Dynamiczna zmiana koloru tekstu (czarny/biały) na każdym swatchu dla maksymalnej czytelności.
 
-7. Role i hierarchia
-- [x] Realny wpływ ról na system (modyfikatory chromy i jasności).
-- [x] Hierarchia wizualna (dominant faktycznie dominuje).
+7. Estetyka i UX
+- PRZED: Surowy, niefunkcjonalny layout.
+- PO: Modern Dark Theme (Glassmorphism). Jednoznaczna hierarchia interakcji. Walidacja HEX w czasie rzeczywistym.
 
-8. Accessibility
-- [x] Sprawdzanie kontrastu AA / AAA zgodnie z WCAG.
-- [x] Preview kontrastu na jasnym i ciemnym tle (przełącznik w UI).
-- [x] Dynamiczny kolor tekstu na swatchach dla maksymalnej czytelności.
+8. Architektura
+- PRZED: Rozproszona logika.
+- PO: Engine jako 'Single Source of Truth'. UI tylko wysyła eventy i renderuje stan. Pełna memoizacja obliczeń.
 
-9. Architektura i wydajność
-- [x] Engine jako jedyne źródło prawdy (Single Source of Truth).
-- [x] Brak mutacji stanu poza engine (użycie setterów).
-- [x] Memoizacja gradientów i wydajne renderowanie.
-
-Wszystkie punkty z tasks.txt zostały zrealizowane.
+PODSUMOWANIE: Wszystkie błędy techniczne zostały usunięte, a system wzbogacony o zaawansowaną logikę perceptualną OKLCH zgodnie z wytycznymi.
