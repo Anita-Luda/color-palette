@@ -1,16 +1,13 @@
-GŁĘBOKA ANALIZA WYDAJNOŚCI I INTERAKCJI
+ANALIZA TECHNICZNA: SYSTEM MAPOWANIA BARW RELACYJNYCH
 
-1. Optymalizacja Pętli Renderowania
-W celu osiągnięcia płynności 60 FPS podczas manipulacji suwakami, wdrożono mechanizm `DocumentFragment` w `ui.render.js`. Pozwala to na przygotowanie całego drzewa DOM palety w pamięci i wykonanie tylko jednej operacji zapisu do `innerHTML`, co drastycznie redukuje liczbę operacji "Layout" i "Paint" w przeglądarce.
+1. Dynamiczne Mapowanie Hue (Relative Hue Mapping)
+Wprowadzono system mapowania, w którym środek suwaka ($t=0.5$) jest dynamicznie przypisywany do $Hue$ wynikającego z wybranej relacji (np. $+120^\circ$ dla triadic). Gradient generowany jest w zakresie $[Hue_{rel} - 180^\circ, Hue_{rel} + 180^\circ]$. Dzięki temu suwak zawsze operuje na pełnym kole barw, ale jego punkt startowy jest zdeterminowany przez geometrię harmonii.
 
-2. Realistyczne Gradienty OKLCH
-Gradienty na suwakach nie są prostą linią między dwoma kolorami. Są one efektem gęstego próbkowania (180 punktów na suwak) w przestrzeni OKLCH przy stałej jasności i chromie. Dzięki temu "track" suwaka jest matematycznie poprawnym podglądem tego, co użytkownik wybierze, zachowując perceptualną stałość jasności podczas zmiany odcienia (Hue).
+2. Gamut-Aware Slider Tracks
+Tło suwaka jest generowane poprzez próbkowanie OKLCH przy stałych parametrach $L$ i $C$ bazy. Zastosowanie `rgba(0,0,0,0.2)` dla punktów spoza sRGB pozwala na natychmiastową ocenę "bezpieczeństwa" wyboru koloru. Mechanizm ten jest zintegrowany z `adjustForMode`, co sprawia, że w trybie Dark Mode suwaki stają się automatycznie bardziej nasycone.
 
-3. Adaptacja do Dark Mode
-Logika silnika (`engine.gradients.js` -> `adjustForMode`) dynamicznie modyfikuje parametry L i C podczas pracy w trybie Dark Mode. Zapewnia to, że kolory są bardziej nasycone i widoczne na ciemnym tle, co zapobiega efektowi "wyprania" barw, często spotykanemu w prostych systemach kolorystycznych.
+3. Separacja Zdarzeń (Event Decoupling)
+Rozdzielono logikę aktualizacji palety (częstotliwość `onInput`) od regeneracji gradientów (częstotliwość zmiany bazy). Zapobiega to kosztownym obliczeniom `canvas`/`linear-gradient` podczas przesuwania suwaka, co eliminuje mikro-przycięcia interfejsu.
 
-4. Model Progowania 100-jednostkowego
-Ujednolicenie wszystkich skal (Main, Functional, Badge) do systemu 0-1000 z krokiem 100 zapewnia spójność przy wdrażaniu Design Tokens do systemów takich jak Tailwind czy Material Design. Każdy swatch posiada swój unikalny identyfikator jasności, co ułatwia komunikację na linii Projektant-Programista.
-
-5. Wnioski
-Aplikacja ewoluowała z narzędzia do generowania kolorów w precyzyjny symulator systemów projektowych, kładąc nacisk na płynność (UX) i poprawność matematyczną (Engineering).
+4. Wnioski
+Rozwiązanie zapewnia idealną równowagę między automatyzacją (relacje) a pełną kontrolą użytkownika (suwak), przy jednoczesnym zachowaniu realizmu percepcyjnego OKLCH.

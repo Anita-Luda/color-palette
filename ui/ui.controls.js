@@ -70,6 +70,7 @@ function refreshUI() {
   renderSliders();
   renderWarnings();
 
+  // Gradients are recalculated here (base color change / batch change)
   import('./ui.gradients.js').then(m => m.renderAllGradients());
   import('./ui.messages.js').then(m => m.renderMessages());
 }
@@ -261,10 +262,9 @@ function createSliderCard(c) {
 
   slider.addEventListener('input', e => {
     setColorSlider(c.index, Number(e.target.value));
-    // Optimized: only render palettes and update gradients
+    // Optimized: only render palettes
+    // Gradients are NOT recalculated here to avoid jumping and for performance
     renderAllPalettes(true);
-    // Don't import dynamically during high-freq event
-    window.refreshGradients?.();
   });
 
   const del = document.createElement('button');

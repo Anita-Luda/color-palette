@@ -17,23 +17,18 @@ function el(tag, cls){
 function stopsToCSS(stops){
   if (!stops.length) return 'transparent';
 
-  // Requirement: Show full range 0..360 but mark out-of-gamut
-  // We'll use a slightly different approach: just linear-gradient of in-gamut colors
-  // or a full gradient if we want to show everything.
   return `linear-gradient(90deg, ${stops
     .map(s => {
-      const pct = (s.hue / 360) * 100;
-      // If disabled, maybe use gray or transparent?
-      // "Użytkownik widzi, że pewne kolory są niedostępne"
-      const color = s.disabled ? 'rgba(0,0,0,0.5)' : s.hex;
+      const pct = s.t * 100;
+      const color = s.disabled ? 'rgba(0,0,0,0.2)' : s.hex;
       return `${color} ${pct.toFixed(2)}%`;
     })
     .join(', ')})`;
 }
 
 /* ---------- CORE ---------- */
-function renderGradientForColor(container, role){
-  const grad = generateSliderGradient(role);
+function renderGradientForColor(container, role, index){
+  const grad = generateSliderGradient(role, index);
   const bar = el('div', 'hue-gradient');
 
   bar.style.background = stopsToCSS(grad.stops);
@@ -47,12 +42,13 @@ export function renderAllGradients(){
 
   cards.forEach((card, i) => {
     const role = state.colors[i]?.role || 'dominant';
+    const index = parseInt(card.dataset.index);
 
     // remove old gradient
     const old = card.querySelector('.hue-gradient');
     if (old) old.remove();
 
-    renderGradientForColor(card, role);
+    renderGradientForColor(card, role, index);
   });
 }
 

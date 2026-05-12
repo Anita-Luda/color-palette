@@ -86,39 +86,64 @@ export function computeHueRange(baseLCH, role){
   };
 }
 
-export function generateSliderGradient(role){
+export function generateSliderGradient(role, index){
   const baseLCH = getBaseLCH();
-  const key = cacheKey(baseLCH, role);
-  if (gradientCache.has(key)) return gradientCache.get(key);
+  // We need to know the 'center' hue for this specific slider from the relation system
+  const { type, distance } = EngineState.relation;
 
-  // Requirement: Show full spectrum if possible, but limited by gamut.
-  // We'll sample 0..360 and only keep in-gamut.
+  // Re-calculate the specific hue logic from palettes.js locally for gradient
+  // Total count of colors is needed
+  const total = EngineState.colors.length;
+
+  // We want to show +/- 180 degrees around the relation-defined hue
+  // Or just show 0-360 mapped so that center is the relation hue?
+  // User says: "Pozycja suwaga na gradiencie ma wskazywać aktualnie wybraną barwę."
+  // If slider is 0.5, it should be the relation hue.
+
+  function getRelHue(baseHue, idx, tot, t, dist){
+      const step = 360 / (tot + 1);
+      switch(t){
+        case 'custom': return (baseHue + (idx + 1) * step + (dist - 30)) % 360;
+        case 'analogous': return (baseHue + (idx + 1) * dist) % 360;
+        case 'complementary': return (baseHue + 180 + idx * dist) % 360;
+        case 'split':
+          if (idx === 0) return (baseHue + 180 - dist) % 360;
+          if (idx === 1) return (baseHue + 180 + dist) % 360;
+          return (baseHue + 180 + (idx - 1) * dist) % 360;
+        case 'triadic': return (baseHue + (idx + 1) * 120 + idx * dist) % 360;
+        case 'tetradic': return (baseHue + (idx + 1) * 90 + idx * dist) % 360;
+        case 'warmcool': return (baseHue + 180 + idx * dist) % 360;
+        default: return baseHue;
+      }
+  }
+
+  const centerHue = getRelHue(baseLCH.h, index, total, type, distance);
+
   const stops = [];
   const roleMult = ROLE_CHROMA_MULT[role] ?? 1;
 
-  for (let h = 0; h <= 360; h += 2){
+  for (let i = 0; i <= 100; i++) {
+    const t = i / 100;
+    // Map t 0..1 to centerHue - 180 .. centerHue + 180
+    let h = (centerHue + (t - 0.5) * 360) % 360;
+    if (h < 0) h += 360;
+
     const L = baseLCH.L;
     const C = baseLCH.C * roleMult;
-
     const adj = adjustForMode(L, C);
     const lab = oklchToOklab(adj.L, adj.C, h);
     const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-
-    // Even if out of gamut, we might want to show it?
-    // "Użytkownik widzi, że pewne kolory są niedostępne" -> maybe dimmed?
-    // For now, let's keep only in-gamut or use a fallback.
     const inGamut = rgbInGamut(rgb);
 
     stops.push({
+      t,
       hue: h,
       hex: rgbToHex01(rgb),
       disabled: !inGamut
     });
   }
 
-  const result = { stops };
-  gradientCache.set(key, result);
-  return result;
+  return { stops, centerHue };
 }
 
 /* ---------- UTIL ---------- */
