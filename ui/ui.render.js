@@ -9,6 +9,7 @@ import {
 } from '../engine/engine.palettes.js';
 
 import { previewContrast } from '../engine/engine.accessibility.js';
+import { getState } from '../engine/engine.core.js';
 
 /* ---------- ROOT ---------- */
 const root = document.getElementById('output');
@@ -47,7 +48,8 @@ function renderSwatch(swatch, opts = {}){
   const onBlack = contrast.dark.ratio;
   d.style.color = onWhite > onBlack ? '#fff' : '#000';
 
-  const step = el('div', 'swatch-step', String(Math.round(swatch.step)));
+  const stepText = typeof swatch.step === 'number' ? Math.round(swatch.step) : swatch.step;
+  const step = el('div', 'swatch-step', String(stepText));
   const hex  = el('div', 'swatch-hex', swatch.hex.toUpperCase());
 
   // Contrast info for current background
@@ -85,7 +87,8 @@ function section(title, subtitle){
 /* ---------- MAIN ---------- */
 function renderMain(){
   const main = getMainPalette();
-  const sec = section('Paleta główna', main.mode === 'symmetric' ? 'Symmetric (from base)' : 'Absolute');
+  const state = getState();
+  const sec = section('Paleta główna', state.mode.scale.toUpperCase());
   sec.appendChild(renderScale(main.scale));
   return sec;
 }
@@ -98,6 +101,15 @@ function renderAdditional(){
   list.forEach(p => {
     const sec = section(`Kolor ${p.index + 1}`, p.role);
     sec.appendChild(renderScale(p.scale));
+
+    // Update mini-preview in sidebar
+    const mini = document.getElementById(`preview-${p.index}`);
+    if (mini) {
+        // Find the swatch closest to 500 or just use the anchor
+        const anchor = p.scale.find(s => s.isBase) || p.scale[Math.floor(p.scale.length/2)];
+        mini.style.background = anchor.hex;
+    }
+
     frag.appendChild(sec);
   });
 
@@ -107,7 +119,7 @@ function renderAdditional(){
 /* ---------- FUNCTIONAL ---------- */
 function renderFunctional(){
   const palettes = getFunctionalPalettes();
-  const sec = section('Paleta funkcjonalna', 'Semantyczna • 0 / 200 / 400 / 600 / 800');
+  const sec = section('Paleta funkcjonalna', 'Semantyczna • Progi co 200');
 
   Object.entries(palettes).forEach(([name, p]) => {
     const row = el('div', 'functional-row');
@@ -122,11 +134,11 @@ function renderFunctional(){
 /* ---------- BADGE ---------- */
 function renderBadge(){
   const list = getBadgePalettes();
-  const sec = section('Paleta badge', 'Stałe Hue • 0 / 200 / 400 / 600 / 800');
+  const sec = section('Paleta badge', 'Zróżnicowane Hue • Progi co 200');
 
   list.forEach(p => {
     const row = el('div', 'badge-row');
-    row.appendChild(el('span', 'role-tag', `Hue ${p.index + 1}`));
+    row.appendChild(el('span', 'role-tag', `Badge ${p.index + 1}`));
     row.appendChild(renderScale(p.scale, { compact: true }));
     sec.appendChild(row);
   });

@@ -1,130 +1,126 @@
 // engine/engine.palettes.js
-// Main / Functional / Badge palettes (no DOM)
+// Scale composition: Main, Functional, Badge. No DOM.
 
 import { EngineState } from './engine.core.js';
-import { generateScaleForLCH, getBaseLCH } from './engine.scales.js';
-
-/* ---------- UTIL ---------- */
-const FUNCTIONAL_STEPS = [0, 200, 400, 600, 800];
-const BADGE_STEPS = [0, 200, 400, 600, 800];
-
-// Stały zestaw hue do badge (nie zależy od relacji ani liczby kolorów)
-const BADGE_HUES = [0, 40, 80, 140, 200, 260];
+import {
+  generateScaleForLCH,
+  getBaseLCH,
+  COARSE_STEPS,
+  FUNCTIONAL_STEPS,
+  BADGE_STEPS
+} from './engine.scales.js';
 
 /* ---------- MAIN PALETTE ---------- */
-export function getMainPalette() {
-  const baseLCH = getBaseLCH();
+export function getMainPalette(){
+  const baseLch = getBaseLCH();
   return {
-    type: 'main',
-    mode: EngineState.mode.scale,
-    scale: generateScaleForLCH(baseLCH)
+    scale: generateScaleForLCH(baseLch),
+    mode: EngineState.mode.scale
   };
 }
 
-/* ---------- ADDITIONAL COLOR PALETTES ---------- */
-export function getAdditionalPalettes() {
-  const baseLCH = getBaseLCH();
-  const count = EngineState.colors.length;
+/* ---------- ADDITIONAL PALETTES ---------- */
+function getHarmonyHue(baseHue, index, total, type, distance){
+  if (type === 'custom') return (baseHue + 360) % 360; // Base hue by default for custom
 
-  return EngineState.colors.map((color, index) => {
-    const relationOffset = getRelationHueOffset(index, count);
-    const sliderOffset = (color.slider - 0.5) * 360;
+  switch(type){
+    case 'analogous':
+      return (baseHue + (index + 1) * distance) % 360;
+    case 'complementary':
+      return (baseHue + 180 + (index % 2 === 1 ? distance : 0)) % 360;
+    case 'split':
+      if (index === 0) return (baseHue + 180 - distance) % 360;
+      if (index === 1) return (baseHue + 180 + distance) % 360;
+      return (baseHue + 180 + (index - 1) * distance) % 360;
+    case 'triadic':
+      return (baseHue + (index + 1) * 120) % 360;
+    case 'tetradic':
+      return (baseHue + (index + 1) * 90) % 360;
+    case 'warmcool':
+      return (baseHue + 180) % 360;
+    default:
+      return baseHue;
+  }
+}
 
-    const h = (baseLCH.h + relationOffset + sliderOffset + 360) % 360;
+export function getAdditionalPalettes(){
+  const baseLch = getBaseLCH();
+  const { type, distance } = EngineState.relation;
+
+  return EngineState.colors.map((c, i) => {
+    let hue = getHarmonyHue(baseLch.h, i, EngineState.colors.length, type, distance);
+
+    // Custom slider offset
+    hue = (hue + (c.slider - 0.5) * 360) % 360;
+    if (hue < 0) hue += 360;
 
     const lch = {
-      L: baseLCH.L,
-      C: baseLCH.C,
-      h
+      L: EngineState.locks.L ? baseLch.L : baseLch.L * 0.95,
+      C: EngineState.locks.C ? baseLch.C : baseLch.C * 0.9,
+      h: hue
     };
 
     return {
-      type: 'additional',
-      index,
-      role: color.role,
+      index: c.index,
+      role: c.role,
       scale: generateScaleForLCH(lch)
     };
   });
 }
 
-/* ---------- FUNCTIONAL PALETTE ---------- */
-export function getFunctionalPalettes() {
-  const baseLCH = getBaseLCH();
+/* ---------- FUNCTIONAL PALETTES ---------- */
+export function getFunctionalPalettes(){
+  const baseLch = getBaseLCH();
 
-  const profiles = {
-    success: { hueOffset: 30,  chromaMult: 0.75 },
-    warning: { hueOffset: 90,  chromaMult: 0.85 },
-    danger:  { hueOffset: 150, chromaMult: 0.9  },
-    info:    { hueOffset: 210, chromaMult: 0.7  }
+  // Semantic Hues in OKLCH
+  // Success: Green (~140)
+  // Info: Blue (~250)
+  // Warning: Yellow/Orange (~70)
+  // Danger: Red (~30)
+
+  const semanticHues = {
+    success: 142,
+    info: 250,
+    warning: 70,
+    danger: 30
   };
 
-  const result = {};
-
-  Object.entries(profiles).forEach(([name, cfg]) => {
-    const h = (baseLCH.h + cfg.hueOffset) % 360;
-    const lch = {
-      L: baseLCH.L,
-      C: baseLCH.C * cfg.chromaMult,
-      h
+  const out = {};
+  for (const [name, hue] of Object.entries(semanticHues)) {
+    out[name] = {
+      scale: generateScaleForLCH({ L: 0.6, C: 0.15, h: hue }, FUNCTIONAL_STEPS, true)
     };
-
-    const fullScale = generateScaleForLCH(lch);
-    const filtered = fullScale.filter(s => FUNCTIONAL_STEPS.includes(s.step));
-
-    result[name] = {
-      type: 'functional',
-      name,
-      steps: FUNCTIONAL_STEPS,
-      scale: filtered
-    };
-  });
-
-  return result;
-}
-
-/* ---------- BADGE PALETTE ---------- */
-export function getBadgePalettes() {
-  const baseLCH = getBaseLCH();
-
-  return BADGE_HUES.map((offset, i) => {
-    const h = (baseLCH.h + offset) % 360;
-    const lch = {
-      L: baseLCH.L,
-      C: baseLCH.C * 0.9,
-      h
-    };
-
-    const fullScale = generateScaleForLCH(lch);
-    const filtered = fullScale.filter(s => BADGE_STEPS.includes(s.step));
-
-    return {
-      type: 'badge',
-      index: i,
-      hueOffset: offset,
-      steps: BADGE_STEPS,
-      scale: filtered
-    };
-  });
-}
-
-/* ---------- RELATION OFFSET ---------- */
-function getRelationHueOffset(index, count) {
-  switch (EngineState.relation.type) {
-    case 'complementary':
-      return index * 180;
-    case 'triadic':
-      return index * 120;
-    case 'tetradic':
-      return index * 90;
-    case 'split':
-      return index === 0 ? -150 : 150;
-    case 'analogous':
-      return count > 1
-        ? -40 + (80 / (count - 1)) * index
-        : 0;
-    case 'warmcool':
-      return index % 2 === 0 ? -40 : 40;
-    default:
-      return 0;
   }
+  return out;
+}
+
+/* ---------- BADGE PALETTES ---------- */
+export function getBadgePalettes(){
+  const baseLch = getBaseLCH();
+  const count = 8;
+  const out = [];
+
+  // Exclude semantic hues to avoid overlap
+  // Semantic hues are roughly: 30, 70, 142, 250
+  const excluded = [30, 70, 142, 250];
+
+  let hue = (baseLch.h + 20) % 360; // start offset
+  for (let i = 0; i < count; i++) {
+    // Attempt to find a hue that is not too close to excluded or already used
+    // Simple approach: distribute evenly and shift if too close to excluded
+    let h = (hue + i * (360/count)) % 360;
+
+    // Very simple check to push away from danger/success
+    for (const ex of excluded) {
+        if (Math.abs(h - ex) < 15 || Math.abs(h - ex) > 345) {
+            h = (h + 20) % 360;
+        }
+    }
+
+    out.push({
+      index: i,
+      scale: generateScaleForLCH({ L: 0.8, C: 0.1, h: h }, BADGE_STEPS, true)
+    });
+  }
+  return out;
 }

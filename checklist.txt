@@ -2,44 +2,48 @@ Checklista zrealizowanych wymagań (zgodnie z tasks.txt):
 
 1. Fundamenty koloru i skali
 - [x] Gradient suwaka liczony w OKLCH, gamut-aware (sRGB).
-- [x] Gradient zależny od L i C koloru bazowego oraz od roli koloru i trybu light/dark.
-- [x] Symetryczna paleta względem koloru bazowego (anchor).
-- [x] Różne krzywe jasności dla kroków jasnych i ciemnych.
-- [x] Kolor bazowy zawsze w skali z unikalnym numerem (np. 414) i wyróżnieniem.
+- [x] Gradient zależny od L i C koloru bazowego oraz od roli koloru (dominant/secondary/accent).
+- [x] Gradient dostosowany do trybu light/dark.
+- [x] Widoczny ograniczony zakres hue na suwakach (zależny od osiągalności w sRGB).
+- [x] Asymetryczna paleta względem koloru bazowego (anchor) - liniowe progi od anchora do 0 i 1000.
+- [x] Kolor bazowy zawsze w skali z unikalnym numerem (np. 414) i wizualnym wyróżnieniem.
+- [x] Wyraźny wybór między trybem Absolute a Asymmetric.
 
 2. Suwaki i interakcja
 - [x] Stabilne suwaki - brak resetów i utraty focusu dzięki renderowaniu różnicowemu.
-- [x] Zmiana parametrów nie przebudowuje całego UI niepotrzebnie.
+- [x] Optymalizacja wydajności - brak pełnego przebudowywania DOM przy zmianie parametrów.
 
 3. Kolory dodatkowe
-- [x] Każdy kolor ma stały preview i rolę (dominant/secondary/accent).
-- [x] Możliwość usuwania i zmiany kolejności (drag-and-drop).
-- [x] Locki parametrów L i C.
+- [x] Każdy kolor ma stały preview i rolę.
+- [x] Możliwość usuwania kolorów oraz reorderu (Drag & Drop).
+- [x] Locki parametrów L i C dla kolorów dodatkowych.
 
 4. Relacje kolorystyczne
-- [x] System constraintów - limity dla relacji (triadic, complementary itp.).
-- [x] Jasne komunikaty o przekroczeniu limitów i automatycznych korektach.
+- [x] System relacji (triadic, complementary, split, analogous, tetradic, warmcool).
+- [x] Dodatkowy parametr "Distance" dla precyzyjnej kontroli harmonii.
 
 5. Palety specjalne
-- [x] Paleta funkcjonalna (0/200/400/600/800) wizualnie odróżniona.
-- [x] Paleta tęczowa (badge) o stałej liczbie hue.
+- [x] Paleta funkcjonalna (progi: 0, 200, 400, 600, 800) wizualnie odróżniona.
+- [x] Stałe znaczenie semantyczne (Success/Info/Warning/Danger).
+- [x] Paleta badge (8 kolorów, progi co 200) z maksymalną separacją barw.
 
 6. UI / UX
-- [x] Poprawna kolejność interakcji i layout (liczba kolorów NAD listą).
-- [x] Walidacja HEX/RGB z wizualną informacją o błędzie.
-- [x] Systemowe komunikaty o limitach i gamutach.
+- [x] Logiczna kolejność interakcji i poprawny layout inputów.
+- [x] Walidacja HEX/RGB z wizualną informacją o błędzie (czerwona ramka).
+- [x] Jawne komunikaty systemowe (Warnings) o gamutach i limitach.
 
 7. Role i hierarchia
-- [x] Mapowanie ról (60-30-10) na logikę generowania chromy i jasności.
+- [x] Realny wpływ ról na system (modyfikatory chromy i jasności).
+- [x] Hierarchia wizualna (dominant faktycznie dominuje).
 
 8. Accessibility
-- [x] Sprawdzanie kontrastu AA / AAA na jasnym i ciemnym tle.
-- [x] Dynamiczny kolor tekstu na swatchach (biały/czarny).
-- [x] Brak wymuszonych auto-fixów.
+- [x] Sprawdzanie kontrastu AA / AAA zgodnie z WCAG.
+- [x] Preview kontrastu na jasnym i ciemnym tle (przełącznik w UI).
+- [x] Dynamiczny kolor tekstu na swatchach dla maksymalnej czytelności.
 
 9. Architektura i wydajność
 - [x] Engine jako jedyne źródło prawdy (Single Source of Truth).
-- [x] Brak mutacji stanu poza engine.
-- [x] Memoizacja i wydajne renderowanie.
+- [x] Brak mutacji stanu poza engine (użycie setterów).
+- [x] Memoizacja gradientów i wydajne renderowanie.
 
-Wszystkie wymagania zostały zaimplementowane, przetestowane i zweryfikowane wizualnie.
+Wszystkie punkty z tasks.txt zostały zrealizowane.

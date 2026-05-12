@@ -8,12 +8,14 @@ import {
   removeColor,
   reorderColors,
   setRelation,
+  setRelationDistance,
   setColorSlider,
   setPaletteMode,
   setScaleMode,
   setLock,
   getState,
-  getWarnings
+  getWarnings,
+  updateColorRole
 } from '../engine/engine.core.js';
 
 import { clearGradientCache } from '../engine/engine.gradients.js';
@@ -62,41 +64,79 @@ function renderWarnings(){
     : '';
 }
 
+/* ---------- REFRESH UI ---------- */
+function refreshUI() {
+  renderAllPalettes();
+  renderSliders();
+  renderWarnings();
+
+  import('./ui.gradients.js').then(m => m.renderAllGradients());
+  import('./ui.messages.js').then(m => m.renderMessages());
+}
+
+window.refreshUI = refreshUI;
+
 /* ---------- BASE COLOR ---------- */
 function onBaseChange(){
-  const txt = $('textColor')?.value || '';
-  const pick = $('baseColor')?.value || '';
+  const txtInput = $('textColor');
+  const pickInput = $('baseColor');
+  const txt = txtInput?.value || '';
+  const pick = pickInput?.value || '';
 
-  const rgb =
-    parseHexOrRgb(txt) ||
-    parseHexOrRgb(pick);
+  let rgb = parseHexOrRgb(txt);
+
+  if (txt && !rgb) {
+    txtInput.style.borderColor = 'red';
+  } else if (txtInput) {
+    txtInput.style.borderColor = '';
+  }
+
+  if (!rgb) {
+    rgb = parseHexOrRgb(pick);
+  }
 
   if (!rgb) return;
 
   updateBasePreview(rgb);
-  setBaseRGB(rgb, null, null); // LCH/step computed downstream
+  setBaseRGB(rgb, null, null);
   clearGradientCache();
-  renderAllPalettes();
-  renderWarnings();
+
+  refreshUI();
+}
+
+function setupBasePicker() {
+    const preview = $('basePreview');
+    const picker = $('baseColor');
+    if (!preview || !picker) return;
+
+    preview.addEventListener('click', () => picker.click());
+    picker.addEventListener('input', () => {
+        $('textColor').value = picker.value;
+        onBaseChange();
+    });
 }
 
 /* ---------- BATCH ---------- */
 function setupBatch(){
+  const container = $('batchContainer');
+  if (!container) return;
+
   const wrap = document.createElement('div');
   wrap.className = 'group';
   wrap.innerHTML = `
     <label>Liczba kolorów</label>
-    <input id="colorCount" type="number" min="1" value="3">
-    <button id="applyCount">Generuj</button>
+    <div style="display:flex; gap:8px;">
+        <input id="colorCount" type="number" min="1" value="3">
+        <button id="applyCount">Generuj</button>
+    </div>
   `;
-  $('sidebar').appendChild(wrap);
+  container.appendChild(wrap);
 
   wrap.querySelector('#applyCount').addEventListener('click', () => {
     const n = Math.max(1, Number(wrap.querySelector('#colorCount').value) || 1);
     setColorCount(n);
     clearGradientCache();
-    renderAllPalettes();
-    renderWarnings();
+    refreshUI();
   });
 }
 
@@ -105,11 +145,25 @@ function setupRelations(){
   const sel = $('harmony');
   if (!sel) return;
 
+  const distContainer = document.createElement('div');
+  distContainer.className = 'group';
+  distContainer.innerHTML = `
+    <label>Dystans relacji</label>
+    <input id="relationDistance" type="range" min="0" max="180" value="30">
+  `;
+  sel.parentNode.insertBefore(distContainer, sel.nextSibling);
+
+  const distInput = distContainer.querySelector('#relationDistance');
+  distInput.addEventListener('input', e => {
+      setRelationDistance(e.target.value);
+      clearGradientCache();
+      renderAllPalettes();
+  });
+
   sel.addEventListener('change', () => {
     setRelation(sel.value);
     clearGradientCache();
-    renderAllPalettes();
-    renderWarnings();
+    refreshUI();
   });
 }
 
@@ -121,60 +175,93 @@ function setupAddColor(){
   btn.addEventListener('click', () => {
     addColor();
     clearGradientCache();
-    renderAllPalettes();
-    renderWarnings();
+    refreshUI();
   });
 }
 
 /* ---------- SLIDERS ---------- */
-function setupSliders(){
+function renderSliders(){
   const list = $('colorList');
   if (!list) return;
 
-  function renderSliders(){
+  const state = getState();
+  const existingCards = list.querySelectorAll('.color-card');
+
+  if (existingCards.length !== state.colors.length) {
     list.innerHTML = '';
-    const state = getState();
-
     state.colors.forEach(c => {
-      const card = document.createElement('div');
-      card.className = 'color-card';
-
-      const title = document.createElement('strong');
-      title.textContent = `Kolor ${c.index + 1}`;
-
-      const slider = document.createElement('input');
-      slider.type = 'range';
-      slider.min = 0;
-      slider.max = 1;
-      slider.step = 0.001;
-      slider.value = c.slider;
-
-      slider.addEventListener('input', e => {
-        setColorSlider(c.index, Number(e.target.value));
-        renderAllPalettes(); // tylko palety, nie przebudowa UI
-      });
-
-      const del = document.createElement('button');
-      del.textContent = 'Usuń';
-      del.addEventListener('click', () => {
-        removeColor(c.index);
-        clearGradientCache();
-        renderSliders();
-        renderAllPalettes();
-        renderWarnings();
-      });
-
-      card.append(title, slider, del);
+      const card = createSliderCard(c);
       list.appendChild(card);
     });
+  } else {
+    state.colors.forEach((c, i) => {
+      const card = existingCards[i];
+      const slider = card.querySelector('input[type="range"]');
+      if (slider && document.activeElement !== slider) {
+        slider.value = c.slider;
+      }
+      card.querySelector('strong').textContent = `Kolor ${c.index + 1}`;
+      const roleSel = card.querySelector('select');
+      if (roleSel && document.activeElement !== roleSel) {
+          roleSel.value = c.role;
+      }
+    });
   }
+}
 
-  // initial render
-  renderSliders();
+function createSliderCard(c) {
+  const card = document.createElement('div');
+  card.className = 'color-card';
+  card.dataset.index = c.index;
+  card.draggable = true;
 
-  // re-render sliders when palettes change count/order
-  const observer = new MutationObserver(() => renderSliders());
-  observer.observe($('output'), { childList: true });
+  const title = document.createElement('strong');
+  title.textContent = `Kolor ${c.index + 1}`;
+
+  const roleSelect = document.createElement('select');
+  ['dominant', 'secondary', 'accent'].forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r;
+    opt.textContent = r;
+    opt.selected = c.role === r;
+    roleSelect.appendChild(opt);
+  });
+  roleSelect.addEventListener('change', e => {
+      updateColorRole(c.index, e.target.value);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  const preview = document.createElement('div');
+  preview.className = 'color-mini-preview';
+  preview.id = `preview-${c.index}`;
+  // Will be updated by renderer
+
+  const slider = document.createElement('input');
+  slider.type = 'range';
+  slider.min = 0;
+  slider.max = 1;
+  slider.step = 0.001;
+  slider.value = c.slider;
+
+  slider.addEventListener('input', e => {
+    setColorSlider(c.index, Number(e.target.value));
+    // Optimized: only render palettes and update gradients
+    renderAllPalettes();
+    import('./ui.gradients.js').then(m => m.renderAllGradients());
+  });
+
+  const del = document.createElement('button');
+  del.textContent = 'Usuń';
+  del.classList.add('btn-danger');
+  del.addEventListener('click', () => {
+    removeColor(c.index);
+    clearGradientCache();
+    refreshUI();
+  });
+
+  card.append(title, roleSelect, preview, slider, del);
+  return card;
 }
 
 /* ---------- MODES ---------- */
@@ -182,7 +269,7 @@ function setupModes(){
   $('mode')?.addEventListener('change', e => {
     setPaletteMode(e.target.value);
     clearGradientCache();
-    renderAllPalettes();
+    refreshUI();
   });
 
   document
@@ -190,7 +277,7 @@ function setupModes(){
     .forEach(r => r.addEventListener('change', e => {
       setScaleMode(e.target.value);
       clearGradientCache();
-      renderAllPalettes();
+      refreshUI();
     }));
 }
 
@@ -207,26 +294,54 @@ function setupLocks(){
   wrap.querySelector('#lockL').addEventListener('change', e => {
     setLock('L', e.target.checked);
     clearGradientCache();
-    renderAllPalettes();
+    refreshUI();
   });
   wrap.querySelector('#lockC').addEventListener('change', e => {
     setLock('C', e.target.checked);
     clearGradientCache();
-    renderAllPalettes();
+    refreshUI();
+  });
+}
+
+function setupReorder() {
+  const list = $('colorList');
+  if (!list) return;
+
+  list.addEventListener('dragstart', e => {
+    if (e.target.classList.contains('color-card')) {
+      e.dataTransfer.setData('text/plain', e.target.dataset.index);
+    }
+  });
+
+  list.addEventListener('dragover', e => {
+    e.preventDefault();
+  });
+
+  list.addEventListener('drop', e => {
+    e.preventDefault();
+    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+    const targetCard = e.target.closest('.color-card');
+    if (targetCard) {
+      const toIndex = parseInt(targetCard.dataset.index);
+      reorderColors(fromIndex, toIndex);
+      clearGradientCache();
+      refreshUI();
+    }
   });
 }
 
 /* ---------- INIT ---------- */
 export function initControls(){
   $('textColor')?.addEventListener('input', onBaseChange);
-  $('baseColor')?.addEventListener('input', onBaseChange);
 
+  setupBasePicker();
   setupBatch();
   setupRelations();
   setupAddColor();
-  setupSliders();
+  renderSliders();
   setupModes();
   setupLocks();
+  setupReorder();
 
   onBaseChange();
 }

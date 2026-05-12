@@ -10,20 +10,12 @@ export const EngineState = {
 
   mode: {
     palette: 'light',        // light | dark
-    scale: 'absolute'        // absolute | symmetric
+    scale: 'absolute'        // absolute | asymmetric
   },
 
   relation: {
     type: 'custom',          // custom | analogous | complementary | triadic | tetradic | split | warmcool
-    limits: {
-      custom: Infinity,
-      analogous: Infinity,
-      warmcool: Infinity,
-      complementary: 2,
-      split: 2,
-      triadic: 3,
-      tetradic: 4
-    }
+    distance: 30             // hue distance for harmonies
   },
 
   colors: [],                // additional colors (user-defined)
@@ -68,39 +60,24 @@ export function setPaletteMode(mode) {
 }
 
 export function setScaleMode(mode) {
-  if (mode !== 'absolute' && mode !== 'symmetric') return;
+  if (mode !== 'absolute' && mode !== 'asymmetric') return;
   EngineState.mode.scale = mode;
 }
 
 /* ---------- RELATIONS ---------- */
 
 export function setRelation(type) {
-  if (!(type in EngineState.relation.limits)) return;
-
   EngineState.relation.type = type;
+}
 
-  const limit = EngineState.relation.limits[type];
-  if (EngineState.colors.length > limit) {
-    pushWarning(
-      `Relacja "${type}" obsługuje maks. ${limit} kolory`
-    );
-    EngineState.colors.length = limit;
-  }
+export function setRelationDistance(dist) {
+  EngineState.relation.distance = Number(dist);
 }
 
 /* ---------- COLORS MANAGEMENT ---------- */
 
 export function setColorCount(count) {
   clearWarnings();
-  const limit = EngineState.relation.limits[EngineState.relation.type];
-
-  if (count > limit) {
-    pushWarning(
-      `Relacja "${EngineState.relation.type}" obsługuje maks. ${limit} kolory`
-    );
-    count = limit;
-  }
-
   EngineState.colors = [];
   for (let i = 0; i < count; i++) {
     EngineState.colors.push(createColor(i));
@@ -108,13 +85,6 @@ export function setColorCount(count) {
 }
 
 export function addColor() {
-  const limit = EngineState.relation.limits[EngineState.relation.type];
-  if (EngineState.colors.length >= limit) {
-    pushWarning(
-      `Nie można dodać więcej kolorów dla relacji "${EngineState.relation.type}"`
-    );
-    return;
-  }
   EngineState.colors.push(createColor(EngineState.colors.length));
 }
 
@@ -151,6 +121,11 @@ function createColor(index) {
         ? 'secondary'
         : 'accent'
   };
+}
+
+export function updateColorRole(index, role) {
+  if (!EngineState.colors[index]) return;
+  EngineState.colors[index].role = role;
 }
 
 /* ---------- SLIDERS ---------- */
