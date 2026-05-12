@@ -1,30 +1,23 @@
-PODSUMOWANIE REALIZACJI POPRAWEK - STAN KOŃCOWY
+OSTATECZNA CHECKLISTA REALIZACJI (Weryfikacja trybów i suwaków)
 
-1. Architektura i Hierarchia
-- [x] Primary (Główny) jako najwyższy priorytet.
-- [x] Relacyjne (Secondary/Główna) wyliczane z Primary.
-- [x] Unikanie kolizji: Kolory Funkcyjne automatycznie przesuwają Hue, by nie kolidować z Primary/Relacyjnymi.
-- [x] Algorytm Badge: Wybór 8 punktów o maksymalnym dystansie od wszystkich zarezerwowanych barw.
+1. Rozkład Skal (Absolute vs Asymmetric)
+- [x] Tryb Absolute: Zachowuje równe odstępy matematyczne jasności (L) niezależnie od koloru bazowego.
+- [x] Tryb Asymmetric: Stosuje nieliniowe zagęszczenie kroków. Jeśli baza jest ciemna, kroki przy 1000 są gęstsze, a przy 0 rozciągnięte.
+- [x] Potwierdzone różnice w wartościach HEX między trybami.
 
-2. Interfejs i Interakcja (UI/UX)
-- [x] Zintegrowany Picker: Swatch koloru głównego otwiera próbnik.
-- [x] Suwaki czasu rzeczywistego (onInput): Płynne przeliczanie całego systemu.
-- [x] Kontekstowy Track: Tło suwaków generowane dynamicznie w OKLCH (zależne od L i C bazy).
-- [x] Live Preview: Każdy suwak posiada podgląd koloru.
+2. Wizualizacja Suwaków (Gradients)
+- [x] Pełny Zakres: Track suwaka pokazuje pełne spektrum 0-360 stopni.
+- [x] Gamut-aware: Barwy nieosiągalne w sRGB są wizualnie przyciemnione/wyłączone na tracku.
+- [x] Spójność: Pozycja suwaka (0..1) odpowiada faktycznie wybranej barwie (Hue) wyświetlanej obok nazwy koloru.
+- [x] Estetyka: Wyższe, bardziej czytelne tracki suwaków z cieniem wewnętrznym.
 
-3. Logika Skal Jasności (0-1000)
-- [x] Nowa logika: 0 = Biały (L=1), 1000 = Czarny (L=0).
-- [x] Renderowanie co 100 jednostek.
-- [x] Tryb Asymmetric: Kotwica na stopniu 500, nieliniowe zagęszczenie kroków (ciemna baza = gęściej przy 1000).
-- [x] Tryb Absolute: Progi w równych odstępach matematycznych.
+3. Płynność i UI
+- [x] Płynne Przełączanie: Naprawiono błąd mapowania trybów w UI. Przełączanie Absolute/Symmetric działa natychmiastowo.
+- [x] Stabilność Focusu: Zmiana trybu nie powoduje utraty focusu ani resetu stanu dodatkowych kolorów.
+- [x] Live Preview: Każdy kolor dodatkowy ma podgląd HEX na karcie suwaka.
 
-4. Relacje i Tryb Custom
-- [x] Dynamiczne Relacje: Obsługa dowolnej liczby kolorów dla Triadic, Tetradic itp.
-- [x] Tryb Custom: Domyślny rozkład 360/n, suwak Distance do ręcznej regulacji.
+4. Hierarchia i Kolizje (Collision Avoidance)
+- [x] Potwierdzone działanie unikania kolizji dla palet funkcjonalnych i badge.
+- [x] 8 kolorów badge wybieranych algorytmem maksymalnego dystansu perceptualnego.
 
-5. Specyfikacja Techniczna
-- [x] Model OKLCH jako fundament.
-- [x] Sztywne zakresy Hue dla funkcyjnych (Success: 120-155, Danger: 0-40, Warning: 60-95, Info: 210-280).
-- [x] Wydajność: Optymalizacja renderowania (Differential Rendering).
-
-System jest w pełni zgodny z nowymi wytycznymi i gotowy do pracy.
+Wszystkie wymagania techniczne i wizualne zostały spełnione. System jest gotowy do finalnego przekazania.

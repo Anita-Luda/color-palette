@@ -1,16 +1,13 @@
-ANALIZA TECHNICZNA ZAAWANSOWANYCH MECHANIZMÓW KOLORU
+ANALIZA TECHNICZNA: DYSTRYBUCJA I WIZUALIZACJA
 
-1. Implementacja Nieliniowości w Skalach (Asymmetric)
-Wprowadzono funkcję potęgową do rozkładu jasności w trybie Asymmetric. Jeśli kolor bazowy ($C_{in}$) jest ciemny, system stosuje wykładnik $p < 1$ dla kroków w stronę czerni (zwiększając gęstość próbek ciemnych) oraz $p > 1$ dla kroków w stronę bieli (rozciągając jasne tony). Zapewnia to lepszą użyteczność palety w systemach typu Dark Mode.
+1. Matematyka Rozkładu Asymetrycznego
+Zaimplementowany model nieliniowy wykorzystuje funkcję $L = 1 - (1 - L_{anchor}) \cdot t^p$ dla tonów jasnych oraz $L = L_{anchor} \cdot (1 - t^p)$ dla tonów ciemnych. Wykładnik $p$ jest dynamicznie obliczany na podstawie jasności $L_{anchor}$, co pozwala na automatyczne dopasowanie gęstości skali. Dzięki temu palety generowane z bardzo ciemnych kolorów bazowych nie tracą czytelności w najniższych rejestrach jasności.
 
-2. Algorytm Unikania Kolizji (Collision Avoidance)
-System implementuje mechanizm "przesunięcia fazowego" dla kolorów semantycznych. Zamiast sztywnego przypisania Hue, funkcja `getFunctionalPalettes` sprawdza listę zarezerwowanych barw (Główna + Relacyjne). W przypadku konfliktu (dystans < 15°), odcień funkcyjny jest korygowany wewnątrz bezpiecznego zakresu, co gwarantuje czytelność komunikatów UI.
+2. Mapowanie Gamutu na Suwakach
+Wyzwanie polegało na pokazaniu pełnego spektrum Hue (0-360) przy zachowaniu realizmu fizycznego (sRGB). Zastosowano gęste próbkowanie (co 2 stopnie) i flagę `disabled` dla kolorów poza gamutem. W warstwie UI barwy te są renderowane z obniżoną opampością, co jasno komunikuje użytkownikowi ograniczenia techniczne bez ukrywania potencjalnych wyborów.
 
-3. Optymalizacja Percepcyjna Badge
-Wybór 8 barw badge odbywa się poprzez algorytm "Max-Min Distance" na kole barw. System iteracyjnie wyszukuje punkty, które mają największy możliwy minimalny dystans od już zajętych obszarów. Pozwala to na maksymalne zróżnicowanie kolorów etykiet (badges), co jest kluczowe przy dużej liczbie kategorii w UI.
+3. Architektura Update-Loop
+Dzięki scentralizowaniu logiki w `engine.scales.js`, zmiana trybu skali ($Absolute$ / $Asymmetric$) jest "przezroczysta" dla reszty systemu. Funkcja `generateScaleForLCH` działa jako dispatcher, co pozwoliło na łatwe wprowadzenie nieliniowości bez modyfikowania komponentów renderujących swatche.
 
-4. Wydajność i Responsywność
-Wykorzystanie zdarzeń `input` na suwakach w połączeniu z `Differential Rendering` w `ui.render.js` pozwala na zachowanie płynności 60 FPS. Engine został zoptymalizowany pod kątem minimalizacji alokacji pamięci podczas szybkich zmian parametrów.
-
-5. Wnioski Rozwojowe
-Obecny system stanowi kompletny fundament dla zaawansowanego Design Ops. Możliwym kolejnym krokiem byłaby implementacja automatycznej weryfikacji $\Delta E$ między wszystkimi parami wygenerowanych kolorów, aby zagwarantować 100% odróżnialność w każdych warunkach.
+4. Rekomendacje Produkcyjne
+System osiągnął dojrzałość pozwalającą na generowanie całych bibliotek UI. Kolejnym naturalnym krokiem byłaby integracja z CSS Typed OM w celu jeszcze wydajniejszej manipulacji kolorami bezpośrednio przez GPU przeglądarki.

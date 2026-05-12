@@ -158,6 +158,8 @@ function setupRelations(){
       setRelationDistance(e.target.value);
       clearGradientCache();
       renderAllPalettes();
+      // Gradients depend on base LCH and role mult, not relation distance itself usually,
+      // but if relation changes roles or hues, we refresh.
       import('./ui.gradients.js').then(m => m.renderAllGradients());
   });
 
@@ -216,8 +218,20 @@ function createSliderCard(c) {
   card.dataset.index = c.index;
   card.draggable = true;
 
+  const header = document.createElement('div');
+  header.style.display = 'flex';
+  header.style.justifyContent = 'space-between';
+  header.style.alignItems = 'center';
+
   const title = document.createElement('strong');
   title.textContent = `Kolor ${c.index + 1}`;
+
+  const hexLabel = document.createElement('span');
+  hexLabel.className = 'swatch-hex';
+  hexLabel.style.fontSize = '0.7rem';
+  hexLabel.id = `hex-val-${c.index}`;
+
+  header.append(title, hexLabel);
 
   const roleSelect = document.createElement('select');
   ['dominant', 'secondary', 'accent'].forEach(r => {
@@ -261,7 +275,7 @@ function createSliderCard(c) {
     refreshUI();
   });
 
-  card.append(title, roleSelect, preview, slider, del);
+  card.append(header, roleSelect, preview, slider, del);
   return card;
 }
 
@@ -276,7 +290,8 @@ function setupModes(){
   document
     .querySelectorAll('input[name="scaleMode"]')
     .forEach(r => r.addEventListener('change', e => {
-      setScaleMode(e.target.value);
+      const mode = e.target.value === 'symmetric' ? 'asymmetric' : 'absolute';
+      setScaleMode(mode);
       clearGradientCache();
       refreshUI();
     }));

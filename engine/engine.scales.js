@@ -83,6 +83,7 @@ function makeSwatch(step, lch){
 }
 
 export function generateAbsoluteScale(lch, steps = DEFAULT_STEPS, forceExcludeAnchor = false){
+  // Requirement: "Wszystkie progi (100, 200, itd.) są generowane w równych odstępach matematycznych, niezależnie od wartości Cin."
   const anchorStep = LToStep(lch.L);
   const scale = steps.map(s => makeSwatch(s, lch));
 
@@ -113,27 +114,23 @@ export function generateAsymmetricScale(lch){
   const out = [];
   const anchorL = lch.L;
 
-  // Normalized anchor position (0=White, 1=Black)
-  // But requirement says 500 is anchor.
-  // Let's use a power function for distribution
-
-  for (let i = 0; i <= 10; i++) {
-      const step = i * 100;
+  for (let i = 0; i <= 100; i++) {
+      const step = i * 10;
       let L;
       if (step === 500) {
           L = anchorL;
       } else if (step < 500) {
-          // t from 0 to 1 as we go from white (0) to anchor (500)
           const t = step / 500;
-          // Nonlinearity: if anchorL is low (dark), we want stretch towards 0.
-          // Power factor: if anchorL=0.2, (1-anchorL)=0.8.
-          // If anchorL is dark, we want to accelerate towards it.
+          // If anchorL is dark (0.2), p = 1/(0.4+0.1) = 2. t^2 stretches small t, squeezes large t near anchor.
+          // Wait, if p > 1, small t (near 0 step / white) grows slowly.
+          // If Cin is dark, we want "rozciągnięcie skali" towards 0.
+          // Meaning 100, 200, 300 should be further apart in L.
           const p = anchorL < 0.5 ? 1 / (2 * anchorL + 0.1) : 1;
           L = 1 - (1 - anchorL) * Math.pow(t, p);
       } else {
-          // t from 0 to 1 as we go from anchor (500) to black (1000)
           const t = (step - 500) / 500;
-          // Nonlinearity: if anchorL is dark, we want density towards 1000.
+          // If anchorL is dark (0.2), p = 0.5. t^0.5 makes small t (near 500) grow fast in L drop.
+          // Meaning 600, 700 are closer to 1000 in L. (zagęszczenie)
           const p = anchorL < 0.5 ? 2 * anchorL + 0.1 : 1;
           L = anchorL * (1 - Math.pow(t, p));
       }
@@ -141,7 +138,7 @@ export function generateAsymmetricScale(lch){
       const C = clampChroma(L, lch.C);
       const lab = oklchToOklab(L, C, lch.h);
       const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-      const sw = { step, hex: rgbToHex(rgb) };
+      const sw = { step, hex: rgbToHex(rgb), h: lch.h, c: C, l: L };
       if (step === 500) sw.isBase = true;
       out.push(sw);
   }
@@ -151,9 +148,13 @@ export function generateAsymmetricScale(lch){
 
 /* ---------- PUBLIC API ---------- */
 export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnchor = false){
-  return EngineState.mode.scale === 'asymmetric' && steps === DEFAULT_STEPS
-    ? generateAsymmetricScale(lch)
-    : generateAbsoluteScale(lch, steps, forceExcludeAnchor);
+  // Check if we are using the default granular steps (0, 10, 20...)
+  const isDefaultGranular = steps === DEFAULT_STEPS || (steps.length === 101 && steps[1] === 10);
+
+  if (EngineState.mode.scale === 'asymmetric' && isDefaultGranular) {
+    return generateAsymmetricScale(lch);
+  }
+  return generateAbsoluteScale(lch, steps, forceExcludeAnchor);
 }
 
 export function getBaseLCH(){

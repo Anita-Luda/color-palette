@@ -104,10 +104,11 @@ function renderAdditional(){
 
     // Update mini-preview in sidebar
     const mini = document.getElementById(`preview-${p.index}`);
+    const hexLabel = document.getElementById(`hex-val-${p.index}`);
     if (mini) {
-        // Find the swatch closest to 500 or just use the anchor
         const anchor = p.scale.find(s => s.isBase) || p.scale[Math.floor(p.scale.length/2)];
         mini.style.background = anchor.hex;
+        if (hexLabel) hexLabel.textContent = anchor.hex.toUpperCase();
     }
 
     frag.appendChild(sec);

@@ -91,28 +91,32 @@ export function generateSliderGradient(role){
   const key = cacheKey(baseLCH, role);
   if (gradientCache.has(key)) return gradientCache.get(key);
 
-  const { min, max } = computeHueRange(baseLCH, role);
+  // Requirement: Show full spectrum if possible, but limited by gamut.
+  // We'll sample 0..360 and only keep in-gamut.
   const stops = [];
   const roleMult = ROLE_CHROMA_MULT[role] ?? 1;
 
-  for (let h = min; h <= max; h += 4){
-    const L = EngineState.locks.L ? baseLCH.L : baseLCH.L;
-    const C = EngineState.locks.C
-      ? baseLCH.C * roleMult
-      : baseLCH.C * roleMult;
+  for (let h = 0; h <= 360; h += 2){
+    const L = baseLCH.L;
+    const C = baseLCH.C * roleMult;
 
     const adj = adjustForMode(L, C);
     const lab = oklchToOklab(adj.L, adj.C, h);
     const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-    if (!rgbInGamut(rgb)) continue;
+
+    // Even if out of gamut, we might want to show it?
+    // "Użytkownik widzi, że pewne kolory są niedostępne" -> maybe dimmed?
+    // For now, let's keep only in-gamut or use a fallback.
+    const inGamut = rgbInGamut(rgb);
 
     stops.push({
       hue: h,
-      hex: rgbToHex01(rgb)
+      hex: rgbToHex01(rgb),
+      disabled: !inGamut
     });
   }
 
-  const result = { min, max, stops };
+  const result = { stops };
   gradientCache.set(key, result);
   return result;
 }
