@@ -1,20 +1,16 @@
-GŁĘBOKA ANALIZA ROZWOJOWA I TECHNICZNA SYSTEMU OKLCH
+ANALIZA TECHNICZNA ZAAWANSOWANYCH MECHANIZMÓW KOLORU
 
-1. Architektura Silnika (Engine)
-Zastosowano wzorzec Single Source of Truth (SSoT). Cały stan aplikacji (EngineState) jest scentralizowany. Zmiany zachodzą wyłącznie poprzez dedykowane settery, co pozwoliło na wyeliminowanie niekontrolowanych mutacji. Obliczenia w przestrzeni OKLCH są izolowane, a transformacje do RGB (gamut clipping) odbywają się dopiero w warstwie generowania swatches.
+1. Implementacja Nieliniowości w Skalach (Asymmetric)
+Wprowadzono funkcję potęgową do rozkładu jasności w trybie Asymmetric. Jeśli kolor bazowy ($C_{in}$) jest ciemny, system stosuje wykładnik $p < 1$ dla kroków w stronę czerni (zwiększając gęstość próbek ciemnych) oraz $p > 1$ dla kroków w stronę bieli (rozciągając jasne tony). Zapewnia to lepszą użyteczność palety w systemach typu Dark Mode.
 
-2. Rozwiązanie Problemu Asymetrii
-Kluczowym elementem była implementacja 'Asymmetric Scale'. W odróżnieniu od standardowych generatorów, które często "ścinają" kolory przy krawędziach jasności, nasz system traktuje kolor bazowy jako punkt zakotwiczenia (anchor). Algorytm oblicza dystans do 0 i 1000 i liniowo rozkłada progi jasności, co zachowuje perceptualny charakter koloru w całym spektrum skali.
+2. Algorytm Unikania Kolizji (Collision Avoidance)
+System implementuje mechanizm "przesunięcia fazowego" dla kolorów semantycznych. Zamiast sztywnego przypisania Hue, funkcja `getFunctionalPalettes` sprawdza listę zarezerwowanych barw (Główna + Relacyjne). W przypadku konfliktu (dystans < 15°), odcień funkcyjny jest korygowany wewnątrz bezpiecznego zakresu, co gwarantuje czytelność komunikatów UI.
 
-3. Optymalizacja Warstwy Prezentacji
-Wprowadzono 'Differential Rendering' w module ui.controls.js. Dzięki temu, podczas przeciągania suwaka, aplikacja nie niszczy i nie tworzy na nowo elementów DOM listy kolorów. Pozwala to na zachowanie focusu na suwaku i drastycznie zmniejsza narzut na procesor, zapewniając płynność interakcji nawet przy wielu aktywnych paletach.
+3. Optymalizacja Percepcyjna Badge
+Wybór 8 barw badge odbywa się poprzez algorytm "Max-Min Distance" na kole barw. System iteracyjnie wyszukuje punkty, które mają największy możliwy minimalny dystans od już zajętych obszarów. Pozwala to na maksymalne zróżnicowanie kolorów etykiet (badges), co jest kluczowe przy dużej liczbie kategorii w UI.
 
-4. System Constraintów (Relacje)
-Relacje kolorystyczne nie są statyczną sugestią, lecz dynamicznym systemem więzów. Zastosowanie parametru 'distance' w engine.palettes.js pozwala na matematycznie precyzyjne sterowanie harmonią (np. precyzyjny kąt w triadic lub dystans w analogous), co jest unikalne w porównaniu do prostych generatorów.
+4. Wydajność i Responsywność
+Wykorzystanie zdarzeń `input` na suwakach w połączeniu z `Differential Rendering` w `ui.render.js` pozwala na zachowanie płynności 60 FPS. Engine został zoptymalizowany pod kątem minimalizacji alokacji pamięci podczas szybkich zmian parametrów.
 
-5. Możliwości Dalszego Rozwoju:
-- Web Workers: Przy skali powyżej 50 kolorów dodatkowych, obliczenia OKLCH mogą być przeniesione do osobnego wątku.
-- Obsługa P3: Implementacja sprawdzenia gamutów dla wyświetlaczy o szerokim spektrum barw.
-- Design System Integration: Możliwość generowania gotowych plików konfiguracyjnych dla Tailwind, Style Dictionary czy Figma Tokens.
-
-WNIOSKI: System przekształcił się z prostego, wadliwego prototypu w zaawansowane narzędzie inżynierskie do pracy z kolorem, gotowe do integracji z nowoczesnymi Design Systemami.
+5. Wnioski Rozwojowe
+Obecny system stanowi kompletny fundament dla zaawansowanego Design Ops. Możliwym kolejnym krokiem byłaby implementacja automatycznej weryfikacji $\Delta E$ między wszystkimi parami wygenerowanych kolorów, aby zagwarantować 100% odróżnialność w każdych warunkach.

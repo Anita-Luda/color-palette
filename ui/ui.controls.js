@@ -158,6 +158,7 @@ function setupRelations(){
       setRelationDistance(e.target.value);
       clearGradientCache();
       renderAllPalettes();
+      import('./ui.gradients.js').then(m => m.renderAllGradients());
   });
 
   sel.addEventListener('change', () => {

@@ -21,23 +21,26 @@ export function getMainPalette(){
 
 /* ---------- ADDITIONAL PALETTES ---------- */
 function getHarmonyHue(baseHue, index, total, type, distance){
-  if (type === 'custom') return (baseHue + 360) % 360; // Base hue by default for custom
+  const step = 360 / (total + 1);
 
   switch(type){
+    case 'custom':
+      return (baseHue + (index + 1) * step + (distance - 30)) % 360;
     case 'analogous':
       return (baseHue + (index + 1) * distance) % 360;
     case 'complementary':
-      return (baseHue + 180 + (index % 2 === 1 ? distance : 0)) % 360;
+      // index 0 -> 180, index 1 -> 180+dist, etc
+      return (baseHue + 180 + index * distance) % 360;
     case 'split':
       if (index === 0) return (baseHue + 180 - distance) % 360;
       if (index === 1) return (baseHue + 180 + distance) % 360;
       return (baseHue + 180 + (index - 1) * distance) % 360;
     case 'triadic':
-      return (baseHue + (index + 1) * 120) % 360;
+      return (baseHue + (index + 1) * 120 + index * distance) % 360;
     case 'tetradic':
-      return (baseHue + (index + 1) * 90) % 360;
+      return (baseHue + (index + 1) * 90 + index * distance) % 360;
     case 'warmcool':
-      return (baseHue + 180) % 360;
+      return (baseHue + 180 + index * distance) % 360;
     default:
       return baseHue;
   }
@@ -69,26 +72,35 @@ export function getAdditionalPalettes(){
 }
 
 /* ---------- FUNCTIONAL PALETTES ---------- */
+const SEMANTIC_RANGES = {
+  success: { min: 120, max: 155, def: 142 },
+  info:    { min: 210, max: 280, def: 250 },
+  warning: { min: 60,  max: 95,  def: 75 },
+  danger:  { min: 0,   max: 40,  def: 25 }
+};
+
 export function getFunctionalPalettes(){
   const baseLch = getBaseLCH();
+  const additional = getAdditionalPalettes();
 
-  // Semantic Hues in OKLCH
-  // Success: Green (~140)
-  // Info: Blue (~250)
-  // Warning: Yellow/Orange (~70)
-  // Danger: Red (~30)
-
-  const semanticHues = {
-    success: 142,
-    info: 250,
-    warning: 70,
-    danger: 30
-  };
+  // Reserved hues
+  const reserved = [baseLch.h, ...additional.map(p => p.scale.find(s=>s.isBase).h)];
 
   const out = {};
-  for (const [name, hue] of Object.entries(semanticHues)) {
+  for (const [name, range] of Object.entries(SEMANTIC_RANGES)) {
+    let bestHue = range.def;
+
+    // Simple collision avoidance: if reserved hue is too close to default, shift
+    for (const r of reserved) {
+      if (Math.abs(r - bestHue) < 15 || Math.abs(r - bestHue) > 345) {
+        // Try shifting within range
+        if (bestHue + 15 <= range.max) bestHue += 15;
+        else if (bestHue - 15 >= range.min) bestHue -= 15;
+      }
+    }
+
     out[name] = {
-      scale: generateScaleForLCH({ L: 0.6, C: 0.15, h: hue }, FUNCTIONAL_STEPS, true)
+      scale: generateScaleForLCH({ L: 0.6, C: 0.15, h: bestHue }, FUNCTIONAL_STEPS, true)
     };
   }
   return out;
@@ -97,30 +109,55 @@ export function getFunctionalPalettes(){
 /* ---------- BADGE PALETTES ---------- */
 export function getBadgePalettes(){
   const baseLch = getBaseLCH();
+  const additional = getAdditionalPalettes();
+  const functional = getFunctionalPalettes();
+
+  // 1. Gather all reserved hues
+  const reserved = [baseLch.h];
+  additional.forEach(p => {
+    const base = p.scale.find(s => s.isBase);
+    if (base) reserved.push(base.h);
+  });
+  Object.values(functional).forEach(p => {
+    reserved.push(p.scale[0].h);
+  });
+
+  // 2. Find 8 hues with max distance (Collision Avoidance)
+  // Use a simple brute-force or step-based search for 8 points
   const count = 8;
-  const out = [];
+  const bestHues = [];
 
-  // Exclude semantic hues to avoid overlap
-  // Semantic hues are roughly: 30, 70, 142, 250
-  const excluded = [30, 70, 142, 250];
-
-  let hue = (baseLch.h + 20) % 360; // start offset
+  // We want to maximize min distance to any reserved or already picked hue
   for (let i = 0; i < count; i++) {
-    // Attempt to find a hue that is not too close to excluded or already used
-    // Simple approach: distribute evenly and shift if too close to excluded
-    let h = (hue + i * (360/count)) % 360;
+    let maxMinDist = -1;
+    let candidateHue = 0;
 
-    // Very simple check to push away from danger/success
-    for (const ex of excluded) {
-        if (Math.abs(h - ex) < 15 || Math.abs(h - ex) > 345) {
-            h = (h + 20) % 360;
-        }
+    for (let h = 0; h < 360; h += 5) {
+      let minDist = Infinity;
+      // Dist to reserved
+      for (const r of reserved) {
+        let d = Math.abs(h - r);
+        if (d > 180) d = 360 - d;
+        if (d < minDist) minDist = d;
+      }
+      // Dist to already picked
+      for (const b of bestHues) {
+        let d = Math.abs(h - b);
+        if (d > 180) d = 360 - d;
+        if (d < minDist) minDist = d;
+      }
+
+      if (minDist > maxMinDist) {
+        maxMinDist = minDist;
+        candidateHue = h;
+      }
     }
-
-    out.push({
-      index: i,
-      scale: generateScaleForLCH({ L: 0.8, C: 0.1, h: h }, BADGE_STEPS, true)
-    });
+    bestHues.push(candidateHue);
   }
-  return out;
+
+  // 3. Generate scales
+  return bestHues.map((h, i) => ({
+    index: i,
+    scale: generateScaleForLCH({ L: 0.75, C: 0.12, h }, BADGE_STEPS, true)
+  }));
 }

@@ -56,18 +56,12 @@ export const FUNCTIONAL_STEPS = [0, 200, 400, 600, 800];
 export const BADGE_STEPS = [0, 200, 400, 600, 800, 1000];
 
 function stepToL(step){
-  const t = step/1000;
-  return EngineState.mode.palette === 'dark'
-    ? 0.12 + (1 - t) * 0.7
-    : 0.98 - t * 0.8;
+  // 0 = White (L=1), 1000 = Black (L=0)
+  return 1 - (step / 1000);
 }
 
 function LToStep(L){
-  return Math.round(
-    EngineState.mode.palette === 'dark'
-      ? (1 - (L - 0.12)/0.7) * 1000
-      : (0.98 - L)/0.8 * 1000
-  );
+  return Math.round((1 - L) * 1000);
 }
 
 // Guardrail chromy
@@ -85,7 +79,7 @@ function makeSwatch(step, lch){
   const C = clampChroma(L, lch.C);
   const lab = oklchToOklab(L, C, lch.h);
   const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-  return { step, hex: rgbToHex(rgb) };
+  return { step, hex: rgbToHex(rgb), h: lch.h, c: C, l: L };
 }
 
 export function generateAbsoluteScale(lch, steps = DEFAULT_STEPS, forceExcludeAnchor = false){
@@ -113,32 +107,46 @@ export function generateAbsoluteScale(lch, steps = DEFAULT_STEPS, forceExcludeAn
 }
 
 export function generateAsymmetricScale(lch){
-  const anchorStep = LToStep(lch.L);
-  const stepsDown = 50; // number of steps from anchor to 0
-  const stepsUp = 50;   // number of steps from anchor to 1000
+  // Requirement: Anchor is fixed at 500.
+  // Nonlinearity: "Jeśli Cin jest ciemny, kroki w stronę 1000 są mniejsze (większe zagęszczenie), a w stronę 0 – większe (rozciągnięcie skali)."
 
   const out = [];
+  const anchorL = lch.L;
 
-  // Steps from anchor down to 0
-  for (let i = 0; i <= stepsDown; i++) {
-      const s = anchorStep * (1 - i/stepsDown);
-      out.push(makeSwatch(s, lch));
-  }
+  // Normalized anchor position (0=White, 1=Black)
+  // But requirement says 500 is anchor.
+  // Let's use a power function for distribution
 
-  // Steps from anchor up to 1000
-  for (let i = 1; i <= stepsUp; i++) {
-      const s = anchorStep + (1000 - anchorStep) * (i/stepsUp);
-      out.push(makeSwatch(s, lch));
-  }
-
-  const final = out.sort((a,b)=>a.step-b.step);
-  final.forEach(sw => {
-      if (Math.abs(sw.step - anchorStep) < 0.001) {
-          sw.isBase = true;
+  for (let i = 0; i <= 10; i++) {
+      const step = i * 100;
+      let L;
+      if (step === 500) {
+          L = anchorL;
+      } else if (step < 500) {
+          // t from 0 to 1 as we go from white (0) to anchor (500)
+          const t = step / 500;
+          // Nonlinearity: if anchorL is low (dark), we want stretch towards 0.
+          // Power factor: if anchorL=0.2, (1-anchorL)=0.8.
+          // If anchorL is dark, we want to accelerate towards it.
+          const p = anchorL < 0.5 ? 1 / (2 * anchorL + 0.1) : 1;
+          L = 1 - (1 - anchorL) * Math.pow(t, p);
+      } else {
+          // t from 0 to 1 as we go from anchor (500) to black (1000)
+          const t = (step - 500) / 500;
+          // Nonlinearity: if anchorL is dark, we want density towards 1000.
+          const p = anchorL < 0.5 ? 2 * anchorL + 0.1 : 1;
+          L = anchorL * (1 - Math.pow(t, p));
       }
-  });
 
-  return final;
+      const C = clampChroma(L, lch.C);
+      const lab = oklchToOklab(L, C, lch.h);
+      const rgb = oklabToRgb(lab.L, lab.a, lab.b);
+      const sw = { step, hex: rgbToHex(rgb) };
+      if (step === 500) sw.isBase = true;
+      out.push(sw);
+  }
+
+  return out.sort((a,b)=>a.step-b.step);
 }
 
 /* ---------- PUBLIC API ---------- */
