@@ -52,8 +52,8 @@ export function rgbToHex({r,g,b}){
 /* ---------- HELPERS ---------- */
 const DEFAULT_STEPS = Array.from({length:101},(_,i)=>i*10);
 export const COARSE_STEPS = Array.from({length:11}, (_,i)=>i*100);
-export const FUNCTIONAL_STEPS = [0, 200, 400, 600, 800];
-export const BADGE_STEPS = [0, 200, 400, 600, 800, 1000];
+export const FUNCTIONAL_STEPS = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
+export const BADGE_STEPS = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 
 function stepToL(step){
   // 0 = White (L=1), 1000 = Black (L=0)

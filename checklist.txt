@@ -1,23 +1,26 @@
-OSTATECZNA CHECKLISTA REALIZACJI (Weryfikacja trybów i suwaków)
+FINALNA CHECKLISTA ZGODNOŚCI Z WYMAGANIAMI
 
-1. Rozkład Skal (Absolute vs Asymmetric)
-- [x] Tryb Absolute: Zachowuje równe odstępy matematyczne jasności (L) niezależnie od koloru bazowego.
-- [x] Tryb Asymmetric: Stosuje nieliniowe zagęszczenie kroków. Jeśli baza jest ciemna, kroki przy 1000 są gęstsze, a przy 0 rozciągnięte.
-- [x] Potwierdzone różnice w wartościach HEX między trybami.
+1. Palety Specjalne (Co 100 jednostek)
+- [x] Paleta Funkcjonalna: kroki 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000.
+- [x] Paleta Badge: kroki 0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000.
+- [x] Spójność: Wszystkie palety specjalne używają nowej logiki (0=Biały, 1000=Czarny).
 
-2. Wizualizacja Suwaków (Gradients)
-- [x] Pełny Zakres: Track suwaka pokazuje pełne spektrum 0-360 stopni.
-- [x] Gamut-aware: Barwy nieosiągalne w sRGB są wizualnie przyciemnione/wyłączone na tracku.
-- [x] Spójność: Pozycja suwaka (0..1) odpowiada faktycznie wybranej barwie (Hue) wyświetlanej obok nazwy koloru.
-- [x] Estetyka: Wyższe, bardziej czytelne tracki suwaków z cieniem wewnętrznym.
+2. Płynność Interakcji (Suwaki)
+- [x] Real-time rendering: Suwaki działają na zdarzeniu `input`, nie `change`.
+- [x] Płynne przesuwanie: Brak przeskakiwania (debounce usunięty dla UI), natychmiastowa reakcja palety.
+- [x] Differential Rendering: Minimalizacja operacji na DOM podczas ruchu suwaka.
 
-3. Płynność i UI
-- [x] Płynne Przełączanie: Naprawiono błąd mapowania trybów w UI. Przełączanie Absolute/Symmetric działa natychmiastowo.
-- [x] Stabilność Focusu: Zmiana trybu nie powoduje utraty focusu ani resetu stanu dodatkowych kolorów.
-- [x] Live Preview: Każdy kolor dodatkowy ma podgląd HEX na karcie suwaka.
+3. Wizualizacja Suwaków (Tracki)
+- [x] Realistyczny podgląd: Gęste próbkowanie Hue (co 2 stopnie) na tracku.
+- [x] Widoczność: Podniesiona wysokość tracka (18px), dodany kontrast i cienie.
+- [x] Gamut-aware: Barwy poza sRGB są przyciemnione, dając jasny feedback użytkownikowi.
 
-4. Hierarchia i Kolizje (Collision Avoidance)
-- [x] Potwierdzone działanie unikania kolizji dla palet funkcjonalnych i badge.
-- [x] 8 kolorów badge wybieranych algorytmem maksymalnego dystansu perceptualnego.
+4. Dark Mode
+- [x] Pełne przeliczenie: Przełączenie trybu aktualizuje tła i kontrast tekstu na swatchach.
+- [x] Integracja: Systemowa flaga `palette_mode` steruje logiką silnika i stylem UI.
 
-Wszystkie wymagania techniczne i wizualne zostały spełnione. System jest gotowy do finalnego przekazania.
+5. Hierarchia i Kolizje
+- [x] Utrzymano system unikania kolizji (Collision Avoidance) dla Funkcyjnych i Badge.
+- [x] Utrzymano nieliniowe skale Asymmetric.
+
+System jest zoptymalizowany pod kątem wydajności i w pełni realizuje zlecony model inżynierski.

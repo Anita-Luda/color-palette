@@ -1,13 +1,16 @@
-ANALIZA TECHNICZNA: DYSTRYBUCJA I WIZUALIZACJA
+GŁĘBOKA ANALIZA WYDAJNOŚCI I INTERAKCJI
 
-1. Matematyka Rozkładu Asymetrycznego
-Zaimplementowany model nieliniowy wykorzystuje funkcję $L = 1 - (1 - L_{anchor}) \cdot t^p$ dla tonów jasnych oraz $L = L_{anchor} \cdot (1 - t^p)$ dla tonów ciemnych. Wykładnik $p$ jest dynamicznie obliczany na podstawie jasności $L_{anchor}$, co pozwala na automatyczne dopasowanie gęstości skali. Dzięki temu palety generowane z bardzo ciemnych kolorów bazowych nie tracą czytelności w najniższych rejestrach jasności.
+1. Optymalizacja Pętli Renderowania
+W celu osiągnięcia płynności 60 FPS podczas manipulacji suwakami, wdrożono mechanizm `DocumentFragment` w `ui.render.js`. Pozwala to na przygotowanie całego drzewa DOM palety w pamięci i wykonanie tylko jednej operacji zapisu do `innerHTML`, co drastycznie redukuje liczbę operacji "Layout" i "Paint" w przeglądarce.
 
-2. Mapowanie Gamutu na Suwakach
-Wyzwanie polegało na pokazaniu pełnego spektrum Hue (0-360) przy zachowaniu realizmu fizycznego (sRGB). Zastosowano gęste próbkowanie (co 2 stopnie) i flagę `disabled` dla kolorów poza gamutem. W warstwie UI barwy te są renderowane z obniżoną opampością, co jasno komunikuje użytkownikowi ograniczenia techniczne bez ukrywania potencjalnych wyborów.
+2. Realistyczne Gradienty OKLCH
+Gradienty na suwakach nie są prostą linią między dwoma kolorami. Są one efektem gęstego próbkowania (180 punktów na suwak) w przestrzeni OKLCH przy stałej jasności i chromie. Dzięki temu "track" suwaka jest matematycznie poprawnym podglądem tego, co użytkownik wybierze, zachowując perceptualną stałość jasności podczas zmiany odcienia (Hue).
 
-3. Architektura Update-Loop
-Dzięki scentralizowaniu logiki w `engine.scales.js`, zmiana trybu skali ($Absolute$ / $Asymmetric$) jest "przezroczysta" dla reszty systemu. Funkcja `generateScaleForLCH` działa jako dispatcher, co pozwoliło na łatwe wprowadzenie nieliniowości bez modyfikowania komponentów renderujących swatche.
+3. Adaptacja do Dark Mode
+Logika silnika (`engine.gradients.js` -> `adjustForMode`) dynamicznie modyfikuje parametry L i C podczas pracy w trybie Dark Mode. Zapewnia to, że kolory są bardziej nasycone i widoczne na ciemnym tle, co zapobiega efektowi "wyprania" barw, często spotykanemu w prostych systemach kolorystycznych.
 
-4. Rekomendacje Produkcyjne
-System osiągnął dojrzałość pozwalającą na generowanie całych bibliotek UI. Kolejnym naturalnym krokiem byłaby integracja z CSS Typed OM w celu jeszcze wydajniejszej manipulacji kolorami bezpośrednio przez GPU przeglądarki.
+4. Model Progowania 100-jednostkowego
+Ujednolicenie wszystkich skal (Main, Functional, Badge) do systemu 0-1000 z krokiem 100 zapewnia spójność przy wdrażaniu Design Tokens do systemów takich jak Tailwind czy Material Design. Każdy swatch posiada swój unikalny identyfikator jasności, co ułatwia komunikację na linii Projektant-Programista.
+
+5. Wnioski
+Aplikacja ewoluowała z narzędzia do generowania kolorów w precyzyjny symulator systemów projektowych, kładąc nacisk na płynność (UX) i poprawność matematyczną (Engineering).

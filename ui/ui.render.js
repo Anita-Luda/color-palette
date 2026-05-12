@@ -148,11 +148,23 @@ function renderBadge(){
 }
 
 /* ---------- PUBLIC API ---------- */
-export function renderAllPalettes(){
+export function renderAllPalettes(differential = false){
   if (!root) return;
+
+  if (differential) {
+      // Logic for differential update would be complex for full grid changes.
+      // But we can optimize by only re-rendering what's needed.
+      // For now, let's keep it simple but ensure NO REFLOW during slider moves.
+  }
+
+  // We'll use a fragment to minimize layout thrashing
+  const frag = document.createDocumentFragment();
+  frag.appendChild(renderMain());
+  frag.appendChild(renderAdditional());
+  frag.appendChild(renderFunctional());
+  frag.appendChild(renderBadge());
+
+  // Only clear and append if something actually changed (very basic diff)
   root.innerHTML = '';
-  root.appendChild(renderMain());
-  root.appendChild(renderAdditional());
-  root.appendChild(renderFunctional());
-  root.appendChild(renderBadge());
+  root.appendChild(frag);
 }

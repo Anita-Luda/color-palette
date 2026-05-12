@@ -55,3 +55,5 @@ export function renderAllGradients(){
     renderGradientForColor(card, role);
   });
 }
+
+window.refreshGradients = renderAllGradients;

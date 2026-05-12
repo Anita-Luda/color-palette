@@ -262,8 +262,9 @@ function createSliderCard(c) {
   slider.addEventListener('input', e => {
     setColorSlider(c.index, Number(e.target.value));
     // Optimized: only render palettes and update gradients
-    renderAllPalettes();
-    import('./ui.gradients.js').then(m => m.renderAllGradients());
+    renderAllPalettes(true);
+    // Don't import dynamically during high-freq event
+    window.refreshGradients?.();
   });
 
   const del = document.createElement('button');
@@ -282,7 +283,18 @@ function createSliderCard(c) {
 /* ---------- MODES ---------- */
 function setupModes(){
   $('mode')?.addEventListener('change', e => {
-    setPaletteMode(e.target.value);
+    const mode = e.target.value;
+    setPaletteMode(mode);
+
+    // Update body theme
+    if (mode === 'dark') {
+        document.body.classList.add('preview-dark');
+        document.body.classList.remove('preview-light');
+    } else {
+        document.body.classList.add('preview-light');
+        document.body.classList.remove('preview-dark');
+    }
+
     clearGradientCache();
     refreshUI();
   });

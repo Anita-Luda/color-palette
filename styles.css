@@ -136,6 +136,9 @@ button.btn-danger:hover { background: var(--danger); color: white; }
 .preview-light { background: var(--bg-light); color: var(--text-light); }
 .preview-light main { background: var(--bg-light); }
 
+.preview-dark { background: var(--bg-dark); color: var(--text-dark); }
+.preview-dark main { background: var(--bg-dark); }
+
 .palette { margin-bottom: 64px; }
 .palette-title { margin-bottom: 24px; display: flex; flex-direction: column; }
 .palette-title strong { font-size: 1.5rem; font-weight: 900; }
@@ -180,11 +183,15 @@ input[type="range"] { -webkit-appearance: none; height: 4px; background: rgba(25
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: white; cursor: pointer; border: 3px solid var(--accent); }
 
 .hue-gradient {
-    height: 12px;
-    border-radius: 6px;
-    margin: 8px 0;
-    border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    height: 18px;
+    border-radius: 9px;
+    margin: 12px 0;
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow:
+        inset 0 1px 4px rgba(0,0,0,0.4),
+        0 2px 4px rgba(0,0,0,0.2);
+    position: relative;
+    overflow: hidden;
 }
 
 #system-messages { margin-top: auto; }
