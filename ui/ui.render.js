@@ -8,8 +8,9 @@ import {
   getBadgePalettes
 } from '../engine/engine.palettes.js';
 
-import { previewContrast } from '../engine/engine.accessibility.js';
+import { previewContrast, contrastRatio } from '../engine/engine.accessibility.js';
 import { getState } from '../engine/engine.core.js';
+import { generateContrastGrid } from '../engine/engine.contrast.js';
 
 /* ---------- ROOT ---------- */
 const root = document.getElementById('output');
@@ -147,24 +148,64 @@ function renderBadge(){
   return sec;
 }
 
+function renderContrastView() {
+    const grid = generateContrastGrid();
+    const container = el('div', 'contrast-grid');
+
+    // Header
+    const header = el('div', 'contrast-row');
+    header.style.minHeight = '40px';
+    header.style.fontWeight = 'bold';
+    header.append(
+        el('div', null, 'Tło'),
+        el('div', null, '3:1 do Tła'),
+        el('div', null, '3:1 do Poprzedniego'),
+        el('div', null, '4.5:1 do obu'),
+        el('div', null, '7:1 do obu')
+    );
+    container.appendChild(header);
+
+    grid.forEach((row, i) => {
+        const r = el('div', 'contrast-row');
+
+        const b = createContrastSwatch('Tło', row.bg, '#fff'); // will auto-adjust text
+        const s1 = createContrastSwatch(`3:1 BG (${contrastRatio(row.bg, row.c3_bg).toFixed(1)}:1)`, row.c3_bg, row.bg);
+        const s2 = createContrastSwatch(`3:1 Prev (${contrastRatio(row.c3_bg, row.c3_prev).toFixed(1)}:1)`, row.c3_prev, row.c3_bg);
+        const s3 = createContrastSwatch(`4.5:1 (${contrastRatio(row.bg, row.c45_bg).toFixed(1)}:1)`, row.c45_bg, row.bg);
+        const s4 = createContrastSwatch(`7:1 (${contrastRatio(row.bg, row.c7_bg).toFixed(1)}:1)`, row.c7_bg, row.bg);
+
+        r.append(b, s1, s2, s3, s4);
+        container.appendChild(r);
+    });
+
+    return container;
+}
+
+function createContrastSwatch(label, hex, bg) {
+    const d = el('div', 'contrast-swatch');
+    d.style.background = hex;
+    d.style.color = previewContrast(hex).light.ratio > previewContrast(hex).dark.ratio ? '#fff' : '#000';
+
+    const l = el('div', null, label);
+    const h = el('div', null, hex.toUpperCase());
+    d.append(l, h);
+    return d;
+}
+
 /* ---------- PUBLIC API ---------- */
 export function renderAllPalettes(differential = false){
   if (!root) return;
+  const state = getState();
 
-  if (differential) {
-      // Logic for differential update would be complex for full grid changes.
-      // But we can optimize by only re-rendering what's needed.
-      // For now, let's keep it simple but ensure NO REFLOW during slider moves.
-  }
-
-  // We'll use a fragment to minimize layout thrashing
-  const frag = document.createDocumentFragment();
-  frag.appendChild(renderMain());
-  frag.appendChild(renderAdditional());
-  frag.appendChild(renderFunctional());
-  frag.appendChild(renderBadge());
-
-  // Only clear and append if something actually changed (very basic diff)
   root.innerHTML = '';
-  root.appendChild(frag);
+  if (state.mode.view === 'contrast') {
+      root.appendChild(renderContrastView());
+  } else {
+      const frag = document.createDocumentFragment();
+      frag.appendChild(renderMain());
+      frag.appendChild(renderAdditional());
+      frag.appendChild(renderFunctional());
+      frag.appendChild(renderBadge());
+      root.appendChild(frag);
+  }
 }

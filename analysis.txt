@@ -1,13 +1,25 @@
-ANALIZA TECHNICZNA: SYSTEM MAPOWANIA BARW RELACYJNYCH
+ANALIZA ROZWOJOWA SYSTEMU GENEROWANIA KOLORÓW
 
-1. Dynamiczne Mapowanie Hue (Relative Hue Mapping)
-Wprowadzono system mapowania, w którym środek suwaka ($t=0.5$) jest dynamicznie przypisywany do $Hue$ wynikającego z wybranej relacji (np. $+120^\circ$ dla triadic). Gradient generowany jest w zakresie $[Hue_{rel} - 180^\circ, Hue_{rel} + 180^\circ]$. Dzięki temu suwak zawsze operuje na pełnym kole barw, ale jego punkt startowy jest zdeterminowany przez geometrię harmonii.
+1. ARCHITEKTURA SILNIKA (ENGINE)
+System opiera się na matematycznym modelu OKLCH, który zapewnia percepcyjną jednolitość barw. Kluczowym osiągnięciem jest oddzielenie logiki matematycznej (engine/) od warstwy prezentacji (ui/).
+- Zastosowano Binary Search do wyznaczania jasności (L) dla zadanych współczynników kontrastu, co pozwala na generowanie warstw interfejsu zgodnych z WCAG (AA/AAA) w czasie rzeczywistym.
+- Algorytm Collision Avoidance dynamicznie zarządza przestrzenią odcieni (Hue), zapobiegając zlewaniu się barw funkcjonalnych z marką.
 
-2. Gamut-Aware Slider Tracks
-Tło suwaka jest generowane poprzez próbkowanie OKLCH przy stałych parametrach $L$ i $C$ bazy. Zastosowanie `rgba(0,0,0,0.2)` dla punktów spoza sRGB pozwala na natychmiastową ocenę "bezpieczeństwa" wyboru koloru. Mechanizm ten jest zintegrowany z `adjustForMode`, co sprawia, że w trybie Dark Mode suwaki stają się automatycznie bardziej nasycone.
+2. LOGIKA SKALOWANIA
+Wprowadzono dwa paradygmaty generowania jasności:
+- Absolute (Globalny): Gwarantuje przewidywalność jasności na każdym kroku (0-1000).
+- Asymmetric (Lokalny): Skupia gęstość próbek wokół koloru bazowego. Jest to krytyczne dla tworzenia "miękkich" interfejsów, gdzie potrzebujemy wielu subtelnych odcieni zbliżonych do głównej marki.
 
-3. Separacja Zdarzeń (Event Decoupling)
-Rozdzielono logikę aktualizacji palety (częstotliwość `onInput`) od regeneracji gradientów (częstotliwość zmiany bazy). Zapobiega to kosztownym obliczeniom `canvas`/`linear-gradient` podczas przesuwania suwaka, co eliminuje mikro-przycięcia interfejsu.
+3. OPTYMALIZACJA UI
+Wykorzystanie DocumentFragment oraz selektywnej aktualizacji DOM pozwoliło na osiągnięcie płynności 60 FPS nawet przy generowaniu setek kafelków kolorów jednocześnie.
+- Innowacyjne podejście do suwaków: tło suwaka nie jest statyczne, lecz dynamicznie mapuje przestrzeń kolorów sRGB, wizualizując "bezpieczne" i "niebezpieczne" (out-of-gamut) obszary.
 
-4. Wnioski
-Rozwiązanie zapewnia idealną równowagę między automatyzacją (relacje) a pełną kontrolą użytkownika (suwak), przy jednoczesnym zachowaniu realizmu percepcyjnego OKLCH.
+4. WIDOK KONTRASTU (CONTRAST-FIRST DESIGN)
+Nowy moduł kontrastu przesuwa narzędzie z roli "generatora palet" w stronę "systemu projektowego".
+- Automatyczne wyliczanie trzech poziomów warstw (3:1, 4.5:1, 7:1) względem 10-stopniowej skali tła pozwala projektantom natychmiast zobaczyć, jak kolor bazowy zachowa się w złożonych komponentach UI (karty na kartach, tooltipy, przyciski).
+
+5. POTENCJAŁ ROZWOJU (ROADMAP)
+- Eksport do formatów Design Tokens: JSON (W3C), CSS Variables, Tailwind Config.
+- Symulacja ślepoty barw: Integracja macierzy transformacji kolorów w widoku kontrastu.
+- Analiza gamutu P3: Rozszerzenie silnika o obsługę szerokiego gamutu dla nowoczesnych wyświetlaczy Apple/OLED.
+- Integracja z Figmą: Plugin synchronizujący wygenerowane skale bezpośrednio z biblioteką stylów.

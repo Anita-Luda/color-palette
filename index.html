@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <title>OKLCH Palette System</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
 </head>
 
@@ -59,9 +62,23 @@
       <option value="light">Jasne</option>
       <option value="dark">Ciemne</option>
     </select>
+
+    <div id="contrast-controls" style="display: none;">
+        <h3>Ustawienia Kontrastu</h3>
+        <label>Jasność tła</label>
+        <input type="range" id="contrast-brightness" min="0" max="1" step="0.01" value="0.5">
+        <label>Boost kontrastu</label>
+        <input type="range" id="contrast-boost" min="0" max="5" step="0.1" value="0">
+    </div>
   </aside>
 
-  <main id="output" class="preview-light"></main>
+  <main id="output-container">
+    <div class="tabs">
+        <button class="tab-btn active" data-view="palettes">Palety</button>
+        <button class="tab-btn" data-view="contrast">Kontrast</button>
+    </div>
+    <div id="output" class="preview-light"></div>
+  </main>
 
   <script type="module">
     import { initControls } from './ui/ui.controls.js';
@@ -81,7 +98,13 @@
     // reaguj na zmiany tła preview
     document.getElementById('previewBg')?.addEventListener('change', e => {
       const out = document.getElementById('output');
-      out.className = e.target.value === 'dark' ? 'preview-dark' : 'preview-light';
+      if (e.target.value === 'dark') {
+          out.classList.add('preview-dark');
+          out.classList.remove('preview-light');
+      } else {
+          out.classList.add('preview-light');
+          out.classList.remove('preview-dark');
+      }
     });
   </script>
 </body>

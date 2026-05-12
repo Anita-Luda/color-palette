@@ -10,7 +10,13 @@ export const EngineState = {
 
   mode: {
     palette: 'light',        // light | dark
-    scale: 'absolute'        // absolute | asymmetric
+    scale: 'absolute',       // absolute | asymmetric
+    view: 'palettes'         // palettes | contrast
+  },
+
+  contrastSettings: {
+    brightness: 0.5,
+    boost: 0
   },
 
   relation: {
@@ -62,6 +68,17 @@ export function setPaletteMode(mode) {
 export function setScaleMode(mode) {
   if (mode !== 'absolute' && mode !== 'asymmetric') return;
   EngineState.mode.scale = mode;
+}
+
+export function setView(view) {
+  if (view !== 'palettes' && view !== 'contrast') return;
+  EngineState.mode.view = view;
+}
+
+export function setContrastSettings(key, value) {
+  if (EngineState.contrastSettings.hasOwnProperty(key)) {
+    EngineState.contrastSettings[key] = Number(value);
+  }
 }
 
 /* ---------- RELATIONS ---------- */

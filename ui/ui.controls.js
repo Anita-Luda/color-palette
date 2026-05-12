@@ -15,7 +15,9 @@ import {
   setLock,
   getState,
   getWarnings,
-  updateColorRole
+  updateColorRole,
+  setView,
+  setContrastSettings
 } from '../engine/engine.core.js';
 
 import { clearGradientCache } from '../engine/engine.gradients.js';
@@ -290,9 +292,13 @@ function setupModes(){
     if (mode === 'dark') {
         document.body.classList.add('preview-dark');
         document.body.classList.remove('preview-light');
+        $('output').classList.add('preview-dark');
+        $('output').classList.remove('preview-light');
     } else {
         document.body.classList.add('preview-light');
         document.body.classList.remove('preview-dark');
+        $('output').classList.add('preview-light');
+        $('output').classList.remove('preview-dark');
     }
 
     clearGradientCache();
@@ -358,6 +364,52 @@ function setupReorder() {
   });
 }
 
+function setupTabs() {
+    const btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const view = btn.dataset.view;
+            setView(view);
+
+            // Toggle sidebar controls
+            const contrastCtrl = $('contrast-controls');
+            const batchCtrl = $('batchContainer').parentElement;
+            const colorsCtrl = $('addColor').parentElement;
+            const scaleCtrl = document.querySelector('input[name="scaleMode"]').parentElement.parentElement;
+            const relationCtrl = $('harmony').parentElement;
+
+            if (view === 'contrast') {
+                contrastCtrl.style.display = 'block';
+                batchCtrl.style.display = 'none';
+                colorsCtrl.style.display = 'none';
+                scaleCtrl.style.display = 'none';
+                relationCtrl.style.display = 'none';
+            } else {
+                contrastCtrl.style.display = 'none';
+                batchCtrl.style.display = 'flex';
+                colorsCtrl.style.display = 'flex';
+                scaleCtrl.style.display = 'flex';
+                relationCtrl.style.display = 'flex';
+            }
+
+            refreshUI();
+        });
+    });
+}
+
+function setupContrastSliders() {
+    $('contrast-brightness')?.addEventListener('input', e => {
+        setContrastSettings('brightness', e.target.value);
+        renderAllPalettes(); // just re-render grid
+    });
+    $('contrast-boost')?.addEventListener('input', e => {
+        setContrastSettings('boost', e.target.value);
+        renderAllPalettes(); // just re-render grid
+    });
+}
+
 /* ---------- INIT ---------- */
 export function initControls(){
   $('textColor')?.addEventListener('input', onBaseChange);
@@ -370,6 +422,8 @@ export function initControls(){
   setupModes();
   setupLocks();
   setupReorder();
+  setupTabs();
+  setupContrastSliders();
 
   onBaseChange();
 }
