@@ -12,6 +12,40 @@
 
 <body>
   <aside id="sidebar">
+    <div id="contrast-controls-top" style="display: none;">
+        <section class="sidebar-section">
+            <h3>Ustawienia Kontrastu</h3>
+            <div class="group">
+                <div id="active-bg-source-top" style="font-size: 0.7rem; opacity: 0.8; margin-bottom: 8px;">Tło z: Paleta Główna</div>
+                <label>Jasność tła</label>
+                <input type="range" id="contrast-brightness-top" min="0" max="1" step="0.01" value="0.5">
+                <label>Boost kontrastu</label>
+                <input type="range" id="contrast-boost-top" min="0" max="5" step="0.1" value="0">
+
+                <div id="ignore-thresholds-top" style="margin-top: 12px;">
+                    <label style="font-size: 0.75rem; display: block; margin-bottom: 8px;">Ignoruj progi:</label>
+
+                    <div class="ignore-group">
+                        <span>Relatywne do Tła (BG):</span>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
+                            <button class="ignore-btn" data-val="L1_BG">Lvl1 (3:1)</button>
+                            <button class="ignore-btn" data-val="C45_BG">AA (4.5:1)</button>
+                            <button class="ignore-btn" data-val="C7_BG">AAA (7:1)</button>
+                        </div>
+                    </div>
+
+                    <div class="ignore-group" style="margin-top: 8px;">
+                        <span>Relatywne do Lvl1:</span>
+                        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
+                            <button class="ignore-btn" data-val="L2_L1">Lvl2 (3:1)</button>
+                            <button class="ignore-btn" data-val="C45_L1">AA (4.5:1)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
     <section class="sidebar-section">
       <h3>Kolor bazowy</h3>
       <div class="group">
@@ -35,24 +69,20 @@
         </div>
 
         <label>Algorytm</label>
-        <label class="radio">
-          <input type="radio" name="algoMode" value="standard" checked />
-          Standard (Standard OKLCH)
-        </label>
-        <label class="radio">
-          <input type="radio" name="algoMode" value="adaptive" />
-          Adaptive Perceptual
-        </label>
+        <div class="toggle-group">
+          <input type="radio" name="algoMode" id="algo-standard" value="standard" checked>
+          <label for="algo-standard">Standard</label>
+          <input type="radio" name="algoMode" id="algo-adaptive" value="adaptive">
+          <label for="algo-adaptive">Adaptive</label>
+        </div>
 
         <label>Rozkład jasności (Distribution)</label>
-        <label class="radio">
-          <input type="radio" name="scaleMode" value="absolute" checked />
-          Absolute (Linear)
-        </label>
-        <label class="radio">
-          <input type="radio" name="scaleMode" value="asymmetric" />
-          Asymmetric (Symmetric Density)
-        </label>
+        <div class="toggle-group">
+          <input type="radio" name="scaleMode" id="scale-absolute" value="absolute" checked>
+          <label for="scale-absolute">Absolute</label>
+          <input type="radio" name="scaleMode" id="scale-asymmetric" value="asymmetric">
+          <label for="scale-asymmetric">Asymmetric</label>
+        </div>
 
         <label>Relacja kolorystyczna</label>
         <select id="harmony">
@@ -91,35 +121,6 @@
       <div id="colorList"></div>
     </section>
 
-    <div id="contrast-controls" style="display: none;">
-        <h3>Ustawienia Kontrastu</h3>
-        <div id="active-bg-source" style="font-size: 0.7rem; opacity: 0.8; margin-bottom: 8px;">Tło z: Paleta Główna</div>
-        <label>Jasność tła</label>
-        <input type="range" id="contrast-brightness" min="0" max="1" step="0.01" value="0.5">
-        <label>Boost kontrastu</label>
-        <input type="range" id="contrast-boost" min="0" max="5" step="0.1" value="0">
-
-        <div id="ignore-thresholds" style="margin-top: 12px;">
-            <label style="font-size: 0.75rem; display: block; margin-bottom: 8px;">Ignoruj progi:</label>
-
-            <div class="ignore-group">
-                <span>Relatywne do Tła (BG):</span>
-                <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
-                    <button class="ignore-btn" data-val="L1_BG">Lvl1 (3:1)</button>
-                    <button class="ignore-btn" data-val="C45_BG">AA (4.5:1)</button>
-                    <button class="ignore-btn" data-val="C7_BG">AAA (7:1)</button>
-                </div>
-            </div>
-
-            <div class="ignore-group" style="margin-top: 8px;">
-                <span>Relatywne do Lvl1:</span>
-                <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
-                    <button class="ignore-btn" data-val="L2_L1">Lvl2 (3:1)</button>
-                    <button class="ignore-btn" data-val="C45_L1">AA (4.5:1)</button>
-                </div>
-            </div>
-        </div>
-    </div>
   </aside>
 
   <main id="output-container">

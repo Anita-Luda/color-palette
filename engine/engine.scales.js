@@ -87,8 +87,9 @@ function clampChroma(L, C){
 /* ---------- CORE GENERATORS ---------- */
 
 function maxChromaForL(L, H, C_start) {
+  let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
   let low = 0;
-  let high = Math.max(C_start, 0.4);
+  let high = Math.max(C_start * multiplier, 0.4);
   for (let i = 0; i < 20; i++) {
     const mid = (low + high) / 2;
     const lab = oklchToOklab(L, mid, H);
@@ -146,10 +147,11 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
 
       let C, H;
       if (isAdaptive) {
+          let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
           H = hueShift(L, lch.L, lch.h);
           const maxC = maxChromaForL(L, H, lch.C);
           const falloff = chromaFalloff(L, lch.L);
-          C = Math.min(maxC, lch.C * falloff);
+          C = Math.min(maxC, lch.C * multiplier * falloff);
       } else {
           C = clampChroma(L, lch.C);
           H = lch.h;
@@ -170,10 +172,11 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
           let L = lch.L;
           let C, H;
           if (isAdaptive) {
+              let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
               H = hueShift(L, lch.L, lch.h);
               const maxC = maxChromaForL(L, H, lch.C);
               const falloff = chromaFalloff(L, lch.L);
-              C = Math.min(maxC, lch.C * falloff);
+              C = Math.min(maxC, lch.C * multiplier * falloff);
           } else {
               C = clampChroma(L, lch.C);
               H = lch.h;

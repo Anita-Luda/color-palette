@@ -298,7 +298,14 @@ function createContrastSwatch(label, hex, forceLch, actualRatio) {
 
     const l = el('div', 'contrast-label', label);
     const h = el('div', 'contrast-hex', c.toUpperCase());
-    d.append(l, h);
+
+    const wb = el('div', 'swatch-wb-contrast');
+    wb.innerHTML = `W: ${contrast.light.ratio} B: ${contrast.dark.ratio}`;
+    wb.style.fontSize = '0.55rem';
+    wb.style.opacity = '0.8';
+    wb.style.marginTop = '2px';
+
+    d.append(l, h, wb);
 
     if (actualRatio !== undefined) {
         const r = el('div', 'contrast-ratio', `Real: ${actualRatio.toFixed(2)}:1`);

@@ -81,10 +81,24 @@ function refreshUI() {
   renderSliders();
   renderWarnings();
   updateContrastInfos();
+  updateContrastSidebarLabels();
 
   // Gradients are recalculated here (base color change / batch change)
   import('./ui.gradients.js').then(m => m.renderAllGradients());
   import('./ui.messages.js').then(m => m.renderMessages());
+}
+
+function updateContrastSidebarLabels() {
+  const state = getState();
+  const topLabel = $('active-bg-source-top');
+  if (topLabel) {
+      const source = state.mode.backgroundSource;
+      if (source === 'base') {
+          topLabel.textContent = 'Tło z: Paleta Główna';
+      } else {
+          topLabel.textContent = `Tło z: Kolor ${source + 1}`;
+      }
+  }
 }
 
 window.refreshUI = refreshUI;
@@ -555,16 +569,12 @@ function setupTabs() {
             setView(view);
 
             // Toggle sidebar controls
-            const contrastCtrl = $('contrast-controls');
-            // DLA PALETY KONTRASTÓW PANEL STEROWANIA NIE POWINIEN ZNIKAĆ.
-            // I interpret this as "sidebar should stay", but we might still hide/show specific knobs.
-            // The user says "Dla palety kontrasttów panel sterowania nie powinien znikać"
-            // but the original code hid everything else. Let's keep things visible as much as possible.
+            const contrastCtrlTop = $('contrast-controls-top');
 
             if (view === 'contrast') {
-                contrastCtrl.style.display = 'block';
+                if (contrastCtrlTop) contrastCtrlTop.style.display = 'block';
             } else {
-                contrastCtrl.style.display = 'none';
+                if (contrastCtrlTop) contrastCtrlTop.style.display = 'none';
             }
 
             refreshUI();
@@ -573,19 +583,32 @@ function setupTabs() {
 }
 
 function setupContrastSliders() {
-    $('contrast-brightness')?.addEventListener('input', e => {
+    const bTop = $('contrast-brightness-top');
+    const bBoostTop = $('contrast-boost-top');
+
+    bTop?.addEventListener('input', e => {
         setContrastSettings('brightness', e.target.value);
-        renderAllPalettes(); // just re-render grid
+        renderAllPalettes();
     });
-    $('contrast-boost')?.addEventListener('input', e => {
+    bBoostTop?.addEventListener('input', e => {
         setContrastSettings('boost', e.target.value);
-        renderAllPalettes(); // just re-render grid
+        renderAllPalettes();
     });
 
     document.querySelectorAll('.ignore-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            btn.classList.toggle('active');
-            toggleIgnoredThreshold(btn.dataset.val);
+            // Find all buttons with same data-val to sync them
+            const val = btn.dataset.val;
+            const allOfSameVal = document.querySelectorAll(`.ignore-btn[data-val="${val}"]`);
+
+            const isActivating = !btn.classList.contains('active');
+
+            allOfSameVal.forEach(b => {
+                if (isActivating) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+
+            toggleIgnoredThreshold(val);
             renderAllPalettes();
         });
     });
