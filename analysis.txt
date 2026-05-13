@@ -4,6 +4,7 @@ ANALIZA ROZWOJOWA SYSTEMU OKLCH PALETTE (PODSUMOWANIE PROJEKTU)
 System został przebudowany, aby stać się narzędziem klasy profesjonalnej dla Design Systems Engineers. Wykorzystanie OKLCH jako natywnego modelu matematycznego pozwala na projektowanie barw w oparciu o percepcję ludzką, a nie ograniczenia sprzętowe (RGB).
 
 2. KLUCZOWE INNOWACJE TECHNICZNE
+- **Adaptive Perceptual Scaling:** Wprowadzenie algorytmu, który dynamicznie wyszukuje maksymalne dopuszczalne nasycenie (Chroma) dla każdego poziomu jasności w gamucie sRGB. Eliminuje to problem "szarzenia" kolorów w bardzo jasnych i bardzo ciemnych partiach skali.
 - **Nested Contrast Engine:** Odejście od prostego porównywania dwóch kolorów na rzecz trójwarstwowej hierarchii (BG -> Level 1 -> Level 2). Każda warstwa może być optymalizowana niezależnie, co pozwala na budowanie złożonych komponentów (karta -> przycisk -> tekst) z gwarancją dostępności WCAG na każdym poziomie.
 - **Background Routing & Source Switching:** Elastyczność w wyborze tła odniesienia. Możliwość testowania "koloru na kolorze" zamiast tylko "koloru na bieli/czerni" otwiera drogę do projektowania dynamicznych motywów (theming).
 - **Binary Search Lightness Optimization:** Zamiast zgadywania lub statycznych kroków, system precyzyjnie "szuka" idealnego odcienia spełniającego normy AA/AAA, co jest kluczowe przy dużych wartościach "Boost".

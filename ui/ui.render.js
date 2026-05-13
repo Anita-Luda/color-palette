@@ -58,16 +58,27 @@ function renderSwatch(swatch, opts = {}){
   const step = el('div', 'swatch-step', String(stepText));
   const hex  = el('div', 'swatch-hex', swatch.hex.toUpperCase());
 
-  // Badges: always visible, differing brightness
+  // Badges logic:
+  // co 10: show 50 and 100 (100 priority)
+  // co 50: show 100
+  // co 100: handled by renderer not showing non-100s
+
   if (swatch.isBase) {
-      const b = el('div', 'swatch-badge base', 'BASE');
-      d.appendChild(b);
+      d.appendChild(el('div', 'swatch-badge base', 'BASE'));
+  } else if (gran === 10) {
+      if (swatch.step % 100 === 0) {
+          d.appendChild(el('div', 'swatch-badge step100 visible', '100'));
+      } else if (swatch.step % 50 === 0) {
+          d.appendChild(el('div', 'swatch-badge step50 visible', '50'));
+      }
+  } else if (gran === 50) {
+      if (swatch.step % 100 === 0) {
+          d.appendChild(el('div', 'swatch-badge step100 visible', '100'));
+      }
   } else if (swatch.step % 100 === 0) {
-      const b = el('div', 'swatch-badge step100', '100');
-      d.appendChild(b);
+      d.appendChild(el('div', 'swatch-badge step100', '100'));
   } else if (swatch.step % 50 === 0) {
-      const b = el('div', 'swatch-badge step50', '50');
-      d.appendChild(b);
+      d.appendChild(el('div', 'swatch-badge step50', '50'));
   }
 
   // Contrast info for current background
@@ -290,7 +301,11 @@ function createContrastSwatch(label, hex, forceLch, actualRatio) {
 }
 
 /* ---------- PUBLIC API ---------- */
-export function renderAllPalettes(differential = false){
+/**
+ * Renders all components of the output view.
+ * @param {boolean} preserveFocus - If true, indicates we should attempt to keep current UI state (e.g. scroll)
+ */
+export function renderAllPalettes(preserveFocus = false){
   if (!root) return;
   const state = getState();
 

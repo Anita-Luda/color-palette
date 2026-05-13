@@ -11,6 +11,7 @@ KOMPLEKSOWA CHECKLISTA REALIZACJI WYMAGAŃ (STAN KOŃCOWY)
 - [x] Granulacja Skali: Dynamiczne przełączanie widoku (co 10, 50, 100) bez utraty danych.
 - [x] Tryb Absolute: Liniowy rozkład jasności.
 - [x] Tryb Asymmetric (Symmetric): Zakotwiczenie na kroku 500 z nieliniowym zagęszczeniem w stronę ciemnych/jasnych tonów.
+- [x] Tryb Adaptive Perceptual: Inteligentne wyliczanie maksymalnego nasycenia (C) przy zachowaniu gamutu sRGB i płynna korekta odcienia (H).
 - [x] Kolizje Odcieni: Automatyczna korekta barw funkcjonalnych względem koloru bazowego.
 - [x] Ręczne Dodawanie Kolorów: Detekcja konfliktów Hue (<15°) z opcją automatycznej korekty.
 - [x] Paleta Szarości: Szybkie dodawanie palety neutralnej (C=0).

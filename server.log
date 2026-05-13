@@ -67,3 +67,15 @@ npm error A complete log of this run can be found in: /home/jules/.npm/_logs/202
 127.0.0.1 - - [13/May/2026 12:57:30] "GET /engine/engine.gradients.js HTTP/1.1" 200 -
 127.0.0.1 - - [13/May/2026 12:57:30] "GET /engine/engine.scales.js HTTP/1.1" 200 -
 127.0.0.1 - - [13/May/2026 12:57:30] "GET /engine/engine.contrast.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/May/2026 13:21:02] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [13/May/2026 13:21:02] "GET /styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [13/May/2026 13:21:02] "GET /ui/ui.controls.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/May/2026 13:21:02] "GET /ui/ui.render.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/May/2026 13:21:02] "GET /ui/ui.gradients.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/May/2026 13:21:02] "GET /ui/ui.messages.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/May/2026 13:21:02] "GET /engine/engine.scales.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/May/2026 13:21:02] "GET /engine/engine.contrast.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/May/2026 13:21:02] "GET /engine/engine.palettes.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/May/2026 13:21:02] "GET /engine/engine.gradients.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/May/2026 13:21:02] "GET /engine/engine.core.js HTTP/1.1" 200 -
+127.0.0.1 - - [13/May/2026 13:21:02] "GET /engine/engine.accessibility.js HTTP/1.1" 200 -

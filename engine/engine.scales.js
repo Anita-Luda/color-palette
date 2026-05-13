@@ -124,6 +124,85 @@ export function generateAbsoluteScale(lch, steps = DEFAULT_STEPS, forceExcludeAn
   return scale.sort((a,b)=>a.step-b.step);
 }
 
+function maxChromaForL(L, H, C_start) {
+  let low = 0;
+  let high = Math.max(C_start, 0.4); // Start with at least 0.4 to find max possible
+  for (let i = 0; i < 20; i++) {
+    const mid = (low + high) / 2;
+    const lab = oklchToOklab(L, mid, H);
+    const rgb = oklabToRgb(lab.L, lab.a, lab.b);
+
+    // Check if in gamut [0, 255]
+    if (rgb.r >= 0 && rgb.r <= 255 && rgb.g >= 0 && rgb.g <= 255 && rgb.b >= 0 && rgb.b <= 255) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+  return low;
+}
+
+function chromaFalloff(L, baseL) {
+  const max_range = 0.6;
+  const alpha = 1.3;
+  const d = Math.abs(L - baseL);
+  return Math.max(0, 1 - Math.pow(d / max_range, alpha));
+}
+
+function hueShift(L, baseL, baseH) {
+  const shift_strength = 5; // degrees
+  const d = L - baseL;
+  return (baseH + d * shift_strength + 360) % 360;
+}
+
+function lightnessCurve(t) {
+  const L_max = 0.97;
+  const L_min = 0.12;
+  const gamma = 1.3;
+  return L_max - (L_max - L_min) * Math.pow(t, gamma);
+}
+
+export function generateAdaptiveScale(lch) {
+  const out = [];
+  const baseL = lch.L;
+  const baseC = lch.C;
+  const baseH = lch.h;
+
+  for (let i = 0; i <= 100; i++) {
+    const step = i * 10;
+    const t = step / 1000;
+
+    // Step 2: Target L
+    const L = lightnessCurve(t);
+
+    // Step 5: Hue shift
+    const H = hueShift(L, baseL, baseH);
+
+    // Step 3 & 4: Adaptive Chroma
+    const maxC = maxChromaForL(L, H, baseC);
+    const falloff = chromaFalloff(L, baseL);
+    const C = Math.min(maxC, baseC * falloff);
+
+    const lab = oklchToOklab(L, C, H);
+    const rgb = oklabToRgb(lab.L, lab.a, lab.b);
+
+    out.push({
+      step,
+      hex: rgbToHex(rgb),
+      h: H,
+      c: C,
+      l: L,
+      isBase: false
+    });
+  }
+
+  // Find and mark the "real" base if we want, but in adaptive mode
+  // the curve might not hit baseL exactly at step 500.
+  // The requirement didn't specify anchor for adaptive.
+
+  return out;
+}
+
 export function generateAsymmetricScale(lch){
   // Requirement: Anchor is fixed at 500.
   // Nonlinearity: "Jeśli Cin jest ciemny, kroki w stronę 1000 są mniejsze (większe zagęszczenie), a w stronę 0 – większe (rozciągnięcie skali)."
@@ -168,8 +247,13 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
   // Check if we are using the default granular steps (0, 10, 20...)
   const isDefaultGranular = steps === DEFAULT_STEPS || (steps.length === 101 && steps[1] === 10);
 
-  if (EngineState.mode.scale === 'asymmetric' && isDefaultGranular) {
-    return generateAsymmetricScale(lch);
+  if (isDefaultGranular) {
+    if (EngineState.mode.scale === 'adaptive') {
+      return generateAdaptiveScale(lch);
+    }
+    if (EngineState.mode.scale === 'asymmetric') {
+      return generateAsymmetricScale(lch);
+    }
   }
   return generateAbsoluteScale(lch, steps, forceExcludeAnchor);
 }

@@ -464,7 +464,8 @@ function setupModes(){
   document
     .querySelectorAll('input[name="scaleMode"]')
     .forEach(r => r.addEventListener('change', e => {
-      const mode = e.target.value === 'symmetric' ? 'asymmetric' : 'absolute';
+      let mode = e.target.value;
+      if (mode === 'symmetric') mode = 'asymmetric';
       setScaleMode(mode);
       clearGradientCache();
       refreshUI();

@@ -12,69 +12,78 @@
 
 <body>
   <aside id="sidebar">
-    <h3>Kolor bazowy</h3>
+    <section class="sidebar-section">
+      <h3>Kolor bazowy</h3>
+      <div class="group">
+        <div id="basePreview" class="big-swatch"></div>
+        <label>HEX / RGB</label>
+        <input id="textColor" placeholder="#7c6cff lub rgb(124,108,255)" />
+        <input type="color" id="baseColor" value="#7c6cff" style="visibility: hidden; height: 0; padding: 0; margin: 0; position: absolute;" />
+      </div>
+    </section>
 
-    <div class="group">
-      <div id="basePreview" class="big-swatch"></div>
+    <section class="sidebar-section">
+      <h3>Konfiguracja palety</h3>
+      <div class="group">
+        <div id="batchContainer"></div>
 
-      <label>HEX / RGB</label>
-      <input id="textColor" placeholder="#7c6cff lub rgb(124,108,255)" />
+        <label>Granulacja skali</label>
+        <div class="granularity-btns">
+            <button class="gran-btn" data-val="10">10</button>
+            <button class="gran-btn" data-val="50">50</button>
+            <button class="gran-btn active" data-val="100">100</button>
+        </div>
 
-      <input type="color" id="baseColor" value="#7c6cff" style="visibility: hidden; height: 0; padding: 0; margin: 0; position: absolute;" />
-    </div>
+        <label>Typ skali</label>
+        <label class="radio">
+          <input type="radio" name="scaleMode" value="absolute" checked />
+          Absolute
+        </label>
+        <label class="radio">
+          <input type="radio" name="scaleMode" value="symmetric" />
+          Symmetric (Asymmetric)
+        </label>
+        <label class="radio">
+          <input type="radio" name="scaleMode" value="adaptive" />
+          Adaptive Perceptual
+        </label>
 
-    <h3>Liczba kolorów</h3>
-    <div id="batchContainer"></div>
+        <label>Relacja kolorystyczna</label>
+        <select id="harmony">
+          <option value="custom">Custom</option>
+          <option value="analogous">Analogous</option>
+          <option value="complementary">Complementary</option>
+          <option value="split">Split complementary</option>
+          <option value="triadic">Triadic</option>
+          <option value="tetradic">Tetradic</option>
+          <option value="warmcool">Warm / cool</option>
+        </select>
 
-    <h3>Kolory dodatkowe</h3>
-    <div class="group">
-        <input id="addManualColorInput" placeholder="#hex lub rgb()" style="margin-bottom: 8px;">
-        <button id="addManualColorBtn">Dodaj ten kolor</button>
-        <div id="manualColorMsg" style="font-size: 0.75rem; color: #ffca28; margin-top: 4px;"></div>
-        <button id="addColor" style="margin-top: 8px;">Dodaj auto kolor</button>
-        <button id="addGrayBtn" style="margin-top: 8px; background: #555;">Dodaj paletę szarości</button>
-    </div>
-    <div id="colorList"></div>
+        <label>Tryb palety (Light/Dark)</label>
+        <select id="mode">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
 
-    <h3>Granulacja skali</h3>
-    <div class="granularity-btns" style="display: flex; gap: 4px; margin-bottom: 16px;">
-        <button class="gran-btn" data-val="10">10</button>
-        <button class="gran-btn" data-val="50">50</button>
-        <button class="gran-btn active" data-val="100">100</button>
-    </div>
+        <label>Podgląd tła (UI Preview)</label>
+        <select id="previewBg">
+          <option value="light">Jasne</option>
+          <option value="dark">Ciemne</option>
+        </select>
+      </div>
+    </section>
 
-    <h3>Typ skali</h3>
-    <label class="radio">
-      <input type="radio" name="scaleMode" value="absolute" checked />
-      Absolute
-    </label>
-    <label class="radio">
-      <input type="radio" name="scaleMode" value="symmetric" />
-      Symmetric (from base)
-    </label>
-
-    <h3>Relacja</h3>
-    <select id="harmony">
-      <option value="custom">Custom</option>
-      <option value="analogous">Analogous</option>
-      <option value="complementary">Complementary</option>
-      <option value="split">Split complementary</option>
-      <option value="triadic">Triadic</option>
-      <option value="tetradic">Tetradic</option>
-      <option value="warmcool">Warm / cool</option>
-    </select>
-
-    <h3>Tryb palety</h3>
-    <select id="mode">
-      <option value="light">Light</option>
-      <option value="dark">Dark</option>
-    </select>
-
-    <h3>Podgląd tła</h3>
-    <select id="previewBg">
-      <option value="light">Jasne</option>
-      <option value="dark">Ciemne</option>
-    </select>
+    <section class="sidebar-section">
+      <h3>Kolory dodatkowe</h3>
+      <div class="group">
+          <input id="addManualColorInput" placeholder="#hex lub rgb()" style="margin-bottom: 8px;">
+          <button id="addManualColorBtn">Dodaj ten kolor</button>
+          <div id="manualColorMsg" style="font-size: 0.75rem; color: #ffca28; margin-top: 4px;"></div>
+          <button id="addColor" style="margin-top: 8px;">Dodaj auto kolor</button>
+          <button id="addGrayBtn" style="margin-top: 8px; background: #555;">Dodaj paletę szarości</button>
+      </div>
+      <div id="colorList"></div>
+    </section>
 
     <div id="contrast-controls" style="display: none;">
         <h3>Ustawienia Kontrastu</h3>

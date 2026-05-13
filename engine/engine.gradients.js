@@ -2,13 +2,16 @@
 // Slider gradients in OKLCH, gamut-aware. No DOM.
 
 import { EngineState } from './engine.core.js';
-import { getBaseLCH } from './engine.scales.js';
+import {
+  getBaseLCH,
+  oklchToOklab,
+  oklabToRgb,
+  rgbToHex,
+  linearToSrgb
+} from './engine.scales.js';
 
-/* ---------- OKLCH MATH (LOCAL) ---------- */
-function linearToSrgb(c){
-  return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1/2.4) - 0.055;
-}
-function oklabToRgb(L,a,b){
+/* ---------- OKLCH MATH (ROBUST) ---------- */
+function isStrictlyInGamut(L, a, b) {
   const l_ = L + 0.3963377774*a + 0.2158037573*b;
   const m_ = L - 0.1055613458*a - 0.0638541728*b;
   const s_ = L - 0.0894841775*a - 1.2914855480*b;
@@ -16,21 +19,9 @@ function oklabToRgb(L,a,b){
   let r =  4.0767416621*l - 3.3077115913*m + 0.2309699292*s;
   let g = -1.2684380046*l + 2.6097574011*m - 0.3413193965*s;
   let b2= -0.0041960863*l - 0.7034186147*m + 1.7076147010*s;
-  r = linearToSrgb(r); g = linearToSrgb(g); b2 = linearToSrgb(b2);
-  return { r, g, b: b2 };
-}
-function oklchToOklab(L,C,h){
-  const hr = h * Math.PI/180;
-  return { L, a: Math.cos(hr)*C, b: Math.sin(hr)*C };
-}
-function rgbInGamut({r,g,b}){
-  return r>=0 && r<=1 && g>=0 && g<=1 && b>=0 && b<=1;
-}
-function rgbToHex01({r,g,b}){
-  const R = Math.round(Math.min(1,Math.max(0,r))*255);
-  const G = Math.round(Math.min(1,Math.max(0,g))*255);
-  const B = Math.round(Math.min(1,Math.max(0,b))*255);
-  return `#${((1<<24)+(R<<16)+(G<<8)+B).toString(16).slice(1)}`;
+
+  // Linear RGB check
+  return r >= 0 && r <= 1 && g >= 0 && g <= 1 && b2 >= 0 && b2 <= 1;
 }
 
 /* ---------- ROLE PROFILES ---------- */
@@ -74,8 +65,7 @@ export function computeHueRange(baseLCH, role){
       EngineState.locks.C ? baseC : baseC
     );
     const lab = oklchToOklab(L, C, h);
-    const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-    if (rgbInGamut(rgb)) samples.push(h);
+    if (isStrictlyInGamut(lab.L, lab.a, lab.b)) samples.push(h);
   }
 
   if (!samples.length) return { min: 0, max: 0 };
@@ -133,13 +123,13 @@ export function generateSliderGradient(role, index){
     const C = baseLCH.C * roleMult;
     const adj = adjustForMode(L, C);
     const lab = oklchToOklab(adj.L, adj.C, h);
-    const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-    const inGamut = rgbInGamut(rgb);
+    const inGamut = isStrictlyInGamut(lab.L, lab.a, lab.b);
+    const rgb = oklabToRgb(lab.L, lab.a, lab.b); // Returns 0-255 clamped
 
     stops.push({
       t,
       hue: h,
-      hex: rgbToHex01(rgb),
+      hex: rgbToHex(rgb),
       disabled: !inGamut
     });
   }
