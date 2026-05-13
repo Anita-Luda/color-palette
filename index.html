@@ -85,11 +85,32 @@
         <input type="range" id="contrast-boost" min="0" max="5" step="0.1" value="0">
 
         <div id="ignore-thresholds" style="margin-top: 12px;">
-            <label style="font-size: 0.75rem; display: block; margin-bottom: 4px;">Ignoruj progi:</label>
-            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                <button class="ignore-btn" data-val="3">3:1</button>
-                <button class="ignore-btn" data-val="4.5">4.5:1</button>
-                <button class="ignore-btn" data-val="7">7:1</button>
+            <label style="font-size: 0.75rem; display: block; margin-bottom: 8px;">Ignoruj progi (odnoszące się do 3:1 Lvl1):</label>
+
+            <div class="ignore-group">
+                <span>Relatywne do Tła:</span>
+                <div style="display: flex; gap: 4px; margin-top: 4px;">
+                    <button class="ignore-btn" data-val="L1_BG">Lvl1 (3:1)</button>
+                    <button class="ignore-btn" data-val="C45_BG">AA (4.5:1)</button>
+                    <button class="ignore-btn" data-val="C7_BG">AAA (7:1)</button>
+                </div>
+            </div>
+
+            <div class="ignore-group" style="margin-top: 8px;">
+                <span>Relatywne do Lvl1:</span>
+                <div style="display: flex; gap: 4px; margin-top: 4px;">
+                    <button class="ignore-btn" data-val="L2_L1">Lvl2 (3:1)</button>
+                    <button class="ignore-btn" data-val="C45_L1">AA (4.5:1)</button>
+                    <button class="ignore-btn" data-val="C7_L1">AAA (7:1)</button>
+                </div>
+            </div>
+
+            <div class="ignore-group" style="margin-top: 8px;">
+                <span>Relatywne do Lvl2:</span>
+                <div style="display: flex; gap: 4px; margin-top: 4px;">
+                    <button class="ignore-btn" data-val="C45_L2">AA (4.5:1)</button>
+                    <button class="ignore-btn" data-val="C7_L2">AAA (7:1)</button>
+                </div>
             </div>
         </div>
     </div>

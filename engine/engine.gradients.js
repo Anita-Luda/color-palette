@@ -118,6 +118,7 @@ export function generateSliderGradient(role, index){
   }
 
   const centerHue = getRelHue(baseLCH.h, index, total, type, distance);
+  const range = computeHueRange(baseLCH, role);
 
   const stops = [];
   const roleMult = ROLE_CHROMA_MULT[role] ?? 1;
@@ -143,7 +144,7 @@ export function generateSliderGradient(role, index){
     });
   }
 
-  return { stops, centerHue };
+  return { stops, centerHue, range };
 }
 
 /* ---------- UTIL ---------- */

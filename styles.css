@@ -192,14 +192,20 @@ button.btn-danger:hover { background: var(--danger); color: white; }
     color: var(--accent);
 }
 .contrast-swatch {
-    padding: 12px;
+    padding: 8px;
     border-radius: 8px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    font-size: 0.7rem;
-    font-weight: bold;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    gap: 2px;
+    min-height: 70px;
 }
+
+.contrast-label { opacity: 0.7; font-weight: 400; font-size: 0.6rem; }
+.contrast-hex { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; }
+.contrast-ratio { font-weight: 900; font-size: 0.65rem; margin-top: 2px; }
 
 .palette { margin-bottom: 64px; }
 .palette-title { margin-bottom: 24px; display: flex; flex-direction: column; }
@@ -246,6 +252,20 @@ button.btn-danger:hover { background: var(--danger); color: white; }
 
 .swatch-step { font-size: 0.7rem; font-weight: 800; opacity: 0.7; }
 .swatch-hex { font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+.ignore-group {
+    background: rgba(255,255,255,0.05);
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.ignore-group span {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+}
 .swatch-contrast { font-size: 0.65rem; font-weight: 700; opacity: 0.6; }
 
 .swatch.major { border: 2px solid rgba(255, 255, 255, 0.3); }

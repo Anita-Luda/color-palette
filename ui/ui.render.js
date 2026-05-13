@@ -178,16 +178,16 @@ function renderContrastGridForLCH(lch, title) {
     // Header
     const header = el('div', 'contrast-row header');
     header.append(
-        el('div', null, 'Tło'),
-        el('div', null, 'L1 (3:1 BG)'),
-        el('div', null, '4.5:1 BG'),
-        el('div', null, '4.5:1 L1'),
-        el('div', null, '7:1 BG'),
-        el('div', null, '7:1 L1'),
-        el('div', null, 'L2 (3:1 L1)'),
-        el('div', null, '4.5:1 L2'),
-        el('div', null, '7:1 L2'),
-        el('div', null, 'Base (Auto)')
+        el('div', null, 'Tło (Background)'),
+        el('div', null, 'Lvl 1 (3:1) vs BG'),
+        el('div', null, 'AA (4.5:1) vs BG'),
+        el('div', null, 'AA (4.5:1) vs L1'),
+        el('div', null, 'AAA (7:1) vs BG'),
+        el('div', null, 'AAA (7:1) vs L1'),
+        el('div', null, 'Lvl 2 (3:1) vs L1'),
+        el('div', null, 'AA (4.5:1) vs L2'),
+        el('div', null, 'AAA (7:1) vs L2'),
+        el('div', null, 'Brand vs BG')
     );
     container.appendChild(header);
 
@@ -196,15 +196,15 @@ function renderContrastGridForLCH(lch, title) {
 
         r.append(
             createContrastSwatch('Tło', row.bg),
-            createContrastSwatch(`L1 (${contrastRatio(row.bg, row.l1).toFixed(1)})`, row.l1),
-            createContrastSwatch(`4.5:1 BG`, row.c45_bg),
-            createContrastSwatch(`4.5:1 L1`, row.c45_l1),
-            createContrastSwatch(`7:1 BG`, row.c7_bg),
-            createContrastSwatch(`7:1 L1`, row.c7_l1),
-            createContrastSwatch(`L2 (${contrastRatio(row.l1, row.l2).toFixed(1)})`, row.l2),
-            createContrastSwatch(`4.5:1 L2`, row.c45_l2),
-            createContrastSwatch(`7:1 L2`, row.c7_l2),
-            createContrastSwatch(`Base (${row.baseContrast.toFixed(1)})`, null, lch) // null hex means use base
+            createContrastSwatch(`Min: ${row.l1_target.toFixed(1)}`, row.l1, null, row.l1_actual),
+            createContrastSwatch(`Min: ${row.c45_bg_target.toFixed(1)}`, row.c45_bg, null, row.c45_bg_actual),
+            createContrastSwatch(`Min: ${row.c45_l1_target.toFixed(1)}`, row.c45_l1, null, row.c45_l1_actual),
+            createContrastSwatch(`Min: ${row.c7_bg_target.toFixed(1)}`, row.c7_bg, null, row.c7_bg_actual),
+            createContrastSwatch(`Min: ${row.c7_l1_target.toFixed(1)}`, row.c7_l1, null, row.c7_l1_actual),
+            createContrastSwatch(`Min: ${row.l2_target.toFixed(1)}`, row.l2, null, row.l2_actual),
+            createContrastSwatch(`Min: ${row.c45_l2_target.toFixed(1)}`, row.c45_l2, null, row.c45_l2_actual),
+            createContrastSwatch(`Min: ${row.c7_l2_target.toFixed(1)}`, row.c7_l2, null, row.c7_l2_actual),
+            createContrastSwatch('Base', null, lch, row.baseContrast)
         );
         container.appendChild(r);
     });
@@ -215,6 +215,22 @@ function renderContrastGridForLCH(lch, title) {
 
 function renderContrastView() {
     const frag = document.createDocumentFragment();
+
+    // Legend
+    const legend = el('div', 'contrast-legend');
+    legend.innerHTML = `
+        <div class="legend-item"><strong>Lvl 1</strong>: Powierzchnia / Element na tłe (np. karta).</div>
+        <div class="legend-item"><strong>AA / AAA</strong>: Wymogi WCAG dla tekstu względem wskazanej warstwy.</div>
+        <div class="legend-item"><strong>Lvl 2</strong>: Element zagnieżdżony na Level 1 (np. przycisk na karcie).</div>
+        <div class="legend-item"><strong>Brand</strong>: Twój kolor bazowy (anchor) wyświetlony na danym tłe.</div>
+    `;
+    legend.style.padding = '20px 32px';
+    legend.style.margin = '0 32px 32px 32px';
+    legend.style.background = 'rgba(255,255,255,0.05)';
+    legend.style.borderRadius = '12px';
+    legend.style.fontSize = '0.85rem';
+    legend.style.lineHeight = '1.6';
+    frag.appendChild(legend);
 
     // Base
     const baseLch = getState().base.lch || getMainPalette().scale.find(s=>s.isBase);
@@ -244,11 +260,10 @@ function renderContrastView() {
 
 import { oklchToOklab, oklabToRgb, rgbToHex } from '../engine/engine.scales.js';
 
-function createContrastSwatch(label, hex, forceLch) {
+function createContrastSwatch(label, hex, forceLch, actualRatio) {
     const d = el('div', 'contrast-swatch');
     let c = hex;
     if (!c && forceLch) {
-        // Normalize LCH (handle l/L, c/C)
         const L = forceLch.L !== undefined ? forceLch.L : forceLch.l;
         const C = forceLch.C !== undefined ? forceLch.C : forceLch.c;
         const H = forceLch.h;
@@ -262,9 +277,15 @@ function createContrastSwatch(label, hex, forceLch) {
     const contrast = previewContrast(c);
     d.style.color = (contrast.light.ratio > contrast.dark.ratio) ? '#fff' : '#000';
 
-    const l = el('div', null, label);
-    const h = el('div', null, c.toUpperCase());
+    const l = el('div', 'contrast-label', label);
+    const h = el('div', 'contrast-hex', c.toUpperCase());
     d.append(l, h);
+
+    if (actualRatio !== undefined) {
+        const r = el('div', 'contrast-ratio', `Real: ${actualRatio.toFixed(2)}:1`);
+        d.appendChild(r);
+    }
+
     return d;
 }
 

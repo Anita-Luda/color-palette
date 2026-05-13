@@ -1,5 +1,8 @@
 import { EngineState } from './engine.core.js';
-import { getBaseLCH, oklchToOklab, oklabToRgb, rgbToHex, oklabToOklch, rgbToOklab, srgbToLinear } from './engine.scales.js';
+import {
+    getBaseLCH, oklchToOklab, oklabToRgb, rgbToHex,
+    oklabToOklch, rgbToOklab, srgbToLinear, generateScaleForLCH
+} from './engine.scales.js';
 import { contrastRatio } from './engine.accessibility.js';
 
 function LToStep(L){
@@ -43,8 +46,6 @@ function findColorByContrast(baseHex, targetRatio, direction, hue, chroma) {
     const lab = oklchToOklab(bestL, chroma, hue);
     return rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
 }
-
-import { generateScaleForLCH } from './engine.scales.js';
 
 function ensureUnique(hex, forbidden, lch, direction) {
     let currentHex = hex;
@@ -118,14 +119,10 @@ export function generateContrastGrid(targetLch) {
     }
 
     const grid = [];
-    const getTarget = (base) => {
-        if (ignoredThresholds.includes(base)) return 1.0;
+    const getTarget = (base, id) => {
+        if (ignoredThresholds.includes(id)) return 1.0;
         return base + boost;
     };
-
-    const t3 = getTarget(3.0);
-    const t45 = getTarget(4.5);
-    const t7 = getTarget(7.0);
 
     for (let i = 0; i < backgrounds.length; i++) {
         let bgHex = backgrounds[i];
@@ -153,14 +150,45 @@ export function generateContrastGrid(targetLch) {
             return color;
         };
 
-        row.l1 = findUnique(t3, bgHex, direction);
-        row.c45_bg = findUnique(t45, bgHex, direction);
-        row.c45_l1 = findUnique(t45, row.l1, direction);
-        row.c7_bg = findUnique(t7, bgHex, direction);
-        row.c7_l1 = findUnique(t7, row.l1, direction);
-        row.l2 = findUnique(t3, row.l1, direction);
-        row.c45_l2 = findUnique(t45, row.l2, direction);
-        row.c7_l2 = findUnique(t7, row.l2, direction);
+        const tL1 = getTarget(3.0, 'L1_BG');
+        row.l1 = findUnique(tL1, bgHex, direction);
+        row.l1_target = tL1;
+        row.l1_actual = contrastRatio(bgHex, row.l1);
+
+        const t45bg = getTarget(4.5, 'C45_BG');
+        row.c45_bg = findUnique(t45bg, bgHex, direction);
+        row.c45_bg_target = t45bg;
+        row.c45_bg_actual = contrastRatio(bgHex, row.c45_bg);
+
+        const t45l1 = getTarget(4.5, 'C45_L1');
+        row.c45_l1 = findUnique(t45l1, row.l1, direction);
+        row.c45_l1_target = t45l1;
+        row.c45_l1_actual = contrastRatio(row.l1, row.c45_l1);
+
+        const t7bg = getTarget(7.0, 'C7_BG');
+        row.c7_bg = findUnique(t7bg, bgHex, direction);
+        row.c7_bg_target = t7bg;
+        row.c7_bg_actual = contrastRatio(bgHex, row.c7_bg);
+
+        const t7l1 = getTarget(7.0, 'C7_L1');
+        row.c7_l1 = findUnique(t7l1, row.l1, direction);
+        row.c7_l1_target = t7l1;
+        row.c7_l1_actual = contrastRatio(row.l1, row.c7_l1);
+
+        const tL2 = getTarget(3.0, 'L2_L1');
+        row.l2 = findUnique(tL2, row.l1, direction);
+        row.l2_target = tL2;
+        row.l2_actual = contrastRatio(row.l1, row.l2);
+
+        const t45l2 = getTarget(4.5, 'C45_L2');
+        row.c45_l2 = findUnique(t45l2, row.l2, direction);
+        row.c45_l2_target = t45l2;
+        row.c45_l2_actual = contrastRatio(row.l2, row.c45_l2);
+
+        const t7l2 = getTarget(7.0, 'C7_L2');
+        row.c7_l2 = findUnique(t7l2, row.l2, direction);
+        row.c7_l2_target = t7l2;
+        row.c7_l2_actual = contrastRatio(row.l2, row.c7_l2);
 
         row.baseContrast = contrastRatio(bgHex, rgbToHex(oklabToRgb(oklchToOklab(lch.L, lch.C, lch.h))));
         grid.push(row);

@@ -1,34 +1,37 @@
-KOMPLEKSOWA CHECKLISTA REALIZACJI WYMAGAŃ (AKTUALIZACJA)
+KOMPLEKSOWA CHECKLISTA REALIZACJI WYMAGAŃ (STAN KOŃCOWY)
 
 1. FUNDAMENTY I ARCHITEKTURA
 - [x] Migracja na model OKLCH: Precyzyjne sterowanie jasnością (L), nasyceniem (C) i odcieniem (H).
-- [x] Odwrócona skala jasności: 0 = Biały (L: 1.0), 1000 = Czarny (L: 0.0).
-- [x] Single Source of Truth: Centralne zarządzanie stanem w engine.core.js.
-- [x] Poprawienie błędów 404: Naprawienie ścieżek do plików JS i CSS.
+- [x] Odwrócona skala jasności: Konsekwentne stosowanie mapowania 0 = Biały (L: 1.0), 1000 = Czarny (L: 0.0).
+- [x] Single Source of Truth: Wszystkie obliczenia i stan w engine.core.js.
+- [x] Poprawienie błędów importów: Moduły ES6 działają poprawnie w przeglądarce.
 
 2. LOGIKA GENEROWANIA KOLORÓW
-- [x] Skale 0-1000: Wszystkie palety funkcjonalne i odznaki mają 11 kroków bazowych.
-- [x] Granulacja Skali: Przełączanie widoku palet tonalnych (co 10, 50, 100).
-- [x] Tryb Absolute: Liniowy rozkład jasności od 0 do 1000.
-- [x] Tryb Asymmetric: Nieliniowy rozkład skupiony wokół koloru bazowego (zakotwiczenie na kroku 500).
-- [x] Kolizje Odcieni (Collision Avoidance): Automatyczne przesuwanie barw funkcjonalnych.
-- [x] Ręczne Dodawanie Kolorów: HEX/RGB z systemem sugestii przesunięcia barwy (+30° przy konflikcie <15°).
-- [x] Paleta Szarości: Dedykowany przycisk dodawania neutralnej palety (C=0).
-- [x] Optymalizacja Dark Mode: Redukcja nasycenia (0.8x chroma) dla palet w trybie ciemnym.
+- [x] Skale 0-1000: Wszystkie palety (Main, Additional, Functional, Badge) oparte na 11 krokach.
+- [x] Granulacja Skali: Dynamiczne przełączanie widoku (co 10, 50, 100) bez utraty danych.
+- [x] Tryb Absolute: Liniowy rozkład jasności.
+- [x] Tryb Asymmetric (Symmetric): Zakotwiczenie na kroku 500 z nieliniowym zagęszczeniem w stronę ciemnych/jasnych tonów.
+- [x] Kolizje Odcieni: Automatyczna korekta barw funkcjonalnych względem koloru bazowego.
+- [x] Ręczne Dodawanie Kolorów: Detekcja konfliktów Hue (<15°) z opcją automatycznej korekty.
+- [x] Paleta Szarości: Szybkie dodawanie palety neutralnej (C=0).
+- [x] Optymalizacja Dark Mode: Desaturacja kolorów (0.8x chroma) dla lepszej czytelności.
 
 3. INTERFEJS UŻYTKOWNIKA (UI/UX)
-- [x] Wydajność 60 FPS: DocumentFragment i reaktywne aktualizacje.
-- [x] Etykiety i Badge: Oznaczenia "BASE", "100" i "50" na kafelkach.
-- [x] Realistyczne suwaki: Dynamiczne gradienty z maskowaniem poza-gamutowym.
-- [x] Niezależne Tło: Testowanie palet na dowolnym tle (Jasne/Ciemne).
+- [x] Wydajność: Optymalizacja renderowania przez DocumentFragment (60 FPS).
+- [x] Wizualne Badge: Etykiety "BASE", "100", "50" ułatwiające orientację w skali.
+- [x] Realistyczne suwaki: Gradienty OKLCH z maskowaniem kolorów poza-gamutowych (szary overlay).
+- [x] Niezależne Tło Preview: Możliwość testowania UI na jasnym i ciemnym tle.
+- [x] Sidebar Contrast Info: Każda karta koloru w sidebarze pokazuje kontrast anchoru względem tła preview.
 
 4. ZAAWANSOWANY WIDOK KONTRASTU
-- [x] Inteligentne Tła: 11 wierszy (Biały/Czarny + okno 10 tonów z wybranej palety).
-- [x] Dynamiczne Okno Tła: Suwak jasności przesuwa okno 10 tonów po pełnej skali tonalnej (co-10).
-- [x] Wybór Źródła Tła: Możliwość ustawienia dowolnej palety dodatkowej (np. szarej lub zielonej) jako tła odniesienia dla innych.
-- [x] Gwarantowana Unikalność: Mechanizm zapobiegający powtarzaniu się kolorów w kolejnych wierszach oraz między progami kontrastu (L1, L2, 4.5:1 itd.), nawet przy "Boost".
-- [x] Zagnieżdżone Progi: Precyzyjne wyliczanie warstw (3:1, 4.5:1, 7:1) względem tła i siebie nawzajem.
+- [x] Dynamiczna Siatka Tła: 11 wierszy generowanych z pełnej skali (co-10) wybranej palety.
+- [x] Wybór Źródła Tła: Możliwość ustawienia dowolnej palety dodatkowej/szarej jako tła odniesienia.
+- [x] Gwarantowana Unikalność: Funkcja ensureUnique zapobiega nakładaniu się identycznych HEX w siatce.
+- [x] Warstwy Kontrastu (L1, L2): Precyzyjne wyliczanie zagnieżdżonych elementów (3:1, 4.5:1, 7:1) metodą Binary Search.
+- [x] Granular Threshold Control: Możliwość ignorowania specyficznych relacji (np. tylko L1 vs BG).
+- [x] Legenda i Opisy: Pełne nazewnictwo relacji (np. "AA vs L1") oraz legenda hierarchii warstw.
+- [x] Raportowanie Real-Time: Swatche pokazują wymagany kontrast (Min) oraz faktycznie uzyskany (Real).
 
 5. DEBUGOWANIE I STABILNOŚĆ
-- [x] Clamping RGB: Zabezpieczenie przed wartościami NaN i błędami poza-gamutowymi.
-- [x] Stabilność UI: Brak utraty focusu w polach input i suwakach.
+- [x] Clamping RGB: Pełne zabezpieczenie przed NaN i błędami renderowania.
+- [x] Stabilność UI: Brak resetów focusu i stanu przy przesuwaniu suwaków.

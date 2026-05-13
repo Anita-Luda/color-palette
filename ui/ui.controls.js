@@ -571,7 +571,7 @@ function setupContrastSliders() {
     document.querySelectorAll('.ignore-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             btn.classList.toggle('active');
-            toggleIgnoredThreshold(Number(btn.dataset.val));
+            toggleIgnoredThreshold(btn.dataset.val);
             renderAllPalettes();
         });
     });

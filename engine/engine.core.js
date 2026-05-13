@@ -105,11 +105,11 @@ export function setContrastSettings(key, value) {
   }
 }
 
-export function toggleIgnoredThreshold(threshold) {
+export function toggleIgnoredThreshold(thresholdId) {
     const list = EngineState.contrastSettings.ignoredThresholds;
-    const idx = list.indexOf(threshold);
+    const idx = list.indexOf(thresholdId);
     if (idx === -1) {
-        list.push(threshold);
+        list.push(thresholdId);
     } else {
         list.splice(idx, 1);
     }
