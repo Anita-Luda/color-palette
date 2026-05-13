@@ -12,6 +12,30 @@
 
 <body>
   <aside id="sidebar">
+    <section class="sidebar-section">
+      <div class="sidebar-header">
+          <h3>Ustawienia Panelu</h3>
+          <button id="hide-panel-btn" class="btn-hide">UKRYJ</button>
+      </div>
+      <div class="group">
+          <label>Pozycja</label>
+          <select id="sb-position">
+              <option value="left">Lewo</option>
+              <option value="right">Prawo</option>
+              <option value="top">Góra</option>
+              <option value="bottom">Dół</option>
+              <option value="floating">Floating</option>
+          </select>
+          <label>Motyw Panelu</label>
+          <div class="toggle-group">
+            <input type="radio" name="sbTheme" id="sb-dark" value="dark" checked>
+            <label for="sb-dark">Dark</label>
+            <input type="radio" name="sbTheme" id="sb-light" value="light">
+            <label for="sb-light">Light</label>
+          </div>
+      </div>
+    </section>
+
     <div id="contrast-controls-top" style="display: none;">
         <section class="sidebar-section">
             <h3>Ustawienia Kontrastu</h3>
@@ -130,6 +154,8 @@
     </div>
     <div id="output" class="preview-light"></div>
   </main>
+
+  <button id="panel-toggle">☰</button>
 
   <script type="module">
     import { initControls } from './ui/ui.controls.js';

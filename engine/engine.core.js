@@ -15,7 +15,10 @@ export const EngineState = {
     view: 'palettes',        // palettes | contrast
     granularity: 100,        // 10 | 50 | 100
     background: 'light',     // light | dark
-    backgroundSource: 'base' // 'base' or index (0, 1, 2...)
+    backgroundSource: 'base', // 'base' or index (0, 1, 2...)
+    sidebarPosition: 'left',
+    sidebarTheme: 'dark',
+    sidebarVisible: true
   },
 
   contrastSettings: {
@@ -95,6 +98,18 @@ export function setGranularity(value) {
 export function setBackgroundMode(mode) {
   if (mode !== 'light' && mode !== 'dark') return;
   EngineState.mode.background = mode;
+}
+
+export function setSidebarPosition(pos) {
+    EngineState.mode.sidebarPosition = pos;
+}
+
+export function setSidebarTheme(theme) {
+    EngineState.mode.sidebarTheme = theme;
+}
+
+export function setSidebarVisibility(visible) {
+    EngineState.mode.sidebarVisible = visible;
 }
 
 export function setBackgroundSource(source) {

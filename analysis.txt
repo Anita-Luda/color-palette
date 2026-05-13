@@ -1,32 +1,30 @@
-# Analiza Rozwojowa Systemu OKLCH Palette Generator
+ANALIZA ROZWOJOWA SYSTEMU OKLCH PALETTE
+=========================================
 
-## Podsumowanie zmian
-System przeszedł gruntowną przebudowę, ewoluując z prostego generatora LCH w zaawansowane narzędzie do projektowania systemów projektowych (Design Systems) oparte na modelu OKLCH. Kluczowym osiągnięciem jest oddzielenie matematycznej dystrybucji jasności od percepcyjnej korekty nasycenia i barwy.
+1. ANALIZA STANU OBECNEGO
+System został gruntownie zmodernizowany, przechodząc z prostego generatora na zaawansowane narzędzie inżynierii koloru. Kluczowe osiągnięcia to:
+- Przejście na model OKLCH, co pozwala na tworzenie palet o spójnej jasności percepcyjnej.
+- Implementacja adaptacyjnego algorytmu, który automatycznie koryguje nasycenie (chroma) w ciemnych motywach, eliminując efekt "neonowości".
+- Stworzenie neutralnego środowiska pracy (Grayscale UI), co jest krytyczne dla profesjonalnych narzędzi graficznych.
 
-## Mocne strony obecnej architektury
-1.  **Percepcyjna Jednolitość:** Dzięki OKLCH błękity i fiolety nie wydają się nienaturalnie ciemniejsze od żółci przy tej samej jasności matematycznej.
-2.  **Elastyczność Skalowania:** Użytkownik może wybrać między "Absolute" (idealne dla skal numerycznych) a "Asymmetric" (lepsze dla UI, gdzie potrzebujemy więcej odcieni w okolicach bieli/czerni).
-3.  **Dostępność (A11y) w centrum:** Każdy kafel dostarcza natychmiastowej informacji o kontraście (W/B), co przyspiesza dobór kolorów tekstowych.
+2. REKOMENDACJE ROZWOJOWE (ROADMAP)
 
-## Kierunki dalszego rozwoju
+A. Design Tokens Export (Priorytet: Wysoki)
+Obecny system generuje kolory, ale nie ułatwia ich wdrożenia. Rekomendowane jest dodanie eksportera do:
+- CSS Variables / Tailwind Config.
+- JSON (standard Design Tokens W3C).
+- Figma Plugin API.
 
-### 1. Eksport i Integracja
--   **Tokeny Designowe:** Dodanie eksportu do formatu JSON zgodnego z W3C Design Tokens Community Group.
--   **Wtyczki do narzędzi projektowych:** Opracowanie pluginu do Figma/Adobe XD, który synchronizowałby paletę na żywo.
--   **Formaty CSS:** Automatyczne generowanie zmiennych CSS w formacie `oklch()` dla nowoczesnych przeglądarek.
+B. Symulacja Zaburzeń Widzenia Barw (Priorytet: Średni)
+Dodanie filtrów Color Blindness (Protanopia, Deuteranopia, Tritanopia) bezpośrednio w widoku Contrast Grid pozwoli na projektowanie inkluzywne na najwyższym poziomie.
 
-### 2. Zaawansowane Algorytmy
--   **Krzywe Beziera dla LCH:** Możliwość ręcznej edycji krzywych nasycenia i jasności za pomocą punktów kontrolnych (podobnie jak w profesjonalnych narzędziach typu Leonardo).
--   **Symulacja Ślepoty Barw:** Zintegrowanie filtrów Protanopia/Deuteranopia/Tritanopia bezpośrednio w widoku palety.
+C. Interpolacja Krzywoliniowa (Priorytet: Średni)
+Obecna skala jasności jest liniowa lub asymetryczna. Wprowadzenie krzywych Beziera dla jasności i nasycenia pozwoliłoby na tworzenie jeszcze bardziej naturalnych, "organicznych" przejść kolorystycznych.
 
-### 3. Rozszerzenie Funkcjonalności
--   **Generowanie Harmonii:** Automatyczne sugerowanie kolorów komplementarnych, triad i tetrad w oparciu o geometrię przestrzeni OKLCH.
--   **System Rekomendacji Kontrastu:** Funkcja "Auto-fix", która delikatnie przesuwa jasność koloru, aby spełnił najbliższy próg WCAG (np. z 4.2:1 na 4.5:1).
+D. Biblioteka Predefiniowanych Harmonii (Priorytet: Niski)
+Rozbudowa menu Harmony o gotowe presety inspirowane klasycznymi systemami (np. Material Design, Carbon, Atlasian).
 
-### 4. Optymalizacja UI
--   **Tryb Porównawczy:** Możliwość zestawienia dwóch różnych algorytmów obok siebie w celu wizualnego porównania różnic w nasyceniu.
--   **Historia Zmian:** Implementacja lokalnego zapisu (LocalStorage) sesji i historii generowanych kolorów bazowych.
+3. WNIOSKI TECHNICZNE
+Architektura została oddzielona (Engine vs UI), co pozwala na łatwe testowanie algorytmów bez wpływu na warstwę wizualną. Kod jest modułowy, co sprzyja dalszej rozbudowie o planowane funkcjonalności eksportu.
 
----
-Opracowano: Jules, Software Engineer
-Data: 2024-05-23
+Przygotował: Jules, Software Engineer

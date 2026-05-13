@@ -22,6 +22,9 @@ import {
   setGranularity,
   setBackgroundMode,
   setBackgroundSource,
+  setSidebarPosition,
+  setSidebarTheme,
+  setSidebarVisibility,
   toggleIgnoredThreshold,
   addManualColor,
   addGrayPalette
@@ -77,6 +80,7 @@ function renderWarnings(){
 
 /* ---------- REFRESH UI ---------- */
 function refreshUI() {
+  updateSidebarLayout();
   renderAllPalettes();
   renderSliders();
   renderWarnings();
@@ -86,6 +90,24 @@ function refreshUI() {
   // Gradients are recalculated here (base color change / batch change)
   import('./ui.gradients.js').then(m => m.renderAllGradients());
   import('./ui.messages.js').then(m => m.renderMessages());
+}
+
+function updateSidebarLayout() {
+    const state = getState();
+    const body = document.body;
+
+    // Clear previous classes
+    body.classList.remove('pos-left', 'pos-right', 'pos-top', 'pos-bottom', 'pos-floating');
+    body.classList.add(`pos-${state.mode.sidebarPosition}`);
+
+    body.classList.remove('sb-dark', 'sb-light');
+    body.classList.add(`sb-${state.mode.sidebarTheme}`);
+
+    if (state.mode.sidebarVisible) {
+        body.classList.remove('sb-hidden');
+    } else {
+        body.classList.add('sb-hidden');
+    }
 }
 
 function updateContrastSidebarLabels() {
@@ -449,7 +471,10 @@ function createSliderCard(c) {
 
 /* ---------- MODES ---------- */
 function setupModes(){
-  $('mode')?.addEventListener('change', e => {
+  const modeSel = $('mode');
+  const previewBgSel = $('previewBg');
+
+  modeSel?.addEventListener('change', e => {
     setPaletteMode(e.target.value);
     // Reset contrast brightness to 0 (default: White for light, Black for dark)
     setContrastSettings('brightness', 0);
@@ -612,10 +637,67 @@ function setupContrastSliders() {
     });
 }
 
+function setupSidebarControls() {
+    const posSel = $('sb-position');
+    const hideBtn = $('hide-panel-btn');
+    const toggleBtn = $('panel-toggle');
+    const themeRadios = document.querySelectorAll('input[name="sbTheme"]');
+
+    posSel?.addEventListener('change', e => {
+        setSidebarPosition(e.target.value);
+        refreshUI();
+    });
+
+    hideBtn?.addEventListener('click', () => {
+        setSidebarVisibility(false);
+        refreshUI();
+    });
+
+    toggleBtn?.addEventListener('click', () => {
+        setSidebarVisibility(true);
+        refreshUI();
+    });
+
+    themeRadios.forEach(r => {
+        r.addEventListener('change', e => {
+            const theme = e.target.value;
+            setSidebarTheme(theme);
+
+            // Requirements:
+            // Dark Sidebar -> Black Palette Background
+            // Light Sidebar -> White Palette Background
+            if (theme === 'dark') {
+                setBackgroundMode('dark');
+                const pBg = $('previewBg');
+                if (pBg) pBg.value = 'dark';
+
+                const out = $('output');
+                document.body.classList.add('preview-dark');
+                document.body.classList.remove('preview-light');
+                out.classList.add('preview-dark');
+                out.classList.remove('preview-light');
+            } else {
+                setBackgroundMode('light');
+                const pBg = $('previewBg');
+                if (pBg) pBg.value = 'light';
+
+                const out = $('output');
+                document.body.classList.add('preview-light');
+                document.body.classList.remove('preview-dark');
+                out.classList.add('preview-light');
+                out.classList.remove('preview-dark');
+            }
+
+            refreshUI();
+        });
+    });
+}
+
 /* ---------- INIT ---------- */
 export function initControls(){
   $('textColor')?.addEventListener('input', onBaseChange);
 
+  setupSidebarControls();
   setupBasePicker();
   setupBatch();
   setupRelations();
@@ -628,5 +710,6 @@ export function initControls(){
   setupTabs();
   setupContrastSliders();
 
+  updateSidebarLayout();
   onBaseChange();
 }
