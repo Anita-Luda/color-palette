@@ -1,17 +1,17 @@
 // engine/engine.scales.js
-// Absolute & Symmetric scales (anchor-aware). No DOM.
+// Absolute & Asymmetric scales (anchor-aware). No DOM.
 
 import { EngineState } from './engine.core.js';
 
 /* ---------- OKLCH MATH ---------- */
-function srgbToLinear(c){
+export function srgbToLinear(c){
   c /= 255;
   return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 }
-function linearToSrgb(c){
+export function linearToSrgb(c){
   return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
 }
-function rgbToOklab(r,g,b){
+export function rgbToOklab(r,g,b){
   r = srgbToLinear(r); g = srgbToLinear(g); b = srgbToLinear(b);
   const l = 0.4122214708*r + 0.5363325363*g + 0.0514459929*b;
   const m = 0.2119034982*r + 0.6806995451*g + 0.1073969566*b;
@@ -23,7 +23,7 @@ function rgbToOklab(r,g,b){
     b: 0.0259040371*l_ + 0.7827717662*m_ - 0.8086757660*s_
   };
 }
-function oklabToRgb(L,a,b){
+export function oklabToRgb(L,a,b){
   const l_ = L + 0.3963377774*a + 0.2158037573*b;
   const m_ = L - 0.1055613458*a - 0.0638541728*b;
   const s_ = L - 0.0894841775*a - 1.2914855480*b;
@@ -31,100 +31,171 @@ function oklabToRgb(L,a,b){
   let r =  4.0767416621*l - 3.3077115913*m + 0.2309699292*s;
   let g = -1.2684380046*l + 2.6097574011*m - 0.3413193965*s;
   let b2= -0.0041960863*l - 0.7034186147*m + 1.7076147010*s;
+
+  // Clamp linear RGB to [0, 1] before conversion to non-linear sRGB to avoid NaN
+  r = Math.max(0, r);
+  g = Math.max(0, g);
+  b2 = Math.max(0, b2);
+
   r = linearToSrgb(r); g = linearToSrgb(g); b2 = linearToSrgb(b2);
   return {
-    r: Math.round(Math.min(1,Math.max(0,r))*255),
-    g: Math.round(Math.min(1,Math.max(0,g))*255),
-    b: Math.round(Math.min(1,Math.max(0,b2))*255)
+    r: Math.round(Math.min(1, r) * 255),
+    g: Math.round(Math.min(1, g) * 255),
+    b: Math.round(Math.min(1, b2) * 255)
   };
 }
-function oklabToOklch({L,a,b}){
+export function oklabToOklch({L,a,b}){
   return { L, C: Math.sqrt(a*a+b*b), h: (Math.atan2(b,a)*180/Math.PI+360)%360 };
 }
-function oklchToOklab(L,C,h){
+export function oklchToOklab(L,C,h){
   const hr = h*Math.PI/180;
   return { L, a: Math.cos(hr)*C, b: Math.sin(hr)*C };
 }
-function rgbToHex({r,g,b}){
+export function rgbToHex({r,g,b}){
   return `#${((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}`;
 }
 
 /* ---------- HELPERS ---------- */
-const STEPS = Array.from({length:101},(_,i)=>i*10);
+const DEFAULT_STEPS = Array.from({length:101},(_,i)=>i*10);
+export const COARSE_STEPS = Array.from({length:11}, (_,i)=>i*100);
+export const FUNCTIONAL_STEPS = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
+export const BADGE_STEPS = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 
 function stepToL(step){
-  const t = step/1000;
-  return EngineState.mode.palette === 'dark'
-    ? 0.12 + (1 - t) * 0.7
-    : 0.98 - t * 0.8;
+  // 0 = White (L=1), 1000 = Black (L=0)
+  return 1 - (step / 1000);
 }
 
 function LToStep(L){
-  return Math.round(
-    EngineState.mode.palette === 'dark'
-      ? (1 - (L - 0.12)/0.7) * 1000
-      : (0.98 - L)/0.8 * 1000
-  );
+  return Math.round((1 - L) * 1000);
 }
 
-// Guardrail chromy – brak „szarzenia”
+// Guardrail chromy
 function clampChroma(L, C){
+  // Paleta kolorów dark mode miała mieć skorygowaną chromę, żeby dobrze wyglądać na dark mode.
+  // In dark mode, we usually want slightly lower chroma to avoid "glowing" or "vibrating" against dark backgrounds.
+  let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
+
   const max =
     L > 0.85 ? 0.10 :
     L > 0.65 ? 0.16 :
     L > 0.45 ? 0.24 : 0.32;
-  return Math.min(C, max);
+  return Math.min(C * multiplier, max);
 }
 
 /* ---------- CORE GENERATORS ---------- */
-function makeSwatch(step, lch){
-  const L = stepToL(step);
-  const C = clampChroma(L, lch.C);
-  const lab = oklchToOklab(L, C, lch.h);
-  const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-  return { step, hex: rgbToHex(rgb) };
+/* ---------- CORE GENERATORS ---------- */
+
+function maxChromaForL(L, H, C_start) {
+  let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
+  let low = 0;
+  let high = Math.max(C_start * multiplier, 0.4);
+  for (let i = 0; i < 20; i++) {
+    const mid = (low + high) / 2;
+    const lab = oklchToOklab(L, mid, H);
+    const rgb = oklabToRgb(lab.L, lab.a, lab.b);
+    if (rgb.r >= 0 && rgb.r <= 255 && rgb.g >= 0 && rgb.g <= 255 && rgb.b >= 0 && rgb.b <= 255) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+  return low;
 }
 
-export function generateAbsoluteScale(lch){
-  return STEPS.map(s => makeSwatch(s, lch));
+function chromaFalloff(L, baseL) {
+  const max_range = 0.6;
+  const alpha = 1.3;
+  const d = Math.abs(L - baseL);
+  return Math.max(0, 1 - Math.pow(d / max_range, alpha));
 }
 
-export function generateSymmetricScale(lch){
+function hueShift(L, baseL, baseH) {
+  const shift_strength = 5;
+  const d = L - baseL;
+  return (baseH + d * shift_strength + 360) % 360;
+}
+
+function lightnessCurve(t) {
+  const L_max = 0.97;
+  const L_min = 0.12;
+  const gamma = 1.3;
+  return L_max - (L_max - L_min) * Math.pow(t, gamma);
+}
+
+export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnchor = false){
   const anchorStep = LToStep(lch.L);
-  const span = Math.max(anchorStep, 1000 - anchorStep);
-  const out = [];
+  const isAsymmetric = EngineState.mode.scale === 'asymmetric';
+  const isAdaptive = EngineState.mode.algorithm === 'adaptive';
 
-  for (let d = -span; d <= span; d += 10){
-    const s = anchorStep + d;
-    if (s < 0 || s > 1000) continue;
-    const L = stepToL(s);
-    // Symetria: ta sama relacja chromy w górę i w dół
-    const t = Math.abs(d) / span;
-    const C = clampChroma(L, lch.C * (1 - 0.15*t));
-    const lab = oklchToOklab(L, C, lch.h);
-    const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-    out.push({ step: s, hex: rgbToHex(rgb), isBase: d === 0 });
+  const scale = steps.map(step => {
+      let L;
+      if (isAsymmetric) {
+          if (step === 500) L = lch.L;
+          else if (step < 500) {
+              const t = step / 500;
+              const p = lch.L < 0.5 ? 1 / (2 * lch.L + 0.1) : 1;
+              L = 1 - (1 - lch.L) * Math.pow(t, p);
+          } else {
+              const t = (step - 500) / 500;
+              const p = lch.L < 0.5 ? 2 * lch.L + 0.1 : 1;
+              L = lch.L * (1 - Math.pow(t, p));
+          }
+      } else {
+          L = isAdaptive ? lightnessCurve(step/1000) : stepToL(step);
+      }
+
+      let C, H;
+      if (isAdaptive) {
+          let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
+          H = hueShift(L, lch.L, lch.h);
+          const maxC = maxChromaForL(L, H, lch.C);
+          const falloff = chromaFalloff(L, lch.L);
+          C = Math.min(maxC, lch.C * multiplier * falloff);
+      } else {
+          C = clampChroma(L, lch.C);
+          H = lch.h;
+      }
+
+      const lab = oklchToOklab(L, C, H);
+      const rgb = oklabToRgb(lab.L, lab.a, lab.b);
+      return {
+          step,
+          hex: rgbToHex(rgb),
+          h: H, c: C, l: L,
+          isBase: isAsymmetric ? (step === 500) : (Math.abs(step - anchorStep) < 2)
+      };
+  });
+
+  if (!isAsymmetric && !forceExcludeAnchor) {
+      if (!scale.find(s => Math.abs(s.step - anchorStep) < 2)) {
+          let L = lch.L;
+          let C, H;
+          if (isAdaptive) {
+              let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
+              H = hueShift(L, lch.L, lch.h);
+              const maxC = maxChromaForL(L, H, lch.C);
+              const falloff = chromaFalloff(L, lch.L);
+              C = Math.min(maxC, lch.C * multiplier * falloff);
+          } else {
+              C = clampChroma(L, lch.C);
+              H = lch.h;
+          }
+          const lab = oklchToOklab(L, C, H);
+          const rgb = oklabToRgb(lab.L, lab.a, lab.b);
+          scale.push({
+              step: anchorStep,
+              hex: rgbToHex(rgb),
+              h: H, c: C, l: L,
+              isBase: true,
+              isInserted: true
+          });
+      }
   }
 
-  // Wstaw bazowy jako osobny swatch, jeśli wypada między progami
-  const snapped = Math.round(anchorStep/10)*10;
-  if (Math.abs(snapped - anchorStep) > 1){
-    const lab = oklchToOklab(lch.L, clampChroma(lch.L, lch.C), lch.h);
-    const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-    out.push({ step: anchorStep, hex: rgbToHex(rgb), isBase: true, isInserted: true });
-  }
-
-  return out.sort((a,b)=>a.step-b.step);
+  return scale.sort((a,b)=>a.step-b.step);
 }
 
-/* ---------- PUBLIC API ---------- */
-export function generateScaleForLCH(lch){
-  return EngineState.mode.scale === 'symmetric'
-    ? generateSymmetricScale(lch)
-    : generateAbsoluteScale(lch);
-}
-
-// Utility: compute base LCH from EngineState.base.rgb
 export function getBaseLCH(){
   const { r,g,b } = EngineState.base.rgb;
   return oklabToOklch(rgbToOklab(r,g,b));

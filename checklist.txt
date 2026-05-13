@@ -1,0 +1,34 @@
+# Checklist - Wymagania i Implementacja
+
+## 1. Migracja na OKLCH i Poprawki Silnika
+- [x] Pełna migracja z LCH na OKLCH (lepsza percepcja jasności i błękitów).
+- [x] Separacja Algorytmu od Dystrybucji:
+    - [x] Algorytm: Standard (OKLCH) vs Adaptive Perceptual.
+    - [x] Dystrybucja: Absolute vs Asymmetric.
+- [x] **Adaptive Perceptual + Dark Mode**: Dodano mnożnik nasycenia 0.8x dla trybu ciemnego (lepszy komfort wizualny).
+- [x] Naprawienie błędu NaN w obliczeniach kontrastu "Brand vs BG".
+- [x] Implementacja automatycznego resetu tła do skrajnych wartości (Step 0 / Step 1000) przy zmianie trybu jasny/ciemny.
+
+## 2. Interfejs Użytkownika (UI/UX)
+- [x] Wyświetlanie rzeczywistych współczynników kontrastu względem Białego (W) i Czarnego (B) na każdym kaflu koloru.
+- [x] **Nice Toggles**: Zamiana standardowych przycisków radio na stylowe przełączniki segmentowe (Segmented Controls).
+- [x] **Dynamic Sidebar**: Inteligentna zmiana kolejności kontrolek - po przejściu do karty "Kontrast", ustawienia jasności tła i progów ignorowania trafiają na samą górę panelu.
+- [x] System Inteligentnych Badge'y (Etykiet):
+    - [x] Badge "BASE" jest zawsze widoczny dla koloru bazowego.
+    - [x] Przy granulacji 10: Badge 50 i 100 są zawsze widoczne.
+    - [x] Przy granulacji 50: Tylko badge 100 jest zawsze widoczny.
+    - [x] Naprawiono błąd CSS: Badge'e są widoczne bez konieczności najeżdżania myszką (hover).
+
+## 3. Moduł Dostępności (Accessibility View)
+- [x] Uproszczenie siatki kontrastów (usunięcie kolumn AAA vs L1, AA vs L2, AAA vs L2).
+- [x] **W/B Contrast Labels**: Dodano etykiety kontrastu do bieli (W) i czerni (B) dla każdego kafla w widoku kontrastów.
+- [x] Aktualizacja legendy i opisów poziomów L1 i L2.
+- [x] Synchronizacja przycisków "Ignore Threshold" z nowym układem kolumn.
+
+## 4. Estetyka i Debugowanie
+- [x] Poprawa renderowania gradientów w przestrzeni OKLCH.
+- [x] Optymalizacja wydajności generowania dużych palet (granulacja 10).
+- [x] Naprawa błędów w zaokrąglaniu wartości HEX.
+
+---
+Status końcowy: Wszystkie wymagania zrealizowane. System jest stabilny i zoptymalizowany pod kątem UX/Accessibility.

@@ -16,27 +16,22 @@ function el(tag, cls){
 
 function stopsToCSS(stops){
   if (!stops.length) return 'transparent';
-  const min = stops[0].hue;
-  const max = stops[stops.length - 1].hue;
+
   return `linear-gradient(90deg, ${stops
     .map(s => {
-      const pct = ((s.hue - min) / (max - min)) * 100;
-      return `${s.hex} ${pct.toFixed(2)}%`;
+      const pct = s.t * 100;
+      const color = s.disabled ? 'rgba(0,0,0,0.2)' : s.hex;
+      return `${color} ${pct.toFixed(2)}%`;
     })
     .join(', ')})`;
 }
 
 /* ---------- CORE ---------- */
-function renderGradientForColor(container, role){
-  const grad = generateSliderGradient(role);
+function renderGradientForColor(container, role, index){
+  const grad = generateSliderGradient(role, index);
   const bar = el('div', 'hue-gradient');
 
   bar.style.background = stopsToCSS(grad.stops);
-
-  // Optional visual bounds (min/max)
-  bar.style.setProperty('--hue-min', grad.min);
-  bar.style.setProperty('--hue-max', grad.max);
-
   container.appendChild(bar);
 }
 
@@ -47,11 +42,14 @@ export function renderAllGradients(){
 
   cards.forEach((card, i) => {
     const role = state.colors[i]?.role || 'dominant';
+    const index = parseInt(card.dataset.index);
 
     // remove old gradient
     const old = card.querySelector('.hue-gradient');
     if (old) old.remove();
 
-    renderGradientForColor(card, role);
+    renderGradientForColor(card, role, index);
   });
 }
+
+window.refreshGradients = renderAllGradients;

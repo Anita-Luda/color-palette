@@ -10,20 +10,23 @@ export const EngineState = {
 
   mode: {
     palette: 'light',        // light | dark
-    scale: 'absolute'        // absolute | symmetric
+    scale: 'absolute',       // absolute | asymmetric
+    algorithm: 'standard',   // standard | adaptive
+    view: 'palettes',        // palettes | contrast
+    granularity: 100,        // 10 | 50 | 100
+    background: 'light',     // light | dark
+    backgroundSource: 'base' // 'base' or index (0, 1, 2...)
+  },
+
+  contrastSettings: {
+    brightness: 0.5,
+    boost: 0,
+    ignoredThresholds: []    // list of contrast ratios to ignore
   },
 
   relation: {
     type: 'custom',          // custom | analogous | complementary | triadic | tetradic | split | warmcool
-    limits: {
-      custom: Infinity,
-      analogous: Infinity,
-      warmcool: Infinity,
-      complementary: 2,
-      split: 2,
-      triadic: 3,
-      tetradic: 4
-    }
+    distance: 30             // hue distance for harmonies
   },
 
   colors: [],                // additional colors (user-defined)
@@ -68,39 +71,70 @@ export function setPaletteMode(mode) {
 }
 
 export function setScaleMode(mode) {
-  if (mode !== 'absolute' && mode !== 'symmetric') return;
+  if (mode !== 'absolute' && mode !== 'asymmetric') return;
   EngineState.mode.scale = mode;
+}
+
+export function setAlgorithmMode(mode) {
+  if (mode !== 'standard' && mode !== 'adaptive') return;
+  EngineState.mode.algorithm = mode;
+}
+
+export function setView(view) {
+  if (view !== 'palettes' && view !== 'contrast') return;
+  EngineState.mode.view = view;
+}
+
+export function setGranularity(value) {
+  const v = Number(value);
+  if ([10, 50, 100].includes(v)) {
+    EngineState.mode.granularity = v;
+  }
+}
+
+export function setBackgroundMode(mode) {
+  if (mode !== 'light' && mode !== 'dark') return;
+  EngineState.mode.background = mode;
+}
+
+export function setBackgroundSource(source) {
+  EngineState.mode.backgroundSource = source;
+}
+
+export function setContrastSettings(key, value) {
+  if (EngineState.contrastSettings.hasOwnProperty(key)) {
+    if (key === 'ignoredThresholds') {
+        EngineState.contrastSettings[key] = value;
+    } else {
+        EngineState.contrastSettings[key] = Number(value);
+    }
+  }
+}
+
+export function toggleIgnoredThreshold(thresholdId) {
+    const list = EngineState.contrastSettings.ignoredThresholds;
+    const idx = list.indexOf(thresholdId);
+    if (idx === -1) {
+        list.push(thresholdId);
+    } else {
+        list.splice(idx, 1);
+    }
 }
 
 /* ---------- RELATIONS ---------- */
 
 export function setRelation(type) {
-  if (!(type in EngineState.relation.limits)) return;
-
   EngineState.relation.type = type;
+}
 
-  const limit = EngineState.relation.limits[type];
-  if (EngineState.colors.length > limit) {
-    pushWarning(
-      `Relacja "${type}" obsługuje maks. ${limit} kolory`
-    );
-    EngineState.colors.length = limit;
-  }
+export function setRelationDistance(dist) {
+  EngineState.relation.distance = Number(dist);
 }
 
 /* ---------- COLORS MANAGEMENT ---------- */
 
 export function setColorCount(count) {
   clearWarnings();
-  const limit = EngineState.relation.limits[EngineState.relation.type];
-
-  if (count > limit) {
-    pushWarning(
-      `Relacja "${EngineState.relation.type}" obsługuje maks. ${limit} kolory`
-    );
-    count = limit;
-  }
-
   EngineState.colors = [];
   for (let i = 0; i < count; i++) {
     EngineState.colors.push(createColor(i));
@@ -108,13 +142,6 @@ export function setColorCount(count) {
 }
 
 export function addColor() {
-  const limit = EngineState.relation.limits[EngineState.relation.type];
-  if (EngineState.colors.length >= limit) {
-    pushWarning(
-      `Nie można dodać więcej kolorów dla relacji "${EngineState.relation.type}"`
-    );
-    return;
-  }
   EngineState.colors.push(createColor(EngineState.colors.length));
 }
 
@@ -141,16 +168,33 @@ function reindexColors() {
   });
 }
 
-function createColor(index) {
+function createColor(index, manualData = null) {
   return {
     index,
-    slider: 0.5,          // 0..1 (position in gradient)
+    slider: manualData ? (manualData.slider || 0.5) : 0.5,
     role: index === 0
       ? 'dominant'
       : index === 1
         ? 'secondary'
-        : 'accent'
+        : 'accent',
+    manualLCH: manualData ? manualData.lch : null,
+    manualHex: manualData ? manualData.hex : null
   };
+}
+
+export function addManualColor(hex, lch, slider) {
+    EngineState.colors.push(createColor(EngineState.colors.length, { hex, lch, slider }));
+}
+
+export function addGrayPalette() {
+    const grayHex = "#808080";
+    const grayLCH = { L: 0.5, C: 0, h: 0 };
+    addManualColor(grayHex, grayLCH, 0.5);
+}
+
+export function updateColorRole(index, role) {
+  if (!EngineState.colors[index]) return;
+  EngineState.colors[index].role = role;
 }
 
 /* ---------- SLIDERS ---------- */

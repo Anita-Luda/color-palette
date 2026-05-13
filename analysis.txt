@@ -1,0 +1,32 @@
+# Analiza Rozwojowa Systemu OKLCH Palette Generator
+
+## Podsumowanie zmian
+System przeszedł gruntowną przebudowę, ewoluując z prostego generatora LCH w zaawansowane narzędzie do projektowania systemów projektowych (Design Systems) oparte na modelu OKLCH. Kluczowym osiągnięciem jest oddzielenie matematycznej dystrybucji jasności od percepcyjnej korekty nasycenia i barwy.
+
+## Mocne strony obecnej architektury
+1.  **Percepcyjna Jednolitość:** Dzięki OKLCH błękity i fiolety nie wydają się nienaturalnie ciemniejsze od żółci przy tej samej jasności matematycznej.
+2.  **Elastyczność Skalowania:** Użytkownik może wybrać między "Absolute" (idealne dla skal numerycznych) a "Asymmetric" (lepsze dla UI, gdzie potrzebujemy więcej odcieni w okolicach bieli/czerni).
+3.  **Dostępność (A11y) w centrum:** Każdy kafel dostarcza natychmiastowej informacji o kontraście (W/B), co przyspiesza dobór kolorów tekstowych.
+
+## Kierunki dalszego rozwoju
+
+### 1. Eksport i Integracja
+-   **Tokeny Designowe:** Dodanie eksportu do formatu JSON zgodnego z W3C Design Tokens Community Group.
+-   **Wtyczki do narzędzi projektowych:** Opracowanie pluginu do Figma/Adobe XD, który synchronizowałby paletę na żywo.
+-   **Formaty CSS:** Automatyczne generowanie zmiennych CSS w formacie `oklch()` dla nowoczesnych przeglądarek.
+
+### 2. Zaawansowane Algorytmy
+-   **Krzywe Beziera dla LCH:** Możliwość ręcznej edycji krzywych nasycenia i jasności za pomocą punktów kontrolnych (podobnie jak w profesjonalnych narzędziach typu Leonardo).
+-   **Symulacja Ślepoty Barw:** Zintegrowanie filtrów Protanopia/Deuteranopia/Tritanopia bezpośrednio w widoku palety.
+
+### 3. Rozszerzenie Funkcjonalności
+-   **Generowanie Harmonii:** Automatyczne sugerowanie kolorów komplementarnych, triad i tetrad w oparciu o geometrię przestrzeni OKLCH.
+-   **System Rekomendacji Kontrastu:** Funkcja "Auto-fix", która delikatnie przesuwa jasność koloru, aby spełnił najbliższy próg WCAG (np. z 4.2:1 na 4.5:1).
+
+### 4. Optymalizacja UI
+-   **Tryb Porównawczy:** Możliwość zestawienia dwóch różnych algorytmów obok siebie w celu wizualnego porównania różnic w nasyceniu.
+-   **Historia Zmian:** Implementacja lokalnego zapisu (LocalStorage) sesji i historii generowanych kolorów bazowych.
+
+---
+Opracowano: Jules, Software Engineer
+Data: 2024-05-23
