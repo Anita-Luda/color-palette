@@ -41,6 +41,11 @@ function renderSwatch(swatch, opts = {}){
   if (swatch.isBase) d.classList.add('base-color');
   if (opts.compact) d.classList.add('compact');
 
+  const state = getState();
+  const gran = state.mode.granularity;
+  if (gran === 50 && swatch.step % 50 !== 0 && !swatch.isBase) return null;
+  if (gran === 100 && swatch.step % 100 !== 0 && !swatch.isBase) return null;
+
   d.style.background = swatch.hex;
 
   // Dynamic contrast for text on swatch
@@ -53,8 +58,20 @@ function renderSwatch(swatch, opts = {}){
   const step = el('div', 'swatch-step', String(stepText));
   const hex  = el('div', 'swatch-hex', swatch.hex.toUpperCase());
 
+  // Badges: always visible, differing brightness
+  if (swatch.isBase) {
+      const b = el('div', 'swatch-badge base', 'BASE');
+      d.appendChild(b);
+  } else if (swatch.step % 100 === 0) {
+      const b = el('div', 'swatch-badge step100', '100');
+      d.appendChild(b);
+  } else if (swatch.step % 50 === 0) {
+      const b = el('div', 'swatch-badge step50', '50');
+      d.appendChild(b);
+  }
+
   // Contrast info for current background
-  const bgMode = document.getElementById('previewBg')?.value || 'light';
+  const bgMode = state.mode.background;
   const info = contrast[bgMode];
   const contrastEl = el('div', 'swatch-contrast', `${info.ratio} ${info.level}`);
 
@@ -72,7 +89,10 @@ function renderSwatch(swatch, opts = {}){
 
 function renderScale(scale, opts = {}){
   const grid = el('div', 'swatches');
-  scale.forEach(s => grid.appendChild(renderSwatch(s, opts)));
+  scale.forEach(s => {
+      const node = renderSwatch(s, opts);
+      if (node) grid.appendChild(node);
+  });
   return grid;
 }
 
@@ -148,46 +168,102 @@ function renderBadge(){
   return sec;
 }
 
-function renderContrastView() {
-    const grid = generateContrastGrid();
+function renderContrastGridForLCH(lch, title) {
+    const grid = generateContrastGrid(lch);
+    const wrap = el('div', 'contrast-section');
+    wrap.appendChild(el('h2', 'contrast-title', title));
+
     const container = el('div', 'contrast-grid');
 
     // Header
-    const header = el('div', 'contrast-row');
-    header.style.minHeight = '40px';
-    header.style.fontWeight = 'bold';
+    const header = el('div', 'contrast-row header');
     header.append(
         el('div', null, 'Tło'),
-        el('div', null, '3:1 do Tła'),
-        el('div', null, '3:1 do Poprzedniego'),
-        el('div', null, '4.5:1 do obu'),
-        el('div', null, '7:1 do obu')
+        el('div', null, 'L1 (3:1 BG)'),
+        el('div', null, '4.5:1 BG'),
+        el('div', null, '4.5:1 L1'),
+        el('div', null, '7:1 BG'),
+        el('div', null, '7:1 L1'),
+        el('div', null, 'L2 (3:1 L1)'),
+        el('div', null, '4.5:1 L2'),
+        el('div', null, '7:1 L2'),
+        el('div', null, 'Base (Auto)')
     );
     container.appendChild(header);
 
-    grid.forEach((row, i) => {
+    grid.forEach(row => {
         const r = el('div', 'contrast-row');
 
-        const b = createContrastSwatch('Tło', row.bg, '#fff'); // will auto-adjust text
-        const s1 = createContrastSwatch(`3:1 BG (${contrastRatio(row.bg, row.c3_bg).toFixed(1)}:1)`, row.c3_bg, row.bg);
-        const s2 = createContrastSwatch(`3:1 Prev (${contrastRatio(row.c3_bg, row.c3_prev).toFixed(1)}:1)`, row.c3_prev, row.c3_bg);
-        const s3 = createContrastSwatch(`4.5:1 (${contrastRatio(row.bg, row.c45_bg).toFixed(1)}:1)`, row.c45_bg, row.bg);
-        const s4 = createContrastSwatch(`7:1 (${contrastRatio(row.bg, row.c7_bg).toFixed(1)}:1)`, row.c7_bg, row.bg);
-
-        r.append(b, s1, s2, s3, s4);
+        r.append(
+            createContrastSwatch('Tło', row.bg),
+            createContrastSwatch(`L1 (${contrastRatio(row.bg, row.l1).toFixed(1)})`, row.l1),
+            createContrastSwatch(`4.5:1 BG`, row.c45_bg),
+            createContrastSwatch(`4.5:1 L1`, row.c45_l1),
+            createContrastSwatch(`7:1 BG`, row.c7_bg),
+            createContrastSwatch(`7:1 L1`, row.c7_l1),
+            createContrastSwatch(`L2 (${contrastRatio(row.l1, row.l2).toFixed(1)})`, row.l2),
+            createContrastSwatch(`4.5:1 L2`, row.c45_l2),
+            createContrastSwatch(`7:1 L2`, row.c7_l2),
+            createContrastSwatch(`Base (${row.baseContrast.toFixed(1)})`, null, lch) // null hex means use base
+        );
         container.appendChild(r);
     });
 
-    return container;
+    wrap.appendChild(container);
+    return wrap;
 }
 
-function createContrastSwatch(label, hex, bg) {
+function renderContrastView() {
+    const frag = document.createDocumentFragment();
+
+    // Base
+    const baseLch = getState().base.lch || getMainPalette().scale.find(s=>s.isBase);
+    frag.appendChild(renderContrastGridForLCH(baseLch, 'Kontrast: Kolor Bazowy'));
+
+    // Additional
+    getAdditionalPalettes().forEach(p => {
+        const lch = p.scale.find(s=>s.isBase) || p.scale[Math.floor(p.scale.length/2)];
+        frag.appendChild(renderContrastGridForLCH(lch, `Kontrast: Kolor ${p.index+1} (${p.role})`));
+    });
+
+    // Functional
+    const func = getFunctionalPalettes();
+    Object.entries(func).forEach(([name, p]) => {
+        const lch = p.scale[Math.floor(p.scale.length/2)];
+        frag.appendChild(renderContrastGridForLCH(lch, `Kontrast: ${name}`));
+    });
+
+    // Badges
+    getBadgePalettes().forEach(p => {
+        const lch = p.scale[Math.floor(p.scale.length/2)];
+        frag.appendChild(renderContrastGridForLCH(lch, `Kontrast: Badge ${p.index+1}`));
+    });
+
+    return frag;
+}
+
+import { oklchToOklab, oklabToRgb, rgbToHex } from '../engine/engine.scales.js';
+
+function createContrastSwatch(label, hex, forceLch) {
     const d = el('div', 'contrast-swatch');
-    d.style.background = hex;
-    d.style.color = previewContrast(hex).light.ratio > previewContrast(hex).dark.ratio ? '#fff' : '#000';
+    let c = hex;
+    if (!c && forceLch) {
+        // Normalize LCH (handle l/L, c/C)
+        const L = forceLch.L !== undefined ? forceLch.L : forceLch.l;
+        const C = forceLch.C !== undefined ? forceLch.C : forceLch.c;
+        const H = forceLch.h;
+        const lab = oklchToOklab(L, C, H);
+        c = rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
+    }
+
+    if (!c) c = '#000000';
+
+    d.style.background = c;
+    const contrast = previewContrast(c);
+    d.style.color = (contrast.light.ratio > contrast.dark.ratio) ? '#fff' : '#000';
 
     const l = el('div', null, label);
-    const h = el('div', null, hex.toUpperCase());
+    const h = el('div', null, c.toUpperCase());
     d.append(l, h);
     return d;
 }

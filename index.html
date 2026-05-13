@@ -27,8 +27,20 @@
     <div id="batchContainer"></div>
 
     <h3>Kolory dodatkowe</h3>
-    <button id="addColor">Dodaj kolor</button>
+    <div class="group">
+        <input id="addManualColorInput" placeholder="#hex lub rgb()" style="margin-bottom: 8px;">
+        <button id="addManualColorBtn">Dodaj ten kolor</button>
+        <div id="manualColorMsg" style="font-size: 0.75rem; color: #ffca28; margin-top: 4px;"></div>
+        <button id="addColor" style="margin-top: 8px;">Dodaj auto kolor</button>
+    </div>
     <div id="colorList"></div>
+
+    <h3>Granulacja skali</h3>
+    <div class="granularity-btns" style="display: flex; gap: 4px; margin-bottom: 16px;">
+        <button class="gran-btn" data-val="10">10</button>
+        <button class="gran-btn" data-val="50">50</button>
+        <button class="gran-btn active" data-val="100">100</button>
+    </div>
 
     <h3>Typ skali</h3>
     <label class="radio">
@@ -69,6 +81,15 @@
         <input type="range" id="contrast-brightness" min="0" max="1" step="0.01" value="0.5">
         <label>Boost kontrastu</label>
         <input type="range" id="contrast-boost" min="0" max="5" step="0.1" value="0">
+
+        <div id="ignore-thresholds" style="margin-top: 12px;">
+            <label style="font-size: 0.75rem; display: block; margin-bottom: 4px;">Ignoruj progi:</label>
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                <button class="ignore-btn" data-val="3">3:1</button>
+                <button class="ignore-btn" data-val="4.5">4.5:1</button>
+                <button class="ignore-btn" data-val="7">7:1</button>
+            </div>
+        </div>
     </div>
   </aside>
 

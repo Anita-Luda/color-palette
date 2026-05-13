@@ -11,12 +11,15 @@ export const EngineState = {
   mode: {
     palette: 'light',        // light | dark
     scale: 'absolute',       // absolute | asymmetric
-    view: 'palettes'         // palettes | contrast
+    view: 'palettes',        // palettes | contrast
+    granularity: 100,        // 10 | 50 | 100
+    background: 'light'      // light | dark
   },
 
   contrastSettings: {
     brightness: 0.5,
-    boost: 0
+    boost: 0,
+    ignoredThresholds: []    // list of contrast ratios to ignore
   },
 
   relation: {
@@ -75,10 +78,36 @@ export function setView(view) {
   EngineState.mode.view = view;
 }
 
+export function setGranularity(value) {
+  const v = Number(value);
+  if ([10, 50, 100].includes(v)) {
+    EngineState.mode.granularity = v;
+  }
+}
+
+export function setBackgroundMode(mode) {
+  if (mode !== 'light' && mode !== 'dark') return;
+  EngineState.mode.background = mode;
+}
+
 export function setContrastSettings(key, value) {
   if (EngineState.contrastSettings.hasOwnProperty(key)) {
-    EngineState.contrastSettings[key] = Number(value);
+    if (key === 'ignoredThresholds') {
+        EngineState.contrastSettings[key] = value;
+    } else {
+        EngineState.contrastSettings[key] = Number(value);
+    }
   }
+}
+
+export function toggleIgnoredThreshold(threshold) {
+    const list = EngineState.contrastSettings.ignoredThresholds;
+    const idx = list.indexOf(threshold);
+    if (idx === -1) {
+        list.push(threshold);
+    } else {
+        list.splice(idx, 1);
+    }
 }
 
 /* ---------- RELATIONS ---------- */
@@ -128,16 +157,22 @@ function reindexColors() {
   });
 }
 
-function createColor(index) {
+function createColor(index, manualData = null) {
   return {
     index,
-    slider: 0.5,          // 0..1 (position in gradient)
+    slider: manualData ? (manualData.slider || 0.5) : 0.5,
     role: index === 0
       ? 'dominant'
       : index === 1
         ? 'secondary'
-        : 'accent'
+        : 'accent',
+    manualLCH: manualData ? manualData.lch : null,
+    manualHex: manualData ? manualData.hex : null
   };
+}
+
+export function addManualColor(hex, lch, slider) {
+    EngineState.colors.push(createColor(EngineState.colors.length, { hex, lch, slider }));
 }
 
 export function updateColorRole(index, role) {

@@ -31,11 +31,17 @@ export function oklabToRgb(L,a,b){
   let r =  4.0767416621*l - 3.3077115913*m + 0.2309699292*s;
   let g = -1.2684380046*l + 2.6097574011*m - 0.3413193965*s;
   let b2= -0.0041960863*l - 0.7034186147*m + 1.7076147010*s;
+
+  // Clamp linear RGB to [0, 1] before conversion to non-linear sRGB to avoid NaN
+  r = Math.max(0, r);
+  g = Math.max(0, g);
+  b2 = Math.max(0, b2);
+
   r = linearToSrgb(r); g = linearToSrgb(g); b2 = linearToSrgb(b2);
   return {
-    r: Math.round(Math.min(1,Math.max(0,r))*255),
-    g: Math.round(Math.min(1,Math.max(0,g))*255),
-    b: Math.round(Math.min(1,Math.max(0,b2))*255)
+    r: Math.round(Math.min(1, r) * 255),
+    g: Math.round(Math.min(1, g) * 255),
+    b: Math.round(Math.min(1, b2) * 255)
   };
 }
 export function oklabToOklch({L,a,b}){
@@ -66,11 +72,15 @@ function LToStep(L){
 
 // Guardrail chromy
 function clampChroma(L, C){
+  // Paleta kolorów dark mode miała mieć skorygowaną chromę, żeby dobrze wyglądać na dark mode.
+  // In dark mode, we usually want slightly lower chroma to avoid "glowing" or "vibrating" against dark backgrounds.
+  let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
+
   const max =
     L > 0.85 ? 0.10 :
     L > 0.65 ? 0.16 :
     L > 0.45 ? 0.24 : 0.32;
-  return Math.min(C, max);
+  return Math.min(C * multiplier, max);
 }
 
 /* ---------- CORE GENERATORS ---------- */
@@ -79,7 +89,14 @@ function makeSwatch(step, lch){
   const C = clampChroma(L, lch.C);
   const lab = oklchToOklab(L, C, lch.h);
   const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-  return { step, hex: rgbToHex(rgb), h: lch.h, c: C, l: L };
+  return {
+    step,
+    hex: rgbToHex(rgb),
+    h: lch.h,
+    c: C,
+    l: L,
+    isBase: false // default
+  };
 }
 
 export function generateAbsoluteScale(lch, steps = DEFAULT_STEPS, forceExcludeAnchor = false){

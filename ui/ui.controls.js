@@ -17,9 +17,14 @@ import {
   getWarnings,
   updateColorRole,
   setView,
-  setContrastSettings
+  setContrastSettings,
+  setGranularity,
+  setBackgroundMode,
+  toggleIgnoredThreshold,
+  addManualColor
 } from '../engine/engine.core.js';
 
+import { rgbToOklab, oklabToOklch } from '../engine/engine.scales.js';
 import { clearGradientCache } from '../engine/engine.gradients.js';
 import { renderAllPalettes } from './ui.render.js';
 
@@ -176,13 +181,65 @@ function setupRelations(){
 /* ---------- ADD COLOR ---------- */
 function setupAddColor(){
   const btn = $('addColor');
-  if (!btn) return;
+  if (btn) {
+    btn.addEventListener('click', () => {
+      addColor();
+      clearGradientCache();
+      refreshUI();
+    });
+  }
 
-  btn.addEventListener('click', () => {
-    addColor();
-    clearGradientCache();
-    refreshUI();
-  });
+  const manualBtn = $('addManualColorBtn');
+  const manualInput = $('addManualColorInput');
+  const msgBox = $('manualColorMsg');
+
+  if (manualBtn && manualInput) {
+    manualBtn.addEventListener('click', () => {
+        const val = manualInput.value;
+        const rgb = parseHexOrRgb(val);
+        if (!rgb) {
+            msgBox.textContent = 'Błędny format koloru.';
+            return;
+        }
+
+        const lch = oklabToOklch(rgbToOklab(rgb.r, rgb.g, rgb.b));
+
+        // Suggestion logic: check if "fits"
+        // For now, any color is added, but we could check if hue is already taken.
+        // The user says: "jeżeli pasują ... jeżeli nie pasują, to powiadom ... i zaproponuj korektę na najbliższy pasujący"
+        // Let's implement a simple check: is it within 15 degrees of any existing?
+        const state = getState();
+        const baseLch = oklabToOklch(rgbToOklab(state.base.rgb.r, state.base.rgb.g, state.base.rgb.b));
+
+        let conflict = Math.abs(lch.h - baseLch.h) < 15 || Math.abs(lch.h - baseLch.h) > 345;
+        if (!conflict) {
+            for (const c of state.colors) {
+                if (c.manualLCH && (Math.abs(lch.h - c.manualLCH.h) < 15 || Math.abs(lch.h - c.manualLCH.h) > 345)) {
+                    conflict = true; break;
+                }
+            }
+        }
+
+        if (conflict) {
+            if (confirm(`Kolor ${val} jest zbyt blisko istniejących barw. Czy skorygować go do najbliższej wolnej przestrzeni?`)) {
+                // simple shift
+                lch.h = (lch.h + 30) % 360;
+                addManualColor(null, lch, 0.5);
+                msgBox.textContent = 'Dodano skorygowany kolor.';
+            } else {
+                addManualColor(val, lch, 0.5);
+                msgBox.textContent = 'Dodano kolor bez korekty.';
+            }
+        } else {
+            addManualColor(val, lch, 0.5);
+            msgBox.textContent = 'Kolor dodany.';
+        }
+
+        manualInput.value = '';
+        clearGradientCache();
+        refreshUI();
+    });
+  }
 }
 
 /* ---------- SLIDERS ---------- */
@@ -285,24 +342,29 @@ function createSliderCard(c) {
 /* ---------- MODES ---------- */
 function setupModes(){
   $('mode')?.addEventListener('change', e => {
-    const mode = e.target.value;
-    setPaletteMode(mode);
-
-    // Update body theme
-    if (mode === 'dark') {
-        document.body.classList.add('preview-dark');
-        document.body.classList.remove('preview-light');
-        $('output').classList.add('preview-dark');
-        $('output').classList.remove('preview-light');
-    } else {
-        document.body.classList.add('preview-light');
-        document.body.classList.remove('preview-dark');
-        $('output').classList.add('preview-light');
-        $('output').classList.remove('preview-dark');
-    }
-
+    setPaletteMode(e.target.value);
     clearGradientCache();
     refreshUI();
+  });
+
+  $('previewBg')?.addEventListener('change', e => {
+      const mode = e.target.value;
+      setBackgroundMode(mode);
+
+      const out = $('output');
+      if (mode === 'dark') {
+          document.body.classList.add('preview-dark');
+          document.body.classList.remove('preview-light');
+          out.classList.add('preview-dark');
+          out.classList.remove('preview-light');
+      } else {
+          document.body.classList.add('preview-light');
+          document.body.classList.remove('preview-dark');
+          out.classList.add('preview-light');
+          out.classList.remove('preview-dark');
+      }
+      // No need for refreshUI if only CSS classes change, but let's be safe
+      renderAllPalettes();
   });
 
   document
@@ -313,6 +375,17 @@ function setupModes(){
       clearGradientCache();
       refreshUI();
     }));
+}
+
+function setupGranularity() {
+    document.querySelectorAll('.gran-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.gran-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            setGranularity(btn.dataset.val);
+            renderAllPalettes();
+        });
+    });
 }
 
 /* ---------- LOCKS ---------- */
@@ -375,23 +448,15 @@ function setupTabs() {
 
             // Toggle sidebar controls
             const contrastCtrl = $('contrast-controls');
-            const batchCtrl = $('batchContainer').parentElement;
-            const colorsCtrl = $('addColor').parentElement;
-            const scaleCtrl = document.querySelector('input[name="scaleMode"]').parentElement.parentElement;
-            const relationCtrl = $('harmony').parentElement;
+            // DLA PALETY KONTRASTÓW PANEL STEROWANIA NIE POWINIEN ZNIKAĆ.
+            // I interpret this as "sidebar should stay", but we might still hide/show specific knobs.
+            // The user says "Dla palety kontrasttów panel sterowania nie powinien znikać"
+            // but the original code hid everything else. Let's keep things visible as much as possible.
 
             if (view === 'contrast') {
                 contrastCtrl.style.display = 'block';
-                batchCtrl.style.display = 'none';
-                colorsCtrl.style.display = 'none';
-                scaleCtrl.style.display = 'none';
-                relationCtrl.style.display = 'none';
             } else {
                 contrastCtrl.style.display = 'none';
-                batchCtrl.style.display = 'flex';
-                colorsCtrl.style.display = 'flex';
-                scaleCtrl.style.display = 'flex';
-                relationCtrl.style.display = 'flex';
             }
 
             refreshUI();
@@ -408,6 +473,14 @@ function setupContrastSliders() {
         setContrastSettings('boost', e.target.value);
         renderAllPalettes(); // just re-render grid
     });
+
+    document.querySelectorAll('.ignore-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            btn.classList.toggle('active');
+            toggleIgnoredThreshold(Number(btn.dataset.val));
+            renderAllPalettes();
+        });
+    });
 }
 
 /* ---------- INIT ---------- */
@@ -421,6 +494,7 @@ export function initControls(){
   renderSliders();
   setupModes();
   setupLocks();
+  setupGranularity();
   setupReorder();
   setupTabs();
   setupContrastSliders();

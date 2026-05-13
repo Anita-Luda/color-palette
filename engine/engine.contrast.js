@@ -44,70 +44,91 @@ function findColorByContrast(baseHex, targetRatio, direction, hue, chroma) {
     return rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
 }
 
-export function generateContrastGrid() {
-    const baseLch = getBaseLCH();
-    const { brightness, boost } = EngineState.contrastSettings;
+export function generateContrastGrid(targetLch) {
+    let lch = targetLch || getBaseLCH();
+    // Normalize LCH: support both lowercase and uppercase keys
+    lch = {
+        L: lch.L !== undefined ? lch.L : (lch.l !== undefined ? lch.l : 0.5),
+        C: lch.C !== undefined ? lch.C : (lch.c !== undefined ? lch.c : 0.1),
+        h: lch.h !== undefined ? lch.h : 0
+    };
+
+    const { brightness, boost, ignoredThresholds } = EngineState.contrastSettings;
     const isDark = EngineState.mode.palette === 'dark';
 
     const levels = 10;
     const grid = [];
+
+    // Progi z uwzględnieniem boostu
+    const getTarget = (base) => {
+        if (ignoredThresholds.includes(base)) return 1.0;
+        return base + boost;
+    };
+
+    const t3 = getTarget(3.0);
+    const t45 = getTarget(4.5);
+    const t7 = getTarget(7.0);
 
     // 10 levels of background
     for (let i = 0; i < levels; i++) {
         const t = i / (levels - 1);
 
         let L;
+        // W palecie kontrastów Ustawienie jasności tła do najmniejszej i do największej powinny nadal generować 10 tonów.
+        // brightness 0..1 mapuje zakres jasności od którego startujemy/kończymy
         if (isDark) {
-            // Requirement: "najjaśniejszy wariant dla tła był biały" -> let's make i=0 light
-            // In Dark Mode, backgrounds are usually dark, but if we want white as lightest...
-            L = (1 - t) * brightness;
-            // If brightness=1, i=0 is L=1 (white). If brightness=0.2, i=0 is L=0.2 (dark).
+            // Dark mode background: darker tones
+            L = (1 - brightness) * (1 - t);
         } else {
-            // Light Mode: i=0 is white (1), i=9 is darker
-            L = 1 - (t * brightness);
-            // If brightness=1, i=9 is L=0 (black). If brightness=0.5, i=9 is L=0.5.
+            // Light mode background: lighter tones
+            L = 1 - (brightness * t);
         }
 
-        const lab = oklchToOklab(L, baseLch.C * 0.2, baseLch.h);
+        // Dodatkowe białe/czarne tło
+        if (i === 0 && brightness > 0.9) L = 1.0; // Force white
+        if (i === levels - 1 && brightness > 0.9) L = 0.0; // Force black
+
+        const lab = oklchToOklab(L, lch.C * 0.15, lch.h);
         const bgHex = rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
 
-        // Targets
-        const t3_1 = 3.0 + boost;
-        const t4_5 = 4.5 + boost;
-        const t7_1 = 7.0 + boost;
-
-        // Direction of contrast layers relative to BG
-        // If BG is light, we go darker. If BG is dark, we go lighter.
         const direction = L > 0.5 ? 'darker' : 'lighter';
 
-        // Layer 1: 3:1 to BG
-        const c3_bg = findColorByContrast(bgHex, t3_1, direction, baseLch.h, baseLch.C);
+        // Nowe progi:
+        // - 3:1 level 1 do tła
+        const L1 = findColorByContrast(bgHex, t3, direction, lch.h, lch.C);
 
-        // Layer 2: 3:1 to Layer 1 (c3_bg)
-        const c3_prev = findColorByContrast(c3_bg, t3_1, direction, baseLch.h, baseLch.C);
+        // - 4.5:1 do tła
+        const C45_BG = findColorByContrast(bgHex, t45, direction, lch.h, lch.C);
 
-        // Layer 3: 4.5:1 to BG AND 3:1 to Layer 1
-        const c45_bg_only = findColorByContrast(bgHex, t4_5, direction, baseLch.h, baseLch.C);
-        const c3_from_l1 = findColorByContrast(c3_bg, t3_1, direction, baseLch.h, baseLch.C);
+        // - 4.5:1 do 3:1 level 1
+        const C45_L1 = findColorByContrast(L1, t45, direction, lch.h, lch.C);
 
-        const c45_bg = direction === 'darker'
-            ? (LToStep(rgbToOklab_local(c45_bg_only).L) > LToStep(rgbToOklab_local(c3_from_l1).L) ? c45_bg_only : c3_from_l1)
-            : (LToStep(rgbToOklab_local(c45_bg_only).L) < LToStep(rgbToOklab_local(c3_from_l1).L) ? c45_bg_only : c3_from_l1);
+        // - 7:1 do tła
+        const C7_BG = findColorByContrast(bgHex, t7, direction, lch.h, lch.C);
 
-        // Layer 4: 7:1 to BG AND 3:1 to Layer 2
-        const c7_bg_only = findColorByContrast(bgHex, t7_1, direction, baseLch.h, baseLch.C);
-        const c3_from_l2 = findColorByContrast(c3_prev, t3_1, direction, baseLch.h, baseLch.C);
+        // - 7:1 do 3:1 level 1
+        const C7_L1 = findColorByContrast(L1, t7, direction, lch.h, lch.C);
 
-        const c7_bg = direction === 'darker'
-            ? (LToStep(rgbToOklab_local(c7_bg_only).L) > LToStep(rgbToOklab_local(c3_from_l2).L) ? c7_bg_only : c3_from_l2)
-            : (LToStep(rgbToOklab_local(c7_bg_only).L) < LToStep(rgbToOklab_local(c3_from_l2).L) ? c7_bg_only : c3_from_l2);
+        // - 3:1 level 2 do 3:1 level 1
+        const L2 = findColorByContrast(L1, t3, direction, lch.h, lch.C);
+
+        // - 4.5:1 do 3:1 level 2
+        const C45_L2 = findColorByContrast(L2, t45, direction, lch.h, lch.C);
+
+        // - 7:1 do 3:1 level 2
+        const C7_L2 = findColorByContrast(L2, t7, direction, lch.h, lch.C);
 
         grid.push({
             bg: bgHex,
-            c3_bg,
-            c3_prev,
-            c45_bg,
-            c7_bg
+            l1: L1,
+            c45_bg: C45_BG,
+            c45_l1: C45_L1,
+            c7_bg: C7_BG,
+            c7_l1: C7_L1,
+            l2: L2,
+            c45_l2: C45_L2,
+            c7_l2: C7_L2,
+            baseContrast: contrastRatio(bgHex, rgbToHex(oklabToRgb(oklchToOklab(lch.L, lch.C, lch.h))))
         });
     }
 

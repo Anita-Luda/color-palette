@@ -51,6 +51,14 @@ export function getAdditionalPalettes(){
   const { type, distance } = EngineState.relation;
 
   return EngineState.colors.map((c, i) => {
+    if (c.manualLCH) {
+        return {
+            index: c.index,
+            role: c.role,
+            scale: generateScaleForLCH(c.manualLCH)
+        };
+    }
+
     let hue = getHarmonyHue(baseLch.h, i, EngineState.colors.length, type, distance);
 
     // Custom slider offset
@@ -84,7 +92,10 @@ export function getFunctionalPalettes(){
   const additional = getAdditionalPalettes();
 
   // Reserved hues
-  const reserved = [baseLch.h, ...additional.map(p => p.scale.find(s=>s.isBase).h)];
+  const reserved = [baseLch.h, ...additional.map(p => {
+      const base = p.scale.find(s=>s.isBase);
+      return base ? base.h : p.scale[Math.floor(p.scale.length/2)].h;
+  })];
 
   const out = {};
   for (const [name, range] of Object.entries(SEMANTIC_RANGES)) {

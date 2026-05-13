@@ -7,26 +7,32 @@ KOMPLEKSOWA CHECKLISTA REALIZACJI WYMAGAŃ
 - [x] Poprawienie błędów 404: Naprawienie ścieżek do plików JS i CSS.
 
 2. LOGIKA GENEROWANIA KOLORÓW
-- [x] Skale 0-1000: Wszystkie palety funkcjonalne i odznaki mają 11 kroków (co 100).
+- [x] Skale 0-1000: Wszystkie palety funkcjonalne i odznaki mają 11 kroków bazowych.
+- [x] Granulacja Skali: Możliwość przełączania widoku palet tonalnych (co 10, 50, 100 jednostek jasności).
 - [x] Tryb Absolute: Liniowy rozkład jasności od 0 do 1000.
 - [x] Tryb Asymmetric: Nieliniowy rozkład skupiony wokół koloru bazowego (zakotwiczenie na kroku 500).
-- [x] Kolizje Odcieni (Collision Avoidance): Automatyczne przesuwanie barw funkcjonalnych (Success, Warning, Error), gdy są zbyt blisko barwy bazowej.
-- [x] System Odznak (Badges): Algorytm Max-Min Distance generujący 8 unikalnych, maksymalnie odległych barw.
+- [x] Kolizje Odcieni (Collision Avoidance): Automatyczne przesuwanie barw funkcjonalnych, gdy są zbyt blisko barwy bazowej.
+- [x] Ręczne Dodawanie Kolorów: Możliwość wprowadzania własnych kolorów HEX/RGB z systemem sugestii przesunięcia barwy w przypadku konfliktów.
+- [x] Optymalizacja Dark Mode: Automatyczna redukcja nasycenia (0.8x chroma) dla palet w trybie ciemnym dla lepszej czytelności.
+- [x] System Odznak (Badges): Algorytm Max-Min Distance generujący unikalne barwy o maksymalnej separacji wizualnej.
 
 3. INTERFEJS UŻYTKOWNIKA (UI/UX)
 - [x] Wydajność 60 FPS: Użycie DocumentFragment i różnicowego renderowania DOM.
-- [x] Realistyczne suwaki: Gradienty pod suwakami pokazują pełne spektrum relacji (+/- 180 deg) z przyciemnieniem kolorów poza gamutem sRGB.
-- [x] Nowoczesny Design: Styl Dark Glassmorphism, responsywne karty kolorów.
-- [x] Kontrast Tekstu: Dynamiczna zmiana koloru tekstu (Czarny/Biały) na kafelkach w zależności od jasności tła.
+- [x] Etykiety i Badge: Zawsze widoczne oznaczenia "BASE", "100" i "50" na kafelkach kolorów.
+- [x] Realistyczne suwaki: Gradienty pod suwakami pokazują pełne spektrum relacji z przyciemnieniem kolorów poza gamutem sRGB.
+- [x] Niezależne Tło: Możliwość testowania dowolnej palety (Jasna/Ciemna) na dowolnym tle (Jasne/Ciemne) niezależnie od trybu generowania.
 
-4. ZAAWANSOWANY WIDOK KONTRASTU (NOWOŚĆ)
-- [x] Dedykowana zakładka "Kontrast": Nowy moduł prezentujący użyteczność kolorów w interfejsie.
-- [x] 10 poziomów tła: Generowanie palety tła o narastającej ciemności.
-- [x] Inteligentne Warstwy: Obliczanie kolorów warstw (Layer 1, 2, 3) spełniających normy WCAG (3:1, 4.5:1, 7:1).
-- [x] Binary Search Lightness: Algorytm precyzyjnie dobierający jasność, aby trafić w docelowy kontrast względem tła i warstw poprzednich.
-- [x] Kontrola użytkownika: Suwaki "Brightness" i "Contrast Boost" pozwalające na tuning widoku kontrastu.
+4. ZAAWANSOWANY WIDOK KONTRASTU
+- [x] Pełne Pokrycie: Generowanie siatek kontrastu dla WSZYSTKICH palet (Bazowa, Funkcjonalne, Dodatkowe, Odznaki).
+- [x] Wielopoziomowe Tło: 10-stopniowa skala tła z gwarantowaną obecnością czystej bieli (#FFFFFF) i czerni (#000000).
+- [x] Zagnieżdżone Progi Kontrastu:
+    - L1 (3:1 do tła)
+    - L2 (3:1 do L1)
+    - Sprawdzanie norm 4.5:1 i 7:1 względem tła oraz poprzednich poziomów warstw.
+- [x] Algorytm Binary Search: Precyzyjne dobieranie jasności dla zachowania norm WCAG.
+- [x] Ignorowanie Progów: Opcja wymuszenia generowania warstw nawet przy ekstremalnych tłach (debugowanie dostępności).
 
 5. DEBUGOWANIE I STABILNOŚĆ
-- [x] Brak limitów relacji: System obsługuje dowolną liczbę kolorów bez arbitralnych ograniczeń.
-- [x] Stabilność focusu: Pola input i suwaki nie tracą focusu podczas manipulacji.
-- [x] Weryfikacja wizualna: Potwierdzona poprawność renderowania na zrzutach ekranu.
+- [x] Clamping RGB: Zabezpieczenie przed wartościami spoza zakresu zapobiegające "czarnym kwadratom" i błędom NaN.
+- [x] Obsługa LCH/lch: Kompatybilność silnika z różnymi formatami zapisu właściwości kolorów.
+- [x] Stabilność UI: Brak utraty focusu i migotania przy szybkich zmianach parametrów.
