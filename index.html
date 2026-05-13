@@ -32,6 +32,7 @@
         <button id="addManualColorBtn">Dodaj ten kolor</button>
         <div id="manualColorMsg" style="font-size: 0.75rem; color: #ffca28; margin-top: 4px;"></div>
         <button id="addColor" style="margin-top: 8px;">Dodaj auto kolor</button>
+        <button id="addGrayBtn" style="margin-top: 8px; background: #555;">Dodaj paletę szarości</button>
     </div>
     <div id="colorList"></div>
 
@@ -77,6 +78,7 @@
 
     <div id="contrast-controls" style="display: none;">
         <h3>Ustawienia Kontrastu</h3>
+        <div id="active-bg-source" style="font-size: 0.7rem; opacity: 0.8; margin-bottom: 8px;">Tło z: Paleta Główna</div>
         <label>Jasność tła</label>
         <input type="range" id="contrast-brightness" min="0" max="1" step="0.01" value="0.5">
         <label>Boost kontrastu</label>

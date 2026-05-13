@@ -1,27 +1,23 @@
-ANALIZA ROZWOJOWA SYSTEMU GENEROWANIA KOLORÓW (REFAKTORYZACJA OKLCH)
+ANALIZA ROZWOJOWA SYSTEMU GENEROWANIA KOLORÓW (ROZSZERZONY KONTRAST)
 
-1. ARCHITEKTURA SILNIKA (SINGLE SOURCE OF TRUTH)
-Rdzeń systemu został przeniesiony do modelu OKLCH, co eliminuje problemy z niespójną jasnością percepcyjną tradycyjnego modelu HSL.
-- Stan aplikacji jest scentralizowany w `engine.core.js`, co pozwala na błyskawiczną synchronizację między widokiem palet a widokiem kontrastu.
-- Wprowadzono system "Manual Colors" z algorytmem wykrywania konfliktów: jeśli nowo dodany kolor znajduje się w odległości mniejszej niż 15 stopni od istniejącego odcienia, system proponuje korektę (+30 stopni), co zapewnia unikalność barw w systemie projektowym.
+1. ARCHITEKTURA I SILNIK
+System wykorzystuje model OKLCH jako fundament percepcyjnej jednolitości. Kluczowym elementem jest pełna separacja obliczeń (`engine/`) od prezentacji (`ui/`).
+- **Binary Search Contrast:** Silnik wykorzystuje algorytm wyszukiwania binarnego do precyzyjnego (do 0.01 L) wyznaczania jasności koloru, który spełnia zadany współczynnik kontrastu (np. 4.5:1) względem tła lub poprzedniej warstwy.
+- **Background Routing:** System wspiera dynamiczne mapowanie źródła tła. Każda paleta (bazowa, dodatkowa, szara) może stać się "tłem odniesienia" dla widoku kontrastu, co pozwala na testowanie relacji międzykolorowych (np. czerwone przyciski na zielonym tle).
 
-2. LOGIKA SKALOWANIA I GRANULACJA
-System wspiera teraz trzy poziomy granulacji (10, 50, 100), co pozwala na płynne przechodzenie od szerokiego przeglądu (co-100) do precyzyjnego doboru odcieni (co-10).
-- Skala jasności 0-1000 jest mapowana na sRGB z użyciem "Clamping logic", co zapobiega powstawaniu błędów matematycznych (NaN) przy skrajnych wartościach nasycenia i jasności.
-- Dark Mode Optimization: Wprowadzono inteligentny mnożnik nasycenia (0.8x) dla palet ciemnych. Zapobiega to zjawisku "fluorescencji" kolorów na ciemnych tła, co jest częstym błędem w systemach generowanych automatycznie.
+2. LOGIKA GENEROWANIA TŁA
+Widok kontrastu nie używa już statycznych odcieni szarości. Zamiast tego:
+- Pobiera pełną paletę tonalną (101 kroków, co 10 jednostek) wybranego źródła.
+- Tworzy okno 10 tonów, którego początek jest sterowany suwakiem jasności.
+- Do okna dodaje kolor ekstremalny (Biały w trybie jasnym, Czarny w trybie ciemnym), tworząc 11-wierszową siatkę.
+- **Uniqueness Guard:** Wprowadzono funkcję `ensureUnique`, która wykrywa powtórzenia kolorów w siatce (wynikające z ograniczania gamutu lub małych różnic jasności) i aplikuje subtelną korektę (delta L), gwarantując czytelność każdego progu.
 
-3. OPTYMALIZACJA WYDAJNOŚCI
-Osiągnięto stałe 60 FPS dzięki zastosowaniu DocumentFragment i minimalizacji operacji na DOM.
-- Suwaki parametrów działają w trybie "Reactive Update", gdzie tylko niezbędne elementy palety są przerywane, co pozwala na natychmiastowy feedback wizualny przy zmianie odcienia (Hue) lub nasycenia (Chroma).
+3. OPTYMALIZACJA UI I UX
+- **Contextual Persistence:** Panel sterowania kontrastem (jasność, boost, ignorowanie progów) pozostaje widoczny przy zmianie zakładek, co ułatwia tuning systemu.
+- **Manual Adjustments:** System ręcznego dodawania kolorów wspiera teraz automatyczną paletę szarości oraz detekcję konfliktów odcieni (Hue Collision), co zapobiega tworzeniu zbyt podobnych barw funkcjonalnych.
 
-4. ROZSZERZONY WIDOK KONTRASTU
-Moduł kontrastu ewoluował z prostego kalkulatora w zaawansowane narzędzie audytorskie.
-- Obsługa wielu palet: Widok generuje gridy dla wszystkich kolorów funkcjonalnych i odznak jednocześnie.
-- Algorytm Zagnieżdżony: System nie tylko sprawdza kontrast tekstu do tła, ale oblicza jasność dla "Warstwy 1" (L1), a następnie "Warstwy 2" (L2) względem L1, symulując hierarchię komponentów UI (np. tło -> karta -> przycisk).
-- Wykorzystanie Binary Search pozwala na znalezienie idealnej jasności dla progu 3:1, 4.5:1 oraz 7:1 z dokładnością do 0.1% jasności OKLCH.
-
-5. POTENCJAŁ ROZWOJU (ROADMAP)
-- Eksport Design Tokens: Generowanie zmiennych CSS/Tailwind z uwzględnieniem nowej skali 0-1000.
-- Wsparcie dla Gamutu P3: Rozszerzenie silnika o obsługę kolorów "Display P3" dla nowoczesnych matryc mobilnych.
-- Inteligentne Grupowanie: Automatyczne generowanie schematów komplementarnych i triad na bazie koloru bazowego z zachowaniem spójności kontrastowej.
-- Testy Dostępności: Integracja filtrów symulujących Protanopię/Deuteranopię bezpośrednio w widoku kontrastu.
+4. POTENCJAŁ ROZWOJU (ROADMAP)
+- **Export Design Tokens:** Mapowanie wyliczonych warstw kontrastowych (L1, L2) na tokeny typu `surface-primary`, `surface-secondary`.
+- **Złożone Relacje Tła:** Możliwość nakładania tła z jednej palety na odcień z drugiej (np. tło o jasności 100 z palety A na tło o jasności 500 z palety B).
+- **Automatyczny Audyt WCAG:** Generowanie raportu PDF/JSON z analizą dostępności dla wszystkich wygenerowanych kombinacji.
+- **Wide Gamut (P3):** Pełne wykorzystanie przestrzeni kolorów P3 na urządzeniach Apple/OLED przy zachowaniu fallbacku sRGB.

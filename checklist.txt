@@ -1,4 +1,4 @@
-KOMPLEKSOWA CHECKLISTA REALIZACJI WYMAGAŃ
+KOMPLEKSOWA CHECKLISTA REALIZACJI WYMAGAŃ (AKTUALIZACJA)
 
 1. FUNDAMENTY I ARCHITEKTURA
 - [x] Migracja na model OKLCH: Precyzyjne sterowanie jasnością (L), nasyceniem (C) i odcieniem (H).
@@ -8,31 +8,27 @@ KOMPLEKSOWA CHECKLISTA REALIZACJI WYMAGAŃ
 
 2. LOGIKA GENEROWANIA KOLORÓW
 - [x] Skale 0-1000: Wszystkie palety funkcjonalne i odznaki mają 11 kroków bazowych.
-- [x] Granulacja Skali: Możliwość przełączania widoku palet tonalnych (co 10, 50, 100 jednostek jasności).
+- [x] Granulacja Skali: Przełączanie widoku palet tonalnych (co 10, 50, 100).
 - [x] Tryb Absolute: Liniowy rozkład jasności od 0 do 1000.
 - [x] Tryb Asymmetric: Nieliniowy rozkład skupiony wokół koloru bazowego (zakotwiczenie na kroku 500).
-- [x] Kolizje Odcieni (Collision Avoidance): Automatyczne przesuwanie barw funkcjonalnych, gdy są zbyt blisko barwy bazowej.
-- [x] Ręczne Dodawanie Kolorów: Możliwość wprowadzania własnych kolorów HEX/RGB z systemem sugestii przesunięcia barwy w przypadku konfliktów.
-- [x] Optymalizacja Dark Mode: Automatyczna redukcja nasycenia (0.8x chroma) dla palet w trybie ciemnym dla lepszej czytelności.
-- [x] System Odznak (Badges): Algorytm Max-Min Distance generujący unikalne barwy o maksymalnej separacji wizualnej.
+- [x] Kolizje Odcieni (Collision Avoidance): Automatyczne przesuwanie barw funkcjonalnych.
+- [x] Ręczne Dodawanie Kolorów: HEX/RGB z systemem sugestii przesunięcia barwy (+30° przy konflikcie <15°).
+- [x] Paleta Szarości: Dedykowany przycisk dodawania neutralnej palety (C=0).
+- [x] Optymalizacja Dark Mode: Redukcja nasycenia (0.8x chroma) dla palet w trybie ciemnym.
 
 3. INTERFEJS UŻYTKOWNIKA (UI/UX)
-- [x] Wydajność 60 FPS: Użycie DocumentFragment i różnicowego renderowania DOM.
-- [x] Etykiety i Badge: Zawsze widoczne oznaczenia "BASE", "100" i "50" na kafelkach kolorów.
-- [x] Realistyczne suwaki: Gradienty pod suwakami pokazują pełne spektrum relacji z przyciemnieniem kolorów poza gamutem sRGB.
-- [x] Niezależne Tło: Możliwość testowania dowolnej palety (Jasna/Ciemna) na dowolnym tle (Jasne/Ciemne) niezależnie od trybu generowania.
+- [x] Wydajność 60 FPS: DocumentFragment i reaktywne aktualizacje.
+- [x] Etykiety i Badge: Oznaczenia "BASE", "100" i "50" na kafelkach.
+- [x] Realistyczne suwaki: Dynamiczne gradienty z maskowaniem poza-gamutowym.
+- [x] Niezależne Tło: Testowanie palet na dowolnym tle (Jasne/Ciemne).
 
 4. ZAAWANSOWANY WIDOK KONTRASTU
-- [x] Pełne Pokrycie: Generowanie siatek kontrastu dla WSZYSTKICH palet (Bazowa, Funkcjonalne, Dodatkowe, Odznaki).
-- [x] Wielopoziomowe Tło: 10-stopniowa skala tła z gwarantowaną obecnością czystej bieli (#FFFFFF) i czerni (#000000).
-- [x] Zagnieżdżone Progi Kontrastu:
-    - L1 (3:1 do tła)
-    - L2 (3:1 do L1)
-    - Sprawdzanie norm 4.5:1 i 7:1 względem tła oraz poprzednich poziomów warstw.
-- [x] Algorytm Binary Search: Precyzyjne dobieranie jasności dla zachowania norm WCAG.
-- [x] Ignorowanie Progów: Opcja wymuszenia generowania warstw nawet przy ekstremalnych tłach (debugowanie dostępności).
+- [x] Inteligentne Tła: 11 wierszy (Biały/Czarny + okno 10 tonów z wybranej palety).
+- [x] Dynamiczne Okno Tła: Suwak jasności przesuwa okno 10 tonów po pełnej skali tonalnej (co-10).
+- [x] Wybór Źródła Tła: Możliwość ustawienia dowolnej palety dodatkowej (np. szarej lub zielonej) jako tła odniesienia dla innych.
+- [x] Gwarantowana Unikalność: Mechanizm zapobiegający powtarzaniu się kolorów w kolejnych wierszach oraz między progami kontrastu (L1, L2, 4.5:1 itd.), nawet przy "Boost".
+- [x] Zagnieżdżone Progi: Precyzyjne wyliczanie warstw (3:1, 4.5:1, 7:1) względem tła i siebie nawzajem.
 
 5. DEBUGOWANIE I STABILNOŚĆ
-- [x] Clamping RGB: Zabezpieczenie przed wartościami spoza zakresu zapobiegające "czarnym kwadratom" i błędom NaN.
-- [x] Obsługa LCH/lch: Kompatybilność silnika z różnymi formatami zapisu właściwości kolorów.
-- [x] Stabilność UI: Brak utraty focusu i migotania przy szybkich zmianach parametrów.
+- [x] Clamping RGB: Zabezpieczenie przed wartościami NaN i błędami poza-gamutowymi.
+- [x] Stabilność UI: Brak utraty focusu w polach input i suwakach.

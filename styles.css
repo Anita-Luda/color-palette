@@ -206,6 +206,23 @@ button.btn-danger:hover { background: var(--danger); color: white; }
 .palette-title strong { font-size: 1.5rem; font-weight: 900; }
 .palette-subtitle { font-size: 0.8rem; color: var(--text-muted); font-weight: 500; }
 
+.bg-source-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 8px;
+    align-self: flex-start;
+}
+
+.bg-source-btn.active {
+    background: #7c6cff;
+    border-color: #7c6cff;
+}
+
 .swatches {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));

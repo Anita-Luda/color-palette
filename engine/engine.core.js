@@ -13,7 +13,8 @@ export const EngineState = {
     scale: 'absolute',       // absolute | asymmetric
     view: 'palettes',        // palettes | contrast
     granularity: 100,        // 10 | 50 | 100
-    background: 'light'      // light | dark
+    background: 'light',     // light | dark
+    backgroundSource: 'base' // 'base' or index (0, 1, 2...)
   },
 
   contrastSettings: {
@@ -88,6 +89,10 @@ export function setGranularity(value) {
 export function setBackgroundMode(mode) {
   if (mode !== 'light' && mode !== 'dark') return;
   EngineState.mode.background = mode;
+}
+
+export function setBackgroundSource(source) {
+  EngineState.mode.backgroundSource = source;
 }
 
 export function setContrastSettings(key, value) {
@@ -173,6 +178,12 @@ function createColor(index, manualData = null) {
 
 export function addManualColor(hex, lch, slider) {
     EngineState.colors.push(createColor(EngineState.colors.length, { hex, lch, slider }));
+}
+
+export function addGrayPalette() {
+    const grayHex = "#808080";
+    const grayLCH = { L: 0.5, C: 0, h: 0 };
+    addManualColor(grayHex, grayLCH, 0.5);
 }
 
 export function updateColorRole(index, role) {

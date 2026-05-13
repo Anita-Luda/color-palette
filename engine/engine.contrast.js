@@ -44,9 +44,25 @@ function findColorByContrast(baseHex, targetRatio, direction, hue, chroma) {
     return rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
 }
 
+import { generateScaleForLCH } from './engine.scales.js';
+
+function ensureUnique(hex, forbidden, lch, direction) {
+    let currentHex = hex;
+    let currentL = rgbToOklab_local(hex).L;
+    let attempts = 0;
+    while (forbidden.includes(currentHex) && attempts < 20) {
+        if (direction === 'lighter') currentL += 0.01;
+        else currentL -= 0.01;
+        currentL = Math.max(0, Math.min(1, currentL));
+        const lab = oklchToOklab(currentL, lch.C, lch.h);
+        currentHex = rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
+        attempts++;
+    }
+    return currentHex;
+}
+
 export function generateContrastGrid(targetLch) {
     let lch = targetLch || getBaseLCH();
-    // Normalize LCH: support both lowercase and uppercase keys
     lch = {
         L: lch.L !== undefined ? lch.L : (lch.l !== undefined ? lch.l : 0.5),
         C: lch.C !== undefined ? lch.C : (lch.c !== undefined ? lch.c : 0.1),
@@ -55,11 +71,49 @@ export function generateContrastGrid(targetLch) {
 
     const { brightness, boost, ignoredThresholds } = EngineState.contrastSettings;
     const isDark = EngineState.mode.palette === 'dark';
+    const bgSource = EngineState.mode.backgroundSource;
 
-    const levels = 10;
+    // Get background palette
+    let bgLch;
+    if (bgSource === 'base') {
+        bgLch = getBaseLCH();
+    } else {
+        const color = EngineState.colors[bgSource];
+        bgLch = color && color.manualLCH ? color.manualLCH : getBaseLCH();
+    }
+
+    // Full tonal scale co-10 (101 steps)
+    const fullScale = generateScaleForLCH(bgLch);
+
+    // Window of 10 tones
+    // slider 0..1 shifts window start from 1..91 (if light) or 0..90?
+    // "biały + pierwsze 10" means steps 10, 20... 100 when slider is 0.
+    // Index 0 is White (step 0), Index 100 is Black (step 1000).
+
+    const backgrounds = [];
+    if (isDark) {
+        backgrounds.push("#000000"); // Black
+        let startIdx = Math.round(brightness * 90); // 0..90
+        // "ostatnie 10" when brightness is 0? Or when brightness is 1?
+        // Let's assume brightness=0 means "pierwsze 10" (lightest) and brightness=1 means "ostatnie 10" (darkest)
+        // No, slider "przesuwa po palecie".
+        // For dark mode: Black + window.
+        for (let i = 1; i <= 10; i++) {
+            let idx = 100 - (startIdx + i);
+            idx = Math.max(0, Math.min(99, idx));
+            backgrounds.push(fullScale[idx].hex);
+        }
+    } else {
+        backgrounds.push("#FFFFFF"); // White
+        let startIdx = Math.round(brightness * 90); // 0..90
+        for (let i = 1; i <= 10; i++) {
+            let idx = startIdx + i;
+            idx = Math.max(1, Math.min(100, idx));
+            backgrounds.push(fullScale[idx].hex);
+        }
+    }
+
     const grid = [];
-
-    // Progi z uwzględnieniem boostu
     const getTarget = (base) => {
         if (ignoredThresholds.includes(base)) return 1.0;
         return base + boost;
@@ -69,67 +123,43 @@ export function generateContrastGrid(targetLch) {
     const t45 = getTarget(4.5);
     const t7 = getTarget(7.0);
 
-    // 10 levels of background
-    for (let i = 0; i < levels; i++) {
-        const t = i / (levels - 1);
+    for (let i = 0; i < backgrounds.length; i++) {
+        let bgHex = backgrounds[i];
 
-        let L;
-        // W palecie kontrastów Ustawienie jasności tła do najmniejszej i do największej powinny nadal generować 10 tonów.
-        // brightness 0..1 mapuje zakres jasności od którego startujemy/kończymy
-        if (isDark) {
-            // Dark mode background: darker tones
-            L = (1 - brightness) * (1 - t);
-        } else {
-            // Light mode background: lighter tones
-            L = 1 - (brightness * t);
+        // Ensure row uniqueness
+        if (i > 0 && bgHex === backgrounds[i-1]) {
+            // Tweak it slightly if it's not unique
+            let lab = rgbToOklab_local(bgHex);
+            let dir = isDark ? 0.005 : -0.005;
+            lab.L = Math.max(0, Math.min(1, lab.L + dir));
+            bgHex = rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
+            backgrounds[i] = bgHex;
         }
 
-        // Dodatkowe białe/czarne tło
-        if (i === 0 && brightness > 0.9) L = 1.0; // Force white
-        if (i === levels - 1 && brightness > 0.9) L = 0.0; // Force black
+        const bgLab = rgbToOklab_local(bgHex);
+        const direction = bgLab.L > 0.5 ? 'darker' : 'lighter';
 
-        const lab = oklchToOklab(L, lch.C * 0.15, lch.h);
-        const bgHex = rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
+        const row = { bg: bgHex };
+        const forbidden = [bgHex];
 
-        const direction = L > 0.5 ? 'darker' : 'lighter';
+        const findUnique = (target, base, dir) => {
+            let color = findColorByContrast(base, target, dir, lch.h, lch.C);
+            color = ensureUnique(color, forbidden, lch, dir);
+            forbidden.push(color);
+            return color;
+        };
 
-        // Nowe progi:
-        // - 3:1 level 1 do tła
-        const L1 = findColorByContrast(bgHex, t3, direction, lch.h, lch.C);
+        row.l1 = findUnique(t3, bgHex, direction);
+        row.c45_bg = findUnique(t45, bgHex, direction);
+        row.c45_l1 = findUnique(t45, row.l1, direction);
+        row.c7_bg = findUnique(t7, bgHex, direction);
+        row.c7_l1 = findUnique(t7, row.l1, direction);
+        row.l2 = findUnique(t3, row.l1, direction);
+        row.c45_l2 = findUnique(t45, row.l2, direction);
+        row.c7_l2 = findUnique(t7, row.l2, direction);
 
-        // - 4.5:1 do tła
-        const C45_BG = findColorByContrast(bgHex, t45, direction, lch.h, lch.C);
-
-        // - 4.5:1 do 3:1 level 1
-        const C45_L1 = findColorByContrast(L1, t45, direction, lch.h, lch.C);
-
-        // - 7:1 do tła
-        const C7_BG = findColorByContrast(bgHex, t7, direction, lch.h, lch.C);
-
-        // - 7:1 do 3:1 level 1
-        const C7_L1 = findColorByContrast(L1, t7, direction, lch.h, lch.C);
-
-        // - 3:1 level 2 do 3:1 level 1
-        const L2 = findColorByContrast(L1, t3, direction, lch.h, lch.C);
-
-        // - 4.5:1 do 3:1 level 2
-        const C45_L2 = findColorByContrast(L2, t45, direction, lch.h, lch.C);
-
-        // - 7:1 do 3:1 level 2
-        const C7_L2 = findColorByContrast(L2, t7, direction, lch.h, lch.C);
-
-        grid.push({
-            bg: bgHex,
-            l1: L1,
-            c45_bg: C45_BG,
-            c45_l1: C45_L1,
-            c7_bg: C7_BG,
-            c7_l1: C7_L1,
-            l2: L2,
-            c45_l2: C45_L2,
-            c7_l2: C7_L2,
-            baseContrast: contrastRatio(bgHex, rgbToHex(oklabToRgb(oklchToOklab(lch.L, lch.C, lch.h))))
-        });
+        row.baseContrast = contrastRatio(bgHex, rgbToHex(oklabToRgb(oklchToOklab(lch.L, lch.C, lch.h))));
+        grid.push(row);
     }
 
     return grid;

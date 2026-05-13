@@ -21,7 +21,8 @@ import {
   setGranularity,
   setBackgroundMode,
   toggleIgnoredThreshold,
-  addManualColor
+  addManualColor,
+  addGrayPalette
 } from '../engine/engine.core.js';
 
 import { rgbToOklab, oklabToOklch } from '../engine/engine.scales.js';
@@ -184,6 +185,15 @@ function setupAddColor(){
   if (btn) {
     btn.addEventListener('click', () => {
       addColor();
+      clearGradientCache();
+      refreshUI();
+    });
+  }
+
+  const grayBtn = $('addGrayBtn');
+  if (grayBtn) {
+    grayBtn.addEventListener('click', () => {
+      addGrayPalette();
       clearGradientCache();
       refreshUI();
     });

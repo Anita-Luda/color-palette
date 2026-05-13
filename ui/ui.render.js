@@ -110,6 +110,19 @@ function renderMain(){
   const main = getMainPalette();
   const state = getState();
   const sec = section('Paleta główna', state.mode.scale.toUpperCase());
+
+  if (state.mode.view === 'contrast') {
+      const btn = el('button', 'bg-source-btn', 'Ustaw jako tło');
+      if (state.mode.backgroundSource === 'base') btn.classList.add('active');
+      btn.onclick = () => {
+          import('../engine/engine.core.js').then(m => {
+              m.setBackgroundSource('base');
+              window.refreshUI();
+          });
+      };
+      sec.querySelector('.palette-title').appendChild(btn);
+  }
+
   sec.appendChild(renderScale(main.scale));
   return sec;
 }
@@ -118,9 +131,23 @@ function renderMain(){
 function renderAdditional(){
   const list = getAdditionalPalettes();
   const frag = document.createDocumentFragment();
+  const state = getState();
 
   list.forEach(p => {
     const sec = section(`Kolor ${p.index + 1}`, p.role);
+
+    if (state.mode.view === 'contrast') {
+        const btn = el('button', 'bg-source-btn', 'Ustaw jako tło');
+        if (state.mode.backgroundSource === p.index) btn.classList.add('active');
+        btn.onclick = () => {
+            import('../engine/engine.core.js').then(m => {
+                m.setBackgroundSource(p.index);
+                window.refreshUI();
+            });
+        };
+        sec.querySelector('.palette-title').appendChild(btn);
+    }
+
     sec.appendChild(renderScale(p.scale));
 
     // Update mini-preview in sidebar
@@ -273,8 +300,21 @@ export function renderAllPalettes(differential = false){
   if (!root) return;
   const state = getState();
 
+  // Update Background source label
+  const bgSourceLabel = document.getElementById('active-bg-source');
+  if (bgSourceLabel) {
+      const source = state.mode.backgroundSource;
+      if (source === 'base') {
+          bgSourceLabel.textContent = 'Tło z: Paleta Główna';
+      } else {
+          bgSourceLabel.textContent = `Tło z: Kolor ${source + 1}`;
+      }
+  }
+
   root.innerHTML = '';
   if (state.mode.view === 'contrast') {
+      root.appendChild(renderMain());
+      root.appendChild(renderAdditional());
       root.appendChild(renderContrastView());
   } else {
       const frag = document.createDocumentFragment();
