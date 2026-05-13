@@ -93,23 +93,27 @@ export function generateContrastGrid(targetLch) {
     const backgrounds = [];
     if (isDark) {
         backgrounds.push("#000000"); // Black
-        let startIdx = Math.round(brightness * 90); // 0..90
-        // "ostatnie 10" when brightness is 0? Or when brightness is 1?
-        // Let's assume brightness=0 means "pierwsze 10" (lightest) and brightness=1 means "ostatnie 10" (darkest)
-        // No, slider "przesuwa po palecie".
-        // For dark mode: Black + window.
+        let startIdx = Math.round(brightness * 90);
         for (let i = 1; i <= 10; i++) {
             let idx = 100 - (startIdx + i);
             idx = Math.max(0, Math.min(99, idx));
             backgrounds.push(fullScale[idx].hex);
         }
+        // "dla maksymalnej jasności tła w dark mode dodawaj biały"
+        if (brightness > 0.95) {
+            backgrounds.push("#FFFFFF");
+        }
     } else {
         backgrounds.push("#FFFFFF"); // White
-        let startIdx = Math.round(brightness * 90); // 0..90
+        let startIdx = Math.round(brightness * 90);
         for (let i = 1; i <= 10; i++) {
             let idx = startIdx + i;
             idx = Math.max(1, Math.min(100, idx));
             backgrounds.push(fullScale[idx].hex);
+        }
+        // "dla maksymalnej ciemności tła w light mode dodawaj czarny"
+        if (brightness > 0.95) {
+            backgrounds.push("#000000");
         }
     }
 

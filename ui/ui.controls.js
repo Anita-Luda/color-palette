@@ -20,14 +20,16 @@ import {
   setContrastSettings,
   setGranularity,
   setBackgroundMode,
+  setBackgroundSource,
   toggleIgnoredThreshold,
   addManualColor,
   addGrayPalette
 } from '../engine/engine.core.js';
 
-import { rgbToOklab, oklabToOklch } from '../engine/engine.scales.js';
+import { rgbToOklab, oklabToOklch, rgbToHex } from '../engine/engine.scales.js';
 import { clearGradientCache } from '../engine/engine.gradients.js';
 import { renderAllPalettes } from './ui.render.js';
+import { contrastRatio } from '../engine/engine.accessibility.js';
 
 /* ---------- HELPERS ---------- */
 const $ = id => document.getElementById(id);
@@ -77,6 +79,7 @@ function refreshUI() {
   renderAllPalettes();
   renderSliders();
   renderWarnings();
+  updateContrastInfos();
 
   // Gradients are recalculated here (base color change / batch change)
   import('./ui.gradients.js').then(m => m.renderAllGradients());
@@ -123,6 +126,26 @@ function setupBasePicker() {
         $('textColor').value = picker.value;
         onBaseChange();
     });
+
+    const bgBtn = document.createElement('button');
+    bgBtn.id = 'base-bg-btn';
+    bgBtn.className = 'bg-source-btn';
+    bgBtn.textContent = 'Ustaw jako tło';
+    bgBtn.style.marginTop = '8px';
+    bgBtn.onclick = () => {
+        import('../engine/engine.core.js').then(m => {
+            m.setBackgroundSource('base');
+            refreshUI();
+        });
+    };
+    preview.parentNode.appendChild(bgBtn);
+
+    const contrastInfo = document.createElement('div');
+    contrastInfo.id = 'base-contrast-info';
+    contrastInfo.style.fontSize = '0.75rem';
+    contrastInfo.style.marginTop = '4px';
+    contrastInfo.style.opacity = '0.8';
+    preview.parentNode.appendChild(contrastInfo);
 }
 
 /* ---------- BATCH ---------- */
@@ -278,11 +301,54 @@ function renderSliders(){
       if (roleSel && document.activeElement !== roleSel) {
           roleSel.value = c.role;
       }
+
+      const bgBtn = card.querySelector('.bg-source-btn');
+      if (bgBtn) {
+          if (state.mode.backgroundSource === c.index) bgBtn.classList.add('active');
+          else bgBtn.classList.remove('active');
+      }
     });
+  }
+
+  const baseBgBtn = $('base-bg-btn');
+  if (baseBgBtn) {
+      if (state.mode.backgroundSource === 'base') baseBgBtn.classList.add('active');
+      else baseBgBtn.classList.remove('active');
   }
 }
 
+function updateContrastInfos() {
+    const state = getState();
+    const bgMode = state.mode.background;
+    const bgHex = bgMode === 'dark' ? '#000000' : '#FFFFFF';
+
+    // Base
+    const baseInfo = $('base-contrast-info');
+    if (baseInfo) {
+        const hex = rgbToHex(state.base.rgb);
+        const ratio = contrastRatio(bgHex, hex);
+        baseInfo.textContent = `Kontrast: ${ratio.toFixed(2)}:1`;
+    }
+
+    // Additional
+    import('../engine/engine.palettes.js').then(m => {
+        const additional = m.getAdditionalPalettes();
+        state.colors.forEach((c, i) => {
+            const info = $(`contrast-info-${c.index}`);
+            if (info) {
+                const palette = additional.find(p => p.index === c.index);
+                if (palette) {
+                    const anchor = palette.scale.find(s => s.isBase) || palette.scale[50];
+                    const ratio = contrastRatio(bgHex, anchor.hex);
+                    info.textContent = `Kontrast: ${ratio.toFixed(2)}:1`;
+                }
+            }
+        });
+    });
+}
+
 function createSliderCard(c) {
+  const state = getState();
   const card = document.createElement('div');
   card.className = 'color-card';
   card.dataset.index = c.index;
@@ -322,6 +388,24 @@ function createSliderCard(c) {
   preview.id = `preview-${c.index}`;
   // Will be updated by renderer
 
+  const bgBtn = document.createElement('button');
+  bgBtn.className = 'bg-source-btn';
+  bgBtn.textContent = 'Ustaw jako tło';
+  bgBtn.style.width = '100%';
+  bgBtn.style.marginBottom = '8px';
+  if (state.mode.backgroundSource === c.index) bgBtn.classList.add('active');
+  bgBtn.onclick = () => {
+      setBackgroundSource(c.index);
+      refreshUI();
+  };
+
+  const contrastInfo = document.createElement('div');
+  contrastInfo.className = 'card-contrast-info';
+  contrastInfo.id = `contrast-info-${c.index}`;
+  contrastInfo.style.fontSize = '0.75rem';
+  contrastInfo.style.marginBottom = '8px';
+  contrastInfo.style.opacity = '0.8';
+
   const slider = document.createElement('input');
   slider.type = 'range';
   slider.min = 0;
@@ -345,7 +429,7 @@ function createSliderCard(c) {
     refreshUI();
   });
 
-  card.append(header, roleSelect, preview, slider, del);
+  card.append(header, roleSelect, preview, bgBtn, contrastInfo, slider, del);
   return card;
 }
 
