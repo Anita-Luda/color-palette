@@ -1,38 +1,30 @@
-KOMPLEKSOWA CHECKLISTA REALIZACJI WYMAGAŃ (STAN KOŃCOWY)
+# Checklist - Wymagania i Implementacja
 
-1. FUNDAMENTY I ARCHITEKTURA
-- [x] Migracja na model OKLCH: Precyzyjne sterowanie jasnością (L), nasyceniem (C) i odcieniem (H).
-- [x] Odwrócona skala jasności: Konsekwentne stosowanie mapowania 0 = Biały (L: 1.0), 1000 = Czarny (L: 0.0).
-- [x] Single Source of Truth: Wszystkie obliczenia i stan w engine.core.js.
-- [x] Poprawienie błędów importów: Moduły ES6 działają poprawnie w przeglądarce.
+## 1. Migracja na OKLCH i Poprawki Silnika
+- [x] Pełna migracja z LCH na OKLCH (lepsza percepcja jasności i błękitów).
+- [x] Separacja Algorytmu od Dystrybucji:
+    - [x] Algorytm: Standard (OKLCH) vs Adaptive Perceptual (krzywe nasycenia i odcienia).
+    - [x] Dystrybucja: Absolute (równomierne kroki L) vs Asymmetric (większa gęstość w cieniach/światłach).
+- [x] Naprawienie błędu NaN w obliczeniach kontrastu "Brand vs BG".
+- [x] Implementacja automatycznego resetu tła do skrajnych wartości (Step 0 / Step 1000) przy zmianie trybu jasny/ciemny.
 
-2. LOGIKA GENEROWANIA KOLORÓW
-- [x] Skale 0-1000: Wszystkie palety (Main, Additional, Functional, Badge) oparte na 11 krokach.
-- [x] Granulacja Skali: Dynamiczne przełączanie widoku (co 10, 50, 100) bez utraty danych.
-- [x] Tryb Absolute: Liniowy rozkład jasności.
-- [x] Tryb Asymmetric (Symmetric): Zakotwiczenie na kroku 500 z nieliniowym zagęszczeniem w stronę ciemnych/jasnych tonów.
-- [x] Tryb Adaptive Perceptual: Inteligentne wyliczanie maksymalnego nasycenia (C) przy zachowaniu gamutu sRGB i płynna korekta odcienia (H).
-- [x] Kolizje Odcieni: Automatyczna korekta barw funkcjonalnych względem koloru bazowego.
-- [x] Ręczne Dodawanie Kolorów: Detekcja konfliktów Hue (<15°) z opcją automatycznej korekty.
-- [x] Paleta Szarości: Szybkie dodawanie palety neutralnej (C=0).
-- [x] Optymalizacja Dark Mode: Desaturacja kolorów (0.8x chroma) dla lepszej czytelności.
+## 2. Interfejs Użytkownika (UI/UX)
+- [x] Wyświetlanie rzeczywistych współczynników kontrastu względem Białego (W) i Czarnego (B) na każdym kaflu koloru.
+- [x] System Inteligentnych Badge'y (Etykiet):
+    - [x] Badge "BASE" jest zawsze widoczny dla koloru bazowego.
+    - [x] Przy granulacji 10: Badge 50 i 100 są zawsze widoczne (priorytet dla 100).
+    - [x] Przy granulacji 50: Tylko badge 100 jest zawsze widoczny.
+- [x] Dodanie przełączników (radio buttons) dla Algorytmu i Dystrybucji w panelu bocznym.
 
-3. INTERFEJS UŻYTKOWNIKA (UI/UX)
-- [x] Wydajność: Optymalizacja renderowania przez DocumentFragment (60 FPS).
-- [x] Wizualne Badge: Etykiety "BASE", "100", "50" ułatwiające orientację w skali.
-- [x] Realistyczne suwaki: Gradienty OKLCH z maskowaniem kolorów poza-gamutowych (szary overlay).
-- [x] Niezależne Tło Preview: Możliwość testowania UI na jasnym i ciemnym tle.
-- [x] Sidebar Contrast Info: Każda karta koloru w sidebarze pokazuje kontrast anchoru względem tła preview.
+## 3. Moduł Dostępności (Accessibility)
+- [x] Uproszczenie siatki kontrastów (usunięcie kolumn AAA vs L1, AA vs L2, AAA vs L2).
+- [x] Aktualizacja legendy i opisów poziomów L1 i L2.
+- [x] Synchronizacja przycisków "Ignore Threshold" z nowym układem kolumn.
 
-4. ZAAWANSOWANY WIDOK KONTRASTU
-- [x] Dynamiczna Siatka Tła: 11 wierszy generowanych z pełnej skali (co-10) wybranej palety.
-- [x] Wybór Źródła Tła: Możliwość ustawienia dowolnej palety dodatkowej/szarej jako tła odniesienia.
-- [x] Gwarantowana Unikalność: Funkcja ensureUnique zapobiega nakładaniu się identycznych HEX w siatce.
-- [x] Warstwy Kontrastu (L1, L2): Precyzyjne wyliczanie zagnieżdżonych elementów (3:1, 4.5:1, 7:1) metodą Binary Search.
-- [x] Granular Threshold Control: Możliwość ignorowania specyficznych relacji (np. tylko L1 vs BG).
-- [x] Legenda i Opisy: Pełne nazewnictwo relacji (np. "AA vs L1") oraz legenda hierarchii warstw.
-- [x] Raportowanie Real-Time: Swatche pokazują wymagany kontrast (Min) oraz faktycznie uzyskany (Real).
+## 4. Estetyka i Debugowanie
+- [x] Poprawa renderowania gradientów w przestrzeni OKLCH.
+- [x] Optymalizacja wydajności generowania dużych palet (granulacja 10).
+- [x] Naprawa błędów w zaokrąglaniu wartości HEX.
 
-5. DEBUGOWANIE I STABILNOŚĆ
-- [x] Clamping RGB: Pełne zabezpieczenie przed NaN i błędami renderowania.
-- [x] Stabilność UI: Brak resetów focusu i stanu przy przesuwaniu suwaków.
+---
+Status końcowy: Wszystkie wymagania zrealizowane. System jest stabilny i gotowy do użycia.

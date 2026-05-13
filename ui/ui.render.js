@@ -43,6 +43,8 @@ function renderSwatch(swatch, opts = {}){
 
   const state = getState();
   const gran = state.mode.granularity;
+
+  // Requirement: "Kolor bazowy ma mieć badge widzony zawsze w każdej palecie i granulacji"
   if (gran === 50 && swatch.step % 50 !== 0 && !swatch.isBase) return null;
   if (gran === 100 && swatch.step % 100 !== 0 && !swatch.isBase) return null;
 
@@ -63,9 +65,16 @@ function renderSwatch(swatch, opts = {}){
   // co 50: show 100
   // co 100: handled by renderer not showing non-100s
 
+  // Badges rules:
+  // - BASE always visible.
+  // - Granularity 10: 100 and 50 visible (100 priority if same).
+  // - Granularity 50: 100 visible.
+
   if (swatch.isBase) {
-      d.appendChild(el('div', 'swatch-badge base', 'BASE'));
-  } else if (gran === 10) {
+      d.appendChild(el('div', 'swatch-badge base visible', 'BASE'));
+  }
+
+  if (gran === 10) {
       if (swatch.step % 100 === 0) {
           d.appendChild(el('div', 'swatch-badge step100 visible', '100'));
       } else if (swatch.step % 50 === 0) {
@@ -75,10 +84,6 @@ function renderSwatch(swatch, opts = {}){
       if (swatch.step % 100 === 0) {
           d.appendChild(el('div', 'swatch-badge step100 visible', '100'));
       }
-  } else if (swatch.step % 100 === 0) {
-      d.appendChild(el('div', 'swatch-badge step100', '100'));
-  } else if (swatch.step % 50 === 0) {
-      d.appendChild(el('div', 'swatch-badge step50', '50'));
   }
 
   // Contrast info for current background
@@ -86,7 +91,16 @@ function renderSwatch(swatch, opts = {}){
   const info = contrast[bgMode];
   const contrastEl = el('div', 'swatch-contrast', `${info.ratio} ${info.level}`);
 
-  d.append(step, hex, contrastEl);
+  const whiteBlackContrast = el('div', 'swatch-wb-contrast');
+  whiteBlackContrast.innerHTML = `
+    <span class="c-w">W: ${contrast.light.ratio}</span>
+    <span class="c-b">B: ${contrast.dark.ratio}</span>
+  `;
+  whiteBlackContrast.style.fontSize = '0.65rem';
+  whiteBlackContrast.style.opacity = '0.8';
+  whiteBlackContrast.style.marginTop = '2px';
+
+  d.append(step, hex, contrastEl, whiteBlackContrast);
 
   // Click to copy
   d.addEventListener('click', () => {
@@ -194,10 +208,7 @@ function renderContrastGridForLCH(lch, title) {
         el('div', null, 'AA (4.5:1) vs BG'),
         el('div', null, 'AA (4.5:1) vs L1'),
         el('div', null, 'AAA (7:1) vs BG'),
-        el('div', null, 'AAA (7:1) vs L1'),
         el('div', null, 'Lvl 2 (3:1) vs L1'),
-        el('div', null, 'AA (4.5:1) vs L2'),
-        el('div', null, 'AAA (7:1) vs L2'),
         el('div', null, 'Brand vs BG')
     );
     container.appendChild(header);
@@ -211,10 +222,7 @@ function renderContrastGridForLCH(lch, title) {
             createContrastSwatch(`Min: ${row.c45_bg_target.toFixed(1)}`, row.c45_bg, null, row.c45_bg_actual),
             createContrastSwatch(`Min: ${row.c45_l1_target.toFixed(1)}`, row.c45_l1, null, row.c45_l1_actual),
             createContrastSwatch(`Min: ${row.c7_bg_target.toFixed(1)}`, row.c7_bg, null, row.c7_bg_actual),
-            createContrastSwatch(`Min: ${row.c7_l1_target.toFixed(1)}`, row.c7_l1, null, row.c7_l1_actual),
             createContrastSwatch(`Min: ${row.l2_target.toFixed(1)}`, row.l2, null, row.l2_actual),
-            createContrastSwatch(`Min: ${row.c45_l2_target.toFixed(1)}`, row.c45_l2, null, row.c45_l2_actual),
-            createContrastSwatch(`Min: ${row.c7_l2_target.toFixed(1)}`, row.c7_l2, null, row.c7_l2_actual),
             createContrastSwatch('Base', null, lch, row.baseContrast)
         );
         container.appendChild(r);
@@ -230,10 +238,10 @@ function renderContrastView() {
     // Legend
     const legend = el('div', 'contrast-legend');
     legend.innerHTML = `
-        <div class="legend-item"><strong>Lvl 1</strong>: Powierzchnia / Element na tłe (np. karta).</div>
+        <div class="legend-item"><strong>Lvl 1</strong>: Powierzchnia / Element na tle (np. karta).</div>
         <div class="legend-item"><strong>AA / AAA</strong>: Wymogi WCAG dla tekstu względem wskazanej warstwy.</div>
         <div class="legend-item"><strong>Lvl 2</strong>: Element zagnieżdżony na Level 1 (np. przycisk na karcie).</div>
-        <div class="legend-item"><strong>Brand</strong>: Twój kolor bazowy (anchor) wyświetlony na danym tłe.</div>
+        <div class="legend-item"><strong>Brand</strong>: Twój kolor bazowy (anchor) wyświetlony na danym tle.</div>
     `;
     legend.style.padding = '20px 32px';
     legend.style.margin = '0 32px 32px 32px';

@@ -12,6 +12,7 @@ import {
   setColorSlider,
   setPaletteMode,
   setScaleMode,
+  setAlgorithmMode,
   setLock,
   getState,
   getWarnings,
@@ -110,7 +111,8 @@ function onBaseChange(){
   if (!rgb) return;
 
   updateBasePreview(rgb);
-  setBaseRGB(rgb, null, null);
+  const lch = oklabToOklch(rgbToOklab(rgb.r, rgb.g, rgb.b));
+  setBaseRGB(rgb, lch, null);
   clearGradientCache();
 
   refreshUI();
@@ -437,6 +439,11 @@ function createSliderCard(c) {
 function setupModes(){
   $('mode')?.addEventListener('change', e => {
     setPaletteMode(e.target.value);
+    // Reset contrast brightness to 0 (default: White for light, Black for dark)
+    setContrastSettings('brightness', 0);
+    const slider = $('contrast-brightness');
+    if (slider) slider.value = 0;
+
     clearGradientCache();
     refreshUI();
   });
@@ -464,9 +471,15 @@ function setupModes(){
   document
     .querySelectorAll('input[name="scaleMode"]')
     .forEach(r => r.addEventListener('change', e => {
-      let mode = e.target.value;
-      if (mode === 'symmetric') mode = 'asymmetric';
-      setScaleMode(mode);
+      setScaleMode(e.target.value);
+      clearGradientCache();
+      refreshUI();
+    }));
+
+  document
+    .querySelectorAll('input[name="algoMode"]')
+    .forEach(r => r.addEventListener('change', e => {
+      setAlgorithmMode(e.target.value);
       clearGradientCache();
       refreshUI();
     }));

@@ -84,55 +84,15 @@ function clampChroma(L, C){
 }
 
 /* ---------- CORE GENERATORS ---------- */
-function makeSwatch(step, lch){
-  const L = stepToL(step);
-  const C = clampChroma(L, lch.C);
-  const lab = oklchToOklab(L, C, lch.h);
-  const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-  return {
-    step,
-    hex: rgbToHex(rgb),
-    h: lch.h,
-    c: C,
-    l: L,
-    isBase: false // default
-  };
-}
-
-export function generateAbsoluteScale(lch, steps = DEFAULT_STEPS, forceExcludeAnchor = false){
-  // Requirement: "Wszystkie progi (100, 200, itd.) są generowane w równych odstępach matematycznych, niezależnie od wartości Cin."
-  const anchorStep = LToStep(lch.L);
-  const scale = steps.map(s => makeSwatch(s, lch));
-
-  // Mark anchor if it exists in the steps or insert it
-  let found = false;
-  scale.forEach(sw => {
-      if (Math.abs(sw.step - anchorStep) < 2) {
-          sw.isBase = true;
-          sw.step = anchorStep; // show exact step
-          found = true;
-      }
-  });
-
-  if (!found && !forceExcludeAnchor) {
-      const baseSwatch = makeSwatch(anchorStep, lch);
-      baseSwatch.isBase = true;
-      baseSwatch.isInserted = true;
-      scale.push(baseSwatch);
-  }
-
-  return scale.sort((a,b)=>a.step-b.step);
-}
+/* ---------- CORE GENERATORS ---------- */
 
 function maxChromaForL(L, H, C_start) {
   let low = 0;
-  let high = Math.max(C_start, 0.4); // Start with at least 0.4 to find max possible
+  let high = Math.max(C_start, 0.4);
   for (let i = 0; i < 20; i++) {
     const mid = (low + high) / 2;
     const lab = oklchToOklab(L, mid, H);
     const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-
-    // Check if in gamut [0, 255]
     if (rgb.r >= 0 && rgb.r <= 255 && rgb.g >= 0 && rgb.g <= 255 && rgb.b >= 0 && rgb.b <= 255) {
       low = mid;
     } else {
@@ -150,7 +110,7 @@ function chromaFalloff(L, baseL) {
 }
 
 function hueShift(L, baseL, baseH) {
-  const shift_strength = 5; // degrees
+  const shift_strength = 5;
   const d = L - baseL;
   return (baseH + d * shift_strength + 360) % 360;
 }
@@ -162,100 +122,75 @@ function lightnessCurve(t) {
   return L_max - (L_max - L_min) * Math.pow(t, gamma);
 }
 
-export function generateAdaptiveScale(lch) {
-  const out = [];
-  const baseL = lch.L;
-  const baseC = lch.C;
-  const baseH = lch.h;
+export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnchor = false){
+  const anchorStep = LToStep(lch.L);
+  const isAsymmetric = EngineState.mode.scale === 'asymmetric';
+  const isAdaptive = EngineState.mode.algorithm === 'adaptive';
 
-  for (let i = 0; i <= 100; i++) {
-    const step = i * 10;
-    const t = step / 1000;
-
-    // Step 2: Target L
-    const L = lightnessCurve(t);
-
-    // Step 5: Hue shift
-    const H = hueShift(L, baseL, baseH);
-
-    // Step 3 & 4: Adaptive Chroma
-    const maxC = maxChromaForL(L, H, baseC);
-    const falloff = chromaFalloff(L, baseL);
-    const C = Math.min(maxC, baseC * falloff);
-
-    const lab = oklchToOklab(L, C, H);
-    const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-
-    out.push({
-      step,
-      hex: rgbToHex(rgb),
-      h: H,
-      c: C,
-      l: L,
-      isBase: false
-    });
-  }
-
-  // Find and mark the "real" base if we want, but in adaptive mode
-  // the curve might not hit baseL exactly at step 500.
-  // The requirement didn't specify anchor for adaptive.
-
-  return out;
-}
-
-export function generateAsymmetricScale(lch){
-  // Requirement: Anchor is fixed at 500.
-  // Nonlinearity: "Jeśli Cin jest ciemny, kroki w stronę 1000 są mniejsze (większe zagęszczenie), a w stronę 0 – większe (rozciągnięcie skali)."
-
-  const out = [];
-  const anchorL = lch.L;
-
-  for (let i = 0; i <= 100; i++) {
-      const step = i * 10;
+  const scale = steps.map(step => {
       let L;
-      if (step === 500) {
-          L = anchorL;
-      } else if (step < 500) {
-          const t = step / 500;
-          // If anchorL is dark (0.2), p = 1/(0.4+0.1) = 2. t^2 stretches small t, squeezes large t near anchor.
-          // Wait, if p > 1, small t (near 0 step / white) grows slowly.
-          // If Cin is dark, we want "rozciągnięcie skali" towards 0.
-          // Meaning 100, 200, 300 should be further apart in L.
-          const p = anchorL < 0.5 ? 1 / (2 * anchorL + 0.1) : 1;
-          L = 1 - (1 - anchorL) * Math.pow(t, p);
+      if (isAsymmetric) {
+          if (step === 500) L = lch.L;
+          else if (step < 500) {
+              const t = step / 500;
+              const p = lch.L < 0.5 ? 1 / (2 * lch.L + 0.1) : 1;
+              L = 1 - (1 - lch.L) * Math.pow(t, p);
+          } else {
+              const t = (step - 500) / 500;
+              const p = lch.L < 0.5 ? 2 * lch.L + 0.1 : 1;
+              L = lch.L * (1 - Math.pow(t, p));
+          }
       } else {
-          const t = (step - 500) / 500;
-          // If anchorL is dark (0.2), p = 0.5. t^0.5 makes small t (near 500) grow fast in L drop.
-          // Meaning 600, 700 are closer to 1000 in L. (zagęszczenie)
-          const p = anchorL < 0.5 ? 2 * anchorL + 0.1 : 1;
-          L = anchorL * (1 - Math.pow(t, p));
+          L = isAdaptive ? lightnessCurve(step/1000) : stepToL(step);
       }
 
-      const C = clampChroma(L, lch.C);
-      const lab = oklchToOklab(L, C, lch.h);
+      let C, H;
+      if (isAdaptive) {
+          H = hueShift(L, lch.L, lch.h);
+          const maxC = maxChromaForL(L, H, lch.C);
+          const falloff = chromaFalloff(L, lch.L);
+          C = Math.min(maxC, lch.C * falloff);
+      } else {
+          C = clampChroma(L, lch.C);
+          H = lch.h;
+      }
+
+      const lab = oklchToOklab(L, C, H);
       const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-      const sw = { step, hex: rgbToHex(rgb), h: lch.h, c: C, l: L };
-      if (step === 500) sw.isBase = true;
-      out.push(sw);
+      return {
+          step,
+          hex: rgbToHex(rgb),
+          h: H, c: C, l: L,
+          isBase: isAsymmetric ? (step === 500) : (Math.abs(step - anchorStep) < 2)
+      };
+  });
+
+  if (!isAsymmetric && !forceExcludeAnchor) {
+      if (!scale.find(s => Math.abs(s.step - anchorStep) < 2)) {
+          let L = lch.L;
+          let C, H;
+          if (isAdaptive) {
+              H = hueShift(L, lch.L, lch.h);
+              const maxC = maxChromaForL(L, H, lch.C);
+              const falloff = chromaFalloff(L, lch.L);
+              C = Math.min(maxC, lch.C * falloff);
+          } else {
+              C = clampChroma(L, lch.C);
+              H = lch.h;
+          }
+          const lab = oklchToOklab(L, C, H);
+          const rgb = oklabToRgb(lab.L, lab.a, lab.b);
+          scale.push({
+              step: anchorStep,
+              hex: rgbToHex(rgb),
+              h: H, c: C, l: L,
+              isBase: true,
+              isInserted: true
+          });
+      }
   }
 
-  return out.sort((a,b)=>a.step-b.step);
-}
-
-/* ---------- PUBLIC API ---------- */
-export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnchor = false){
-  // Check if we are using the default granular steps (0, 10, 20...)
-  const isDefaultGranular = steps === DEFAULT_STEPS || (steps.length === 101 && steps[1] === 10);
-
-  if (isDefaultGranular) {
-    if (EngineState.mode.scale === 'adaptive') {
-      return generateAdaptiveScale(lch);
-    }
-    if (EngineState.mode.scale === 'asymmetric') {
-      return generateAsymmetricScale(lch);
-    }
-  }
-  return generateAbsoluteScale(lch, steps, forceExcludeAnchor);
+  return scale.sort((a,b)=>a.step-b.step);
 }
 
 export function getBaseLCH(){

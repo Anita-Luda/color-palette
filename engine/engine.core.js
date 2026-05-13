@@ -11,6 +11,7 @@ export const EngineState = {
   mode: {
     palette: 'light',        // light | dark
     scale: 'absolute',       // absolute | asymmetric
+    algorithm: 'standard',   // standard | adaptive
     view: 'palettes',        // palettes | contrast
     granularity: 100,        // 10 | 50 | 100
     background: 'light',     // light | dark
@@ -70,8 +71,13 @@ export function setPaletteMode(mode) {
 }
 
 export function setScaleMode(mode) {
-  if (mode !== 'absolute' && mode !== 'asymmetric' && mode !== 'adaptive') return;
+  if (mode !== 'absolute' && mode !== 'asymmetric') return;
   EngineState.mode.scale = mode;
+}
+
+export function setAlgorithmMode(mode) {
+  if (mode !== 'standard' && mode !== 'adaptive') return;
+  EngineState.mode.algorithm = mode;
 }
 
 export function setView(view) {

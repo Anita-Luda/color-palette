@@ -170,27 +170,13 @@ export function generateContrastGrid(targetLch) {
         row.c7_bg_target = t7bg;
         row.c7_bg_actual = contrastRatio(bgHex, row.c7_bg);
 
-        const t7l1 = getTarget(7.0, 'C7_L1');
-        row.c7_l1 = findUnique(t7l1, row.l1, direction);
-        row.c7_l1_target = t7l1;
-        row.c7_l1_actual = contrastRatio(row.l1, row.c7_l1);
-
         const tL2 = getTarget(3.0, 'L2_L1');
         row.l2 = findUnique(tL2, row.l1, direction);
         row.l2_target = tL2;
         row.l2_actual = contrastRatio(row.l1, row.l2);
 
-        const t45l2 = getTarget(4.5, 'C45_L2');
-        row.c45_l2 = findUnique(t45l2, row.l2, direction);
-        row.c45_l2_target = t45l2;
-        row.c45_l2_actual = contrastRatio(row.l2, row.c45_l2);
-
-        const t7l2 = getTarget(7.0, 'C7_L2');
-        row.c7_l2 = findUnique(t7l2, row.l2, direction);
-        row.c7_l2_target = t7l2;
-        row.c7_l2_actual = contrastRatio(row.l2, row.c7_l2);
-
-        row.baseContrast = contrastRatio(bgHex, rgbToHex(oklabToRgb(oklchToOklab(lch.L, lch.C, lch.h))));
+        const baseLab = oklchToOklab(lch.L, lch.C, lch.h);
+        row.baseContrast = contrastRatio(bgHex, rgbToHex(oklabToRgb(baseLab.L, baseLab.a, baseLab.b)));
         grid.push(row);
     }
 
