@@ -149,10 +149,8 @@ function setupBasePicker() {
     bgBtn.textContent = 'Ustaw jako tło';
     bgBtn.style.marginTop = '8px';
     bgBtn.onclick = () => {
-        import('../engine/engine.core.js').then(m => {
-            m.setBackgroundSource('base');
-            refreshUI();
-        });
+        setBackgroundSource('base');
+        refreshUI();
     };
     preview.parentNode.appendChild(bgBtn);
 

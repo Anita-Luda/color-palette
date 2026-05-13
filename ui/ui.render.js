@@ -140,6 +140,19 @@ function renderMain(){
 }
 
 /* ---------- ADDITIONAL ---------- */
+export function updateSidebarPreviews() {
+  const list = getAdditionalPalettes();
+  list.forEach(p => {
+    const mini = document.getElementById(`preview-${p.index}`);
+    const hexLabel = document.getElementById(`hex-val-${p.index}`);
+    if (mini) {
+      const anchor = p.scale.find(s => s.isBase) || p.scale[Math.floor(p.scale.length / 2)];
+      mini.style.background = anchor.hex;
+      if (hexLabel) hexLabel.textContent = anchor.hex.toUpperCase();
+    }
+  });
+}
+
 function renderAdditional(){
   const list = getAdditionalPalettes();
   const frag = document.createDocumentFragment();
@@ -147,19 +160,10 @@ function renderAdditional(){
   list.forEach(p => {
     const sec = section(`Kolor ${p.index + 1}`, p.role);
     sec.appendChild(renderScale(p.scale));
-
-    // Update mini-preview in sidebar
-    const mini = document.getElementById(`preview-${p.index}`);
-    const hexLabel = document.getElementById(`hex-val-${p.index}`);
-    if (mini) {
-        const anchor = p.scale.find(s => s.isBase) || p.scale[Math.floor(p.scale.length/2)];
-        mini.style.background = anchor.hex;
-        if (hexLabel) hexLabel.textContent = anchor.hex.toUpperCase();
-    }
-
     frag.appendChild(sec);
   });
 
+  updateSidebarPreviews();
   return frag;
 }
 
@@ -324,16 +328,7 @@ export function renderAllPalettes(preserveFocus = false){
   if (!root) return;
   const state = getState();
 
-  // Update Background source label
-  const bgSourceLabel = document.getElementById('active-bg-source');
-  if (bgSourceLabel) {
-      const source = state.mode.backgroundSource;
-      if (source === 'base') {
-          bgSourceLabel.textContent = 'Tło z: Paleta Główna';
-      } else {
-          bgSourceLabel.textContent = `Tło z: Kolor ${source + 1}`;
-      }
-  }
+  updateSidebarPreviews();
 
   root.innerHTML = '';
   if (state.mode.view === 'contrast') {

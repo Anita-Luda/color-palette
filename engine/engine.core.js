@@ -147,7 +147,14 @@ export function addColor() {
 
 export function removeColor(index) {
   if (index < 0 || index >= EngineState.colors.length) return;
+
+  const removedColorIndex = EngineState.colors[index].index;
   EngineState.colors.splice(index, 1);
+
+  if (EngineState.mode.backgroundSource === removedColorIndex) {
+    EngineState.mode.backgroundSource = 'base';
+  }
+
   reindexColors();
 }
 
