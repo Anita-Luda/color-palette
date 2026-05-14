@@ -116,19 +116,40 @@ function hueShift(L, baseL, baseH) {
   return (baseH + d * shift_strength + 360) % 360;
 }
 
-function lightnessCurve(t) {
+function getAdaptiveGamma(baseL, baseT) {
   const L_max = 0.97;
   const L_min = 0.12;
-  const gamma = 1.3;
+  if (baseT <= 0.001) return 1.3;
+  if (baseT >= 0.999) return 1.3;
+  const ratio = (L_max - baseL) / (L_max - L_min);
+  const safeRatio = Math.max(0.01, Math.min(0.99, ratio));
+  return Math.log(safeRatio) / Math.log(baseT);
+}
+
+function lightnessCurve(t, gamma = 1.3) {
+  const L_max = 0.97;
+  const L_min = 0.12;
   return L_max - (L_max - L_min) * Math.pow(t, gamma);
 }
 
-export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnchor = false){
+export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnchor = false, sourceHex = null){
   const anchorStep = LToStep(lch.L);
   const isAsymmetric = EngineState.mode.scale === 'asymmetric';
+  const isFixed = EngineState.mode.scale === 'fixed';
   const isAdaptive = EngineState.mode.algorithm === 'adaptive';
+  const isDarkMode = EngineState.mode.palette === 'dark';
+  const granularity = EngineState.mode.granularity || 100;
 
-  const scale = steps.map(step => {
+  const adaptiveGamma = isAdaptive ? getAdaptiveGamma(lch.L, anchorStep / 1000) : 1.3;
+
+  let actualSteps = steps;
+  if (isFixed) {
+      const offset = anchorStep % 10;
+      actualSteps = steps.map(s => s + offset).filter(s => s >= 0 && s <= 1000);
+      actualSteps = [...new Set(actualSteps)].sort((a,b)=>a-b);
+  }
+
+  const scale = actualSteps.map(step => {
       let L;
       if (isAsymmetric) {
           if (step === 500) L = lch.L;
@@ -142,16 +163,18 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
               L = lch.L * (1 - Math.pow(t, p));
           }
       } else {
-          L = isAdaptive ? lightnessCurve(step/1000) : stepToL(step);
+          L = isAdaptive ? lightnessCurve(step/1000, adaptiveGamma) : stepToL(step);
       }
 
       let C, H;
+      const isBaseStep = isAsymmetric ? (step === 500) : (Math.abs(step - anchorStep) < 0.1);
+
       if (isAdaptive) {
-          let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
+          let multiplier = isDarkMode ? 0.8 : 1.0;
           H = hueShift(L, lch.L, lch.h);
           const maxC = maxChromaForL(L, H, lch.C);
           const falloff = chromaFalloff(L, lch.L);
-          C = Math.min(maxC, lch.C * multiplier * falloff);
+          C = Math.min(maxC, lch.C * multiplier * (isBaseStep ? 1 : falloff));
       } else {
           C = clampChroma(L, lch.C);
           H = lch.h;
@@ -159,33 +182,41 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
 
       const lab = oklchToOklab(L, C, H);
       const rgb = oklabToRgb(lab.L, lab.a, lab.b);
+      let hex = rgbToHex(rgb);
+
+      if (isBaseStep && !isDarkMode && sourceHex) {
+          hex = sourceHex;
+      }
+
       return {
           step,
-          hex: rgbToHex(rgb),
+          hex,
           h: H, c: C, l: L,
-          isBase: isAsymmetric ? (step === 500) : (Math.abs(step - anchorStep) < 2)
+          isBase: isBaseStep
       };
   });
 
-  if (!isAsymmetric && !forceExcludeAnchor) {
-      if (!scale.find(s => Math.abs(s.step - anchorStep) < 2)) {
+  if (!isAsymmetric && !isFixed && !forceExcludeAnchor) {
+      if (!scale.find(s => Math.abs(s.step - anchorStep) < 0.1)) {
           let L = lch.L;
           let C, H;
           if (isAdaptive) {
-              let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
+              let multiplier = isDarkMode ? 0.8 : 1.0;
               H = hueShift(L, lch.L, lch.h);
               const maxC = maxChromaForL(L, H, lch.C);
-              const falloff = chromaFalloff(L, lch.L);
-              C = Math.min(maxC, lch.C * multiplier * falloff);
+              C = Math.min(maxC, lch.C * multiplier);
           } else {
               C = clampChroma(L, lch.C);
               H = lch.h;
           }
           const lab = oklchToOklab(L, C, H);
           const rgb = oklabToRgb(lab.L, lab.a, lab.b);
+          let hex = rgbToHex(rgb);
+          if (!isDarkMode && sourceHex) hex = sourceHex;
+
           scale.push({
               step: anchorStep,
-              hex: rgbToHex(rgb),
+              hex,
               h: H, c: C, l: L,
               isBase: true,
               isInserted: true

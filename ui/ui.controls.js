@@ -22,6 +22,9 @@ import {
   setGranularity,
   setBackgroundMode,
   setBackgroundSource,
+  setSidebarPosition,
+  setSidebarTheme,
+  setSidebarVisibility,
   toggleIgnoredThreshold,
   addManualColor,
   addGrayPalette
@@ -77,15 +80,49 @@ function renderWarnings(){
 
 /* ---------- REFRESH UI ---------- */
 function refreshUI() {
+  updateSidebarLayout();
   renderAllPalettes();
   renderSliders();
   renderWarnings();
   updateContrastInfos();
   updateContrastSidebarLabels();
+  updateDegreeDisplay();
 
   // Gradients are recalculated here (base color change / batch change)
   import('./ui.gradients.js').then(m => m.renderAllGradients());
   import('./ui.messages.js').then(m => m.renderMessages());
+}
+
+function updateDegreeDisplay() {
+    const state = getState();
+    const label = document.querySelector('label[for="relationDistance"]');
+    if (label) {
+        label.textContent = `Dystans relacji (${state.relation.distance}°)`;
+    }
+}
+
+function updateSidebarLayout() {
+    const state = getState();
+    const body = document.body;
+
+    // Update active pos button
+    document.querySelectorAll('.pos-btn').forEach(btn => {
+        if (btn.dataset.val === state.mode.sidebarPosition) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+
+    // Clear previous classes
+    body.classList.remove('pos-left', 'pos-right', 'pos-top', 'pos-bottom', 'pos-floating');
+    body.classList.add(`pos-${state.mode.sidebarPosition}`);
+
+    body.classList.remove('sb-dark', 'sb-light');
+    body.classList.add(`sb-${state.mode.sidebarTheme}`);
+
+    if (state.mode.sidebarVisible) {
+        body.classList.remove('sb-hidden');
+    } else {
+        body.classList.add('sb-hidden');
+    }
 }
 
 function updateContrastSidebarLabels() {
@@ -145,14 +182,12 @@ function setupBasePicker() {
 
     const bgBtn = document.createElement('button');
     bgBtn.id = 'base-bg-btn';
-    bgBtn.className = 'bg-source-btn';
+    bgBtn.className = 'bg-source-btn primary';
     bgBtn.textContent = 'Ustaw jako tło';
     bgBtn.style.marginTop = '8px';
     bgBtn.onclick = () => {
-        import('../engine/engine.core.js').then(m => {
-            m.setBackgroundSource('base');
-            refreshUI();
-        });
+        setBackgroundSource('base');
+        refreshUI();
     };
     preview.parentNode.appendChild(bgBtn);
 
@@ -194,9 +229,9 @@ function setupRelations(){
   if (!sel) return;
 
   const distContainer = document.createElement('div');
-  distContainer.className = 'group';
+  distContainer.className = 'rel-dist-group';
   distContainer.innerHTML = `
-    <label>Dystans relacji</label>
+    <label for="relationDistance">Dystans relacji</label>
     <input id="relationDistance" type="range" min="0" max="180" value="30">
   `;
   sel.parentNode.insertBefore(distContainer, sel.nextSibling);
@@ -204,10 +239,9 @@ function setupRelations(){
   const distInput = distContainer.querySelector('#relationDistance');
   distInput.addEventListener('input', e => {
       setRelationDistance(e.target.value);
+      updateDegreeDisplay();
       clearGradientCache();
-      renderAllPalettes();
-      // Gradients depend on base LCH and role mult, not relation distance itself usually,
-      // but if relation changes roles or hues, we refresh.
+      renderAllPalettes(true);
       import('./ui.gradients.js').then(m => m.renderAllGradients());
   });
 
@@ -405,7 +439,7 @@ function createSliderCard(c) {
   // Will be updated by renderer
 
   const bgBtn = document.createElement('button');
-  bgBtn.className = 'bg-source-btn';
+  bgBtn.className = 'bg-source-btn primary';
   bgBtn.textContent = 'Ustaw jako tło';
   bgBtn.style.width = '100%';
   bgBtn.style.marginBottom = '8px';
@@ -431,9 +465,9 @@ function createSliderCard(c) {
 
   slider.addEventListener('input', e => {
     setColorSlider(c.index, Number(e.target.value));
-    // Optimized: only render palettes
-    // Gradients are NOT recalculated here to avoid jumping and for performance
     renderAllPalettes(true);
+    // Refresh sidebar previews immediately for feedback
+    import('./ui.render.js').then(m => m.updateSidebarPreviews());
   });
 
   const del = document.createElement('button');
@@ -451,52 +485,58 @@ function createSliderCard(c) {
 
 /* ---------- MODES ---------- */
 function setupModes(){
-  $('mode')?.addEventListener('change', e => {
-    setPaletteMode(e.target.value);
-    // Reset contrast brightness to 0 (default: White for light, Black for dark)
-    setContrastSettings('brightness', 0);
-    const slider = $('contrast-brightness');
-    if (slider) slider.value = 0;
-
-    clearGradientCache();
-    refreshUI();
+  document.querySelectorAll('input[name="mode"]').forEach(r => {
+      r.addEventListener('change', e => {
+          setPaletteMode(e.target.value);
+          setContrastSettings('brightness', 0);
+          const slider = $('contrast-brightness-top');
+          if (slider) slider.value = 0;
+          clearGradientCache();
+          refreshUI();
+      });
   });
 
-  $('previewBg')?.addEventListener('change', e => {
-      const mode = e.target.value;
-      setBackgroundMode(mode);
-
-      const out = $('output');
-      if (mode === 'dark') {
-          document.body.classList.add('preview-dark');
-          document.body.classList.remove('preview-light');
-          out.classList.add('preview-dark');
-          out.classList.remove('preview-light');
-      } else {
-          document.body.classList.add('preview-light');
-          document.body.classList.remove('preview-dark');
-          out.classList.add('preview-light');
-          out.classList.remove('preview-dark');
-      }
-      // No need for refreshUI if only CSS classes change, but let's be safe
-      renderAllPalettes();
+  document.querySelectorAll('input[name="previewBg"]').forEach(r => {
+      r.addEventListener('change', e => {
+          const mode = e.target.value;
+          setBackgroundMode(mode);
+          const out = $('output');
+          if (mode === 'dark') {
+              out.classList.add('preview-dark');
+              out.classList.remove('preview-light');
+          } else {
+              out.classList.add('preview-light');
+              out.classList.remove('preview-dark');
+          }
+          renderAllPalettes();
+      });
   });
 
-  document
-    .querySelectorAll('input[name="scaleMode"]')
-    .forEach(r => r.addEventListener('change', e => {
+  document.querySelectorAll('input[name="viewMode"]').forEach(r => {
+      r.addEventListener('change', e => {
+          const view = e.target.value;
+          setView(view);
+          const contrastSec = $('sec-contrast');
+          if (view === 'contrast') {
+              if (contrastSec) contrastSec.style.display = 'block';
+          } else {
+              if (contrastSec) contrastSec.style.display = 'none';
+          }
+          refreshUI();
+      });
+  });
+
+  document.querySelectorAll('input[name="scaleMode"]').forEach(r => r.addEventListener('change', e => {
       setScaleMode(e.target.value);
       clearGradientCache();
       refreshUI();
-    }));
+  }));
 
-  document
-    .querySelectorAll('input[name="algoMode"]')
-    .forEach(r => r.addEventListener('change', e => {
+  document.querySelectorAll('input[name="algoMode"]').forEach(r => r.addEventListener('change', e => {
       setAlgorithmMode(e.target.value);
       clearGradientCache();
       refreshUI();
-    }));
+  }));
 }
 
 function setupGranularity() {
@@ -559,26 +599,46 @@ function setupReorder() {
   });
 }
 
-function setupTabs() {
-    const btns = document.querySelectorAll('.tab-btn');
-    btns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            btns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const view = btn.dataset.view;
-            setView(view);
+function setupCollapsibles() {
+    document.addEventListener('click', (e) => {
+        const header = e.target.closest('.sidebar-header');
+        if (!header) return;
+        if (e.target.closest('button')) return;
 
-            // Toggle sidebar controls
-            const contrastCtrlTop = $('contrast-controls-top');
+        const section = header.closest('.sidebar-section');
+        if (section && section.classList.contains('collapsible')) {
+            section.classList.toggle('collapsed');
+        }
+    });
+}
 
-            if (view === 'contrast') {
-                if (contrastCtrlTop) contrastCtrlTop.style.display = 'block';
-            } else {
-                if (contrastCtrlTop) contrastCtrlTop.style.display = 'none';
-            }
+function setupFloatingPanel() {
+    const sidebar = $('sidebar');
+    let isDragging = false;
+    let offset = { x: 0, y: 0 };
 
-            refreshUI();
-        });
+    sidebar.addEventListener('mousedown', e => {
+        const state = getState();
+        if (state.mode.sidebarPosition !== 'floating') return;
+        if (e.target.closest('input, select, button, .big-swatch')) return;
+
+        isDragging = true;
+        offset.x = e.clientX - sidebar.offsetLeft;
+        offset.y = e.clientY - sidebar.offsetTop;
+        sidebar.style.transition = 'none';
+    });
+
+    document.addEventListener('mousemove', e => {
+        if (!isDragging) return;
+        sidebar.style.left = (e.clientX - offset.x) + 'px';
+        sidebar.style.top = (e.clientY - offset.y) + 'px';
+        sidebar.style.bottom = 'auto';
+        sidebar.style.right = 'auto';
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        sidebar.style.transition = '';
     });
 }
 
@@ -614,10 +674,92 @@ function setupContrastSliders() {
     });
 }
 
+function setupSidebarControls() {
+    const posBtns = document.querySelectorAll('.pos-btn');
+    const hideBtn = $('hide-panel-btn');
+    const toggleBtn = $('panel-toggle');
+    const themeRadios = document.querySelectorAll('input[name="sbTheme"]');
+
+    posBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            setSidebarPosition(btn.dataset.val);
+            const sidebar = $('sidebar');
+            sidebar.style.left = ''; sidebar.style.top = ''; sidebar.style.bottom = ''; sidebar.style.right = '';
+            refreshUI();
+        });
+    });
+
+    hideBtn?.addEventListener('click', () => {
+        setSidebarVisibility(false);
+        refreshUI();
+    });
+
+    toggleBtn?.addEventListener('click', () => {
+        setSidebarVisibility(true);
+        refreshUI();
+    });
+
+    themeRadios.forEach(r => {
+        r.addEventListener('change', e => {
+            const theme = e.target.value;
+            setSidebarTheme(theme);
+
+            const pbgDark = $('pbg-dark');
+            const pbgLight = $('pbg-light');
+
+            if (theme === 'dark') {
+                setBackgroundMode('dark');
+                if (pbgDark) pbgDark.checked = true;
+                $('output').classList.add('preview-dark');
+                $('output').classList.remove('preview-light');
+            } else {
+                setBackgroundMode('light');
+                if (pbgLight) pbgLight.checked = true;
+                $('output').classList.add('preview-light');
+                $('output').classList.remove('preview-dark');
+            }
+
+            refreshUI();
+        });
+    });
+}
+
+function setupExport() {
+    const exportBtns = [
+        'export-figma-btn',
+        'export-figma-func-btn',
+        'export-figma-badge-btn',
+        'export-figma-contrast-btn'
+    ];
+
+    exportBtns.forEach(id => {
+        $(id)?.addEventListener('click', (e) => {
+            const type = e.target.dataset.type || 'main';
+            import('./ui.render.js').then(m => {
+                const svg = m.generateExportSVG(type);
+                navigator.clipboard.writeText(svg).then(() => {
+                    alert(`SVG (${type}) skopiowano do schowka. Możesz teraz wkleić go bezpośrednio w Figmie.`);
+                });
+            });
+        });
+    });
+
+    $('copy-hex-list-btn')?.addEventListener('click', () => {
+        import('./ui.render.js').then(m => {
+            const hexes = m.getAllVisibleHexes();
+            const list = Array.from(new Set(hexes)).join(', ');
+            navigator.clipboard.writeText(list).then(() => {
+                alert('Skopiowano listę unikatowych HEXów.');
+            });
+        });
+    });
+}
+
 /* ---------- INIT ---------- */
 export function initControls(){
   $('textColor')?.addEventListener('input', onBaseChange);
 
+  setupSidebarControls();
   setupBasePicker();
   setupBatch();
   setupRelations();
@@ -627,8 +769,11 @@ export function initControls(){
   setupLocks();
   setupGranularity();
   setupReorder();
-  setupTabs();
+  setupCollapsibles();
   setupContrastSliders();
+  setupFloatingPanel();
+  setupExport();
 
+  updateSidebarLayout();
   onBaseChange();
 }

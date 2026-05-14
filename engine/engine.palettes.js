@@ -13,11 +13,14 @@ import {
 /* ---------- MAIN PALETTE ---------- */
 export function getMainPalette(){
   const baseLch = getBaseLCH();
+  const baseHex = rgbToHex(EngineState.base.rgb);
   return {
-    scale: generateScaleForLCH(baseLch),
+    scale: generateScaleForLCH(baseLch, undefined, false, baseHex),
     mode: EngineState.mode.scale
   };
 }
+
+import { rgbToHex } from './engine.scales.js';
 
 /* ---------- ADDITIONAL PALETTES ---------- */
 function getHarmonyHue(baseHue, index, total, type, distance){
@@ -74,7 +77,7 @@ export function getAdditionalPalettes(){
     return {
       index: c.index,
       role: c.role,
-      scale: generateScaleForLCH(lch)
+      scale: generateScaleForLCH(lch, undefined, false, c.manualHex)
     };
   });
 }

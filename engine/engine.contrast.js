@@ -4,6 +4,7 @@ import {
     oklabToOklch, rgbToOklab, srgbToLinear, generateScaleForLCH
 } from './engine.scales.js';
 import { contrastRatio } from './engine.accessibility.js';
+import { getAdditionalPalettes } from './engine.palettes.js';
 
 function LToStep(L){
     return Math.round((1 - L) * 1000);
@@ -79,11 +80,18 @@ export function generateContrastGrid(targetLch) {
     if (bgSource === 'base') {
         bgLch = getBaseLCH();
     } else {
-        const color = EngineState.colors[bgSource];
-        bgLch = color && color.manualLCH ? color.manualLCH : getBaseLCH();
+        const additional = getAdditionalPalettes();
+        const p = additional.find(p => p.index === bgSource);
+        if (p) {
+            const anchor = p.scale.find(s => s.isBase) || p.scale[Math.floor(p.scale.length / 2)];
+            bgLch = { L: anchor.l, C: anchor.c, h: anchor.h };
+        } else {
+            bgLch = getBaseLCH();
+        }
     }
 
-    // Full tonal scale co-10 (101 steps)
+    // Full tonal scale co-10 (101 steps).
+    // If scale mode is fixed, we MUST use fixed for background generation too to keep consistency.
     const fullScale = generateScaleForLCH(bgLch);
 
     // Window of 10 tones
@@ -94,28 +102,26 @@ export function generateContrastGrid(targetLch) {
     const backgrounds = [];
     if (isDark) {
         backgrounds.push("#000000"); // Black
-        let startIdx = Math.round(brightness * 90);
+
+        let startIdx = Math.round(brightness * (fullScale.length - 11));
         for (let i = 1; i <= 10; i++) {
-            let idx = 100 - (startIdx + i);
-            idx = Math.max(0, Math.min(99, idx));
+            let idx = (fullScale.length - 1) - (startIdx + i);
+            idx = Math.max(0, Math.min(fullScale.length - 1, idx));
             backgrounds.push(fullScale[idx].hex);
         }
-        // "dla maksymalnej jasności tła w dark mode dodawaj biały"
-        if (brightness > 0.95) {
-            backgrounds.push("#FFFFFF");
-        }
+
+        if (brightness > 0.95) backgrounds.push("#FFFFFF");
     } else {
         backgrounds.push("#FFFFFF"); // White
-        let startIdx = Math.round(brightness * 90);
+
+        let startIdx = Math.round(brightness * (fullScale.length - 11));
         for (let i = 1; i <= 10; i++) {
             let idx = startIdx + i;
-            idx = Math.max(1, Math.min(100, idx));
+            idx = Math.max(0, Math.min(fullScale.length - 1, idx));
             backgrounds.push(fullScale[idx].hex);
         }
-        // "dla maksymalnej ciemności tła w light mode dodawaj czarny"
-        if (brightness > 0.95) {
-            backgrounds.push("#000000");
-        }
+
+        if (brightness > 0.95) backgrounds.push("#000000");
     }
 
     const grid = [];
@@ -140,6 +146,34 @@ export function generateContrastGrid(targetLch) {
         const bgLab = rgbToOklab_local(bgHex);
         const direction = bgLab.L > 0.5 ? 'darker' : 'lighter';
 
+        // Calculate maximum possible contrast boost for this row
+        const extremeHex = direction === 'darker' ? '#000000' : '#FFFFFF';
+        const maxRatio = contrastRatio(bgHex, extremeHex);
+
+        // Boost can only go up to what's achievable for ALL required thresholds in the row
+        // Lvl1, AA (4.5), AAA (7) relative to BG
+        // Lvl2 (3), AA (4.5) relative to Lvl1
+        // The most restrictive is AA (4.5) relative to Lvl1, but Lvl1 itself is pushed by boost.
+        // If boost is B, Lvl1 target is 3+B. Then Lvl2 target is 4.5+B relative to Lvl1.
+        // Rough estimate of required total ratio to background: (3+B) * (4.5+B)
+        // Let's find B such that (3+B)*(4.5+B) <= maxRatio
+        // B^2 + 7.5B + 13.5 - maxRatio = 0
+        // Quadratic formula: B = (-7.5 + sqrt(7.5^2 - 4 * (13.5 - maxRatio))) / 2
+
+        let achievableBoost = boost;
+        const delta = 7.5 * 7.5 - 4 * (13.5 - maxRatio);
+        if (delta >= 0) {
+            const maxB = (-7.5 + Math.sqrt(delta)) / 2;
+            achievableBoost = Math.max(0, Math.min(boost, maxB));
+        } else {
+            achievableBoost = 0;
+        }
+
+        const getAchievableTarget = (base, id) => {
+            if (ignoredThresholds.includes(id)) return 1.0;
+            return base + achievableBoost;
+        };
+
         const row = { bg: bgHex };
         const forbidden = [bgHex];
 
@@ -150,27 +184,27 @@ export function generateContrastGrid(targetLch) {
             return color;
         };
 
-        const tL1 = getTarget(3.0, 'L1_BG');
+        const tL1 = getAchievableTarget(3.0, 'L1_BG');
         row.l1 = findUnique(tL1, bgHex, direction);
         row.l1_target = tL1;
         row.l1_actual = contrastRatio(bgHex, row.l1);
 
-        const t45bg = getTarget(4.5, 'C45_BG');
+        const t45bg = getAchievableTarget(4.5, 'C45_BG');
         row.c45_bg = findUnique(t45bg, bgHex, direction);
         row.c45_bg_target = t45bg;
         row.c45_bg_actual = contrastRatio(bgHex, row.c45_bg);
 
-        const t45l1 = getTarget(4.5, 'C45_L1');
+        const t45l1 = getAchievableTarget(4.5, 'C45_L1');
         row.c45_l1 = findUnique(t45l1, row.l1, direction);
         row.c45_l1_target = t45l1;
         row.c45_l1_actual = contrastRatio(row.l1, row.c45_l1);
 
-        const t7bg = getTarget(7.0, 'C7_BG');
+        const t7bg = getAchievableTarget(7.0, 'C7_BG');
         row.c7_bg = findUnique(t7bg, bgHex, direction);
         row.c7_bg_target = t7bg;
         row.c7_bg_actual = contrastRatio(bgHex, row.c7_bg);
 
-        const tL2 = getTarget(3.0, 'L2_L1');
+        const tL2 = getAchievableTarget(3.0, 'L2_L1');
         row.l2 = findUnique(tL2, row.l1, direction);
         row.l2_target = tL2;
         row.l2_actual = contrastRatio(row.l1, row.l2);
