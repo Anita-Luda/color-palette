@@ -13,6 +13,7 @@ import {
   setPaletteMode,
   setScaleMode,
   setAlgorithmMode,
+  setDarkModeBoost,
   setLock,
   getState,
   getWarnings,
@@ -123,6 +124,14 @@ function updateSidebarLayout() {
     } else {
         body.classList.add('sb-hidden');
     }
+
+    // Sync form elements
+    const boostToggle = $('boost-toggle');
+    if (boostToggle) boostToggle.checked = state.mode.darkModeBoost;
+
+    document.querySelectorAll('input[name="algoMode"]').forEach(r => {
+        r.checked = (r.value === state.mode.algorithm);
+    });
 }
 
 function updateContrastSidebarLabels() {

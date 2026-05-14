@@ -46,8 +46,9 @@ function renderSwatch(swatch, opts = {}){
 
   // Account for Fixed scale offset in granularity filtering
   // Requirement: "Na paletach w rozkładzie 'fixed' brakuje badgy z progami. Logika badgy powinna być taka sama jak przy rozkłądzie absolute."
-  // We use the gridStep to snap to the nearest "clean" threshold even if slightly offset
-  const gridStep = Math.round(swatch.step / 10) * 10;
+  // Logic: treat the shifted steps as if they were clean steps for the purpose of badges and filtering.
+  const offset = state.mode.scale === 'fixed' ? (Math.round(swatch.step) % 10) : 0;
+  const gridStep = Math.round(swatch.step - offset);
 
   // Requirement: "Kolor bazowy ma mieć badge widzony zawsze w każdej palecie i granulacji"
   if (gran === 50 && gridStep % 50 !== 0 && !swatch.isBase) return null;
@@ -351,7 +352,9 @@ export function getAllVisibleHexes() {
     const hexes = [];
     const collect = (scale) => {
         scale.forEach(s => {
-            const gridStep = s.step - (s.step % 10);
+            const offset = state.mode.scale === 'fixed' ? (Math.round(s.step) % 10) : 0;
+            const gridStep = Math.round(s.step - offset);
+
             if (state.mode.granularity === 50 && gridStep % 50 !== 0 && !s.isBase) return;
             if (state.mode.granularity === 100 && gridStep % 100 !== 0 && !s.isBase) return;
             hexes.push(s.hex.toUpperCase());
@@ -380,15 +383,18 @@ function createSVGSwatch(swatch, x, y, width, height) {
                    <text x="${x+width/2}" y="${y+2}" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="#FFFFFF">BASE</text>`;
     } else {
         const gran = state.mode.granularity;
+        const offset = state.mode.scale === 'fixed' ? (Math.round(swatch.step) % 10) : 0;
+        const gridStep = Math.round(swatch.step - offset);
+
         if (gran === 10) {
-            if (swatch.step % 100 === 0) {
+            if (gridStep % 100 === 0) {
                 badges += `<rect x="${x+width/2-15}" y="${y-10}" width="30" height="18" rx="9" fill="#334155" />
                            <text x="${x+width/2}" y="${y+2}" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="#FFFFFF">100</text>`;
-            } else if (swatch.step % 50 === 0) {
+            } else if (gridStep % 50 === 0) {
                 badges += `<rect x="${x+width/2-15}" y="${y-10}" width="30" height="18" rx="9" fill="#94a3b8" />
                            <text x="${x+width/2}" y="${y+2}" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="#000000">50</text>`;
             }
-        } else if (gran === 50 && swatch.step % 100 === 0) {
+        } else if (gran === 50 && gridStep % 100 === 0) {
             badges += `<rect x="${x+width/2-15}" y="${y-10}" width="30" height="18" rx="9" fill="#334155" />
                        <text x="${x+width/2}" y="${y+2}" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="#FFFFFF">100</text>`;
         }
@@ -492,7 +498,9 @@ export function generateExportSVG(type = 'main') {
         collections.forEach(p => {
             svgContent += `<text x="0" y="${currentY - 10}" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="${textFill}">${p.name}</text>`;
             const filteredScale = p.scale.filter(s => {
-                const gridStep = Math.round(s.step / 10) * 10;
+                const offset = state.mode.scale === 'fixed' ? (Math.round(s.step) % 10) : 0;
+                const gridStep = Math.round(s.step - offset);
+
                 if (gran === 50 && gridStep % 50 !== 0 && !s.isBase) return false;
                 if (gran === 100 && gridStep % 100 !== 0 && !s.isBase) return false;
                 return true;
