@@ -24,6 +24,7 @@
 - [x] **Responsywność**: Interfejs dostosowuje się do szerokości ekranu, zachowując czytelność siatek.
 - [x] **Wizualne Wskaźniki**: Badge "BASE" dla koloru źródłowego oraz "100/50" dla progów systemowych w trybie Fixed.
 - [x] **Poprawki Layoutu**: Naprawione odstępy w grupach przycisków (gap: 8px) oraz spójne stylowanie przycisków tła.
+- [x] **Standard Mode Blend**: Naprawiony efekt "skoku" dla nasyconych kolorów (np. żółty #ffff00) poprzez dynamiczne mapowanie gamutu i subtelny falloff nasycenia.
 
 ## Status Końcowy: 100% Zrealizowane
-Wszystkie błędy zostały naprawione, a wymagania z pliku txt wdrożone z nadwyżką w postaci zaawansowanych algorytmów skalowania.
+Wszystkie błędy zostały naprawione, a wymagania z pliku txt wdrożone z nadwyżką w postaci zaawansowanych algorytmów skalowania i korekt percepcji.

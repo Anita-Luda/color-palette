@@ -70,17 +70,15 @@ function LToStep(L){
   return Math.round((1 - L) * 1000);
 }
 
-// Guardrail chromy
-function clampChroma(L, C){
-  // Paleta kolorów dark mode miała mieć skorygowaną chromę, żeby dobrze wyglądać na dark mode.
-  // In dark mode, we usually want slightly lower chroma to avoid "glowing" or "vibrating" against dark backgrounds.
+// Guardrail chromy - ulepszony, aby uniknąć "skoków" nasycenia
+function clampChroma(L, C, H){
   let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
 
-  const max =
-    L > 0.85 ? 0.10 :
-    L > 0.65 ? 0.16 :
-    L > 0.45 ? 0.24 : 0.32;
-  return Math.min(C * multiplier, max);
+  // Zamiast arbitralnych progów, używamy faktycznego limitu gamutu dla danego L i H.
+  // Zapobiega to sytuacji, gdzie kolor bazowy (np. #ffff00) ma wysokie nasycenie,
+  // a sąsiednie swatche są gwałtownie przygaszane do arbitralnego limitu.
+  const maxGamut = maxChromaForL(L, H, C);
+  return Math.min(C * multiplier, maxGamut);
 }
 
 /* ---------- CORE GENERATORS ---------- */
@@ -226,8 +224,14 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
           if (!isBaseStep) C *= falloff;
 
       } else {
-          C = clampChroma(L, lch.C);
           H = lch.h;
+          C = clampChroma(L, lch.C, H);
+
+          // Dodajemy delikatny falloff dla skali standard, aby kolory nie były
+          // nienaturalnie nasycone w bardzo ciemnych/jasnych partiach,
+          // co pomaga zachować spójność wizualną "zlejania się" palety.
+          const falloff = chromaFalloff(L, lch.L);
+          if (!isBaseStep) C *= (0.7 + 0.3 * falloff); // Mniej agresywny falloff niż w adaptive
       }
 
       if (isBoost) {
@@ -268,8 +272,8 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
               const maxC = maxChromaForL(L, H, lch.C);
               C = Math.min(maxC, lch.C * multiplier);
           } else {
-              C = clampChroma(L, lch.C);
               H = lch.h;
+              C = clampChroma(L, lch.C, H);
           }
 
           if (isBoost) {
