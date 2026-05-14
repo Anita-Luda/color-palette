@@ -13,6 +13,7 @@ export const EngineState = {
     scale: 'absolute',       // absolute | asymmetric
     algorithm: 'standard',   // standard | adaptive
     darkModeBoost: false,    // post-processing boost
+    neonBoost: false,        // post-processing neon effect
     view: 'palettes',        // palettes | contrast
     granularity: 100,        // 10 | 50 | 100
     background: 'light',     // light | dark
@@ -86,6 +87,10 @@ export function setAlgorithmMode(mode) {
 
 export function setDarkModeBoost(enabled) {
   EngineState.mode.darkModeBoost = Boolean(enabled);
+}
+
+export function setNeonBoost(enabled) {
+  EngineState.mode.neonBoost = Boolean(enabled);
 }
 
 export function setView(view) {

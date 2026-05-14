@@ -122,6 +122,26 @@ function applyDarkModeBoost(L, C, H) {
   return { C: newC, H: newH };
 }
 
+function applyNeonBoost(L, C, H) {
+  // Neon effect: maximize chroma within gamut and slightly shift lightness for vibrancy.
+  // We ignore current C and find the absolute maximum for this L and H.
+  const maxC = maxChromaForL(L, H, 0.4);
+
+  // To make it look "neon", we want very high saturation.
+  // We take the max gamut chroma but cap it slightly to avoid extreme "broken" colors
+  // and keep it in a "vibrant" zone.
+  let newC = maxC * 0.98;
+
+  // Optional: subtle lightness shift to a "sweeter" spot for neon colors
+  // (e.g. making it slightly lighter if it's too dark)
+  let newL = L;
+  if (L < 0.5) newL = L + (0.5 - L) * 0.2;
+
+  // IMPORTANT: For neon to be visible, we must ensure it bypasses multipliers
+  // We return a slightly modified L and forced high C
+  return { L: newL, C: newC, H };
+}
+
 function maxChromaForL(L, H, C_start) {
   let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
   let low = 0;
@@ -174,6 +194,7 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
   const isFixed = EngineState.mode.scale === 'fixed';
   const isAdaptive = EngineState.mode.algorithm === 'adaptive';
   const isBoost = EngineState.mode.darkModeBoost;
+  const isNeon = EngineState.mode.neonBoost;
   const isDarkMode = EngineState.mode.palette === 'dark';
   const granularity = EngineState.mode.granularity || 100;
 
@@ -246,6 +267,13 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
         C = boosted.C;
       }
 
+      if (isNeon) {
+        const neon = applyNeonBoost(L, C, H);
+        L = neon.L;
+        C = neon.C;
+        H = neon.H;
+      }
+
       const lab = oklchToOklab(L, C, H);
       const rgb = oklabToRgb(lab.L, lab.a, lab.b);
       let hex = rgbToHex(rgb);
@@ -284,6 +312,13 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
             } else {
                 H = boosted.H;
             }
+          }
+
+          if (isNeon) {
+              const neon = applyNeonBoost(L, C, H);
+              L = neon.L;
+              C = neon.C;
+              H = neon.H;
           }
 
           const lab = oklchToOklab(L, C, H);

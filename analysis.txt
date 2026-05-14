@@ -3,6 +3,7 @@
 ## Stan Obecny (V2)
 System osiągnął dojrzałość produkcyjną. Kluczowe przewagi techniczne:
 - **Precyzja Percepcyjna**: Dzięki OKLCH kolory zachowują stałą jasność wizualną przy zmianie barwy.
+- **Dynamiczne Gamut-Clamping**: Algorytmy automatycznie dopasowują nasycenie do granic przestrzeni sRGB, eliminując visual spikes.
 - **Algorytmiczne Skalowanie**: Tryby `Asym` i `Fixed` pozwalają na budowę systemów projektowych o różnej dynamice.
 - **Zorientowanie na Kontrast**: System nie tylko generuje kolory, ale weryfikuje ich użyteczność w czasie rzeczywistym (WCAG).
 

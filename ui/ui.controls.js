@@ -14,6 +14,7 @@ import {
   setScaleMode,
   setAlgorithmMode,
   setDarkModeBoost,
+  setNeonBoost,
   setLock,
   getState,
   getWarnings,
@@ -128,6 +129,9 @@ function updateSidebarLayout() {
     // Sync form elements
     const boostToggle = $('boost-toggle');
     if (boostToggle) boostToggle.checked = state.mode.darkModeBoost;
+
+    const neonToggle = $('neon-toggle');
+    if (neonToggle) neonToggle.checked = state.mode.neonBoost;
 
     document.querySelectorAll('input[name="algoMode"]').forEach(r => {
         r.checked = (r.value === state.mode.algorithm);
@@ -549,6 +553,12 @@ function setupModes(){
 
   $('boost-toggle')?.addEventListener('change', e => {
       setDarkModeBoost(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  $('neon-toggle')?.addEventListener('change', e => {
+      setNeonBoost(e.target.checked);
       clearGradientCache();
       refreshUI();
   });
