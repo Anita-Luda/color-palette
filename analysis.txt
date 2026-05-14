@@ -5,6 +5,7 @@ ANALIZA ROZWOJOWA SYSTEMU OKLCH PALETTE
 System został gruntownie zmodernizowany, przechodząc z prostego generatora na zaawansowane narzędzie inżynierii koloru. Kluczowe osiągnięcia to:
 - Przejście na model OKLCH, co pozwala na tworzenie palet o spójnej jasności percepcyjnej.
 - Implementacja adaptacyjnego algorytmu, który automatycznie koryguje nasycenie (chroma) w ciemnych motywach, eliminując efekt "neonowości".
+- Dodanie innowacyjnego trybu "Fixed Scale", który inteligentnie przesuwa progi jasności tak, aby kolor bazowy zawsze był częścią wygenerowanej skali.
 - Stworzenie neutralnego środowiska pracy (Grayscale UI), co jest krytyczne dla profesjonalnych narzędzi graficznych.
 
 2. REKOMENDACJE ROZWOJOWE (ROADMAP)

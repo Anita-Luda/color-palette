@@ -5,7 +5,7 @@ SILNIK I MATEMATYKA KOLORÓW
 [✓] Migracja na OKLCH - Cały system operuje na percepcyjnie jednolitym modelu barw.
 [✓] Rozdzielenie Algorytmu od Rozkładu Jasności - Możliwość niezależnego wyboru:
     - Algorytm: Standardowy vs Adaptacyjny (z inteligentnym scalingiem chroma).
-    - Rozkład: Absolutny vs Asymetryczny.
+    - Rozkład: Absolutny, Asymetryczny oraz Fixed (skorygowany pod kolor bazowy).
 [✓] Poprawa błędu NaN - Obsługa krawędziowych przypadków jasności (0% i 100%).
 
 KONTRAST I DOSTĘPNOŚĆ (ACCESSIBILITY)

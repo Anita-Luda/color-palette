@@ -126,9 +126,17 @@ function lightnessCurve(t) {
 export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnchor = false){
   const anchorStep = LToStep(lch.L);
   const isAsymmetric = EngineState.mode.scale === 'asymmetric';
+  const isFixed = EngineState.mode.scale === 'fixed';
   const isAdaptive = EngineState.mode.algorithm === 'adaptive';
+  const granularity = EngineState.mode.granularity || 100;
 
-  const scale = steps.map(step => {
+  let actualSteps = steps;
+  if (isFixed) {
+      const offset = anchorStep % granularity;
+      actualSteps = steps.map(s => s + offset).filter(s => s >= 0 && s <= 1000);
+  }
+
+  const scale = actualSteps.map(step => {
       let L;
       if (isAsymmetric) {
           if (step === 500) L = lch.L;
@@ -163,11 +171,11 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
           step,
           hex: rgbToHex(rgb),
           h: H, c: C, l: L,
-          isBase: isAsymmetric ? (step === 500) : (Math.abs(step - anchorStep) < 2)
+          isBase: isAsymmetric ? (step === 500) : (Math.abs(step - anchorStep) < 0.1)
       };
   });
 
-  if (!isAsymmetric && !forceExcludeAnchor) {
+  if (!isAsymmetric && !isFixed && !forceExcludeAnchor) {
       if (!scale.find(s => Math.abs(s.step - anchorStep) < 2)) {
           let L = lch.L;
           let C, H;

@@ -74,7 +74,7 @@ export function setPaletteMode(mode) {
 }
 
 export function setScaleMode(mode) {
-  if (mode !== 'absolute' && mode !== 'asymmetric') return;
+  if (mode !== 'absolute' && mode !== 'asymmetric' && mode !== 'fixed') return;
   EngineState.mode.scale = mode;
 }
 
