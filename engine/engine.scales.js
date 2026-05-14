@@ -132,7 +132,7 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
 
   let actualSteps = steps;
   if (isFixed) {
-      const offset = anchorStep % granularity;
+      const offset = anchorStep % 10;
       actualSteps = steps.map(s => s + offset).filter(s => s >= 0 && s <= 1000);
   }
 

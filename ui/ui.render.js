@@ -44,9 +44,12 @@ function renderSwatch(swatch, opts = {}){
   const state = getState();
   const gran = state.mode.granularity;
 
+  // Account for Fixed scale offset in granularity filtering
+  const gridStep = swatch.step - (swatch.step % 10);
+
   // Requirement: "Kolor bazowy ma mieć badge widzony zawsze w każdej palecie i granulacji"
-  if (gran === 50 && swatch.step % 50 !== 0 && !swatch.isBase) return null;
-  if (gran === 100 && swatch.step % 100 !== 0 && !swatch.isBase) return null;
+  if (gran === 50 && gridStep % 50 !== 0 && !swatch.isBase) return null;
+  if (gran === 100 && gridStep % 100 !== 0 && !swatch.isBase) return null;
 
   d.style.background = swatch.hex;
 
