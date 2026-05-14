@@ -318,8 +318,9 @@ button.btn-danger:hover { background: var(--danger); color: white; }
 }
 
 .bg-source-btn.active {
-    background: #7c6cff;
-    border-color: #7c6cff;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--sb-bg);
 }
 
 .swatches {
@@ -409,6 +410,26 @@ button.btn-danger:hover { background: var(--danger); color: white; }
 .granularity-btns {
     display: flex;
     width: 100%;
+}
+
+.pos-btn-group {
+    display: flex;
+    gap: 8px;
+}
+
+.pos-btn {
+    flex: 1;
+}
+
+.sticky-top {
+    position: sticky;
+    top: -24px; /* Adjusting for padding */
+    background: var(--sb-bg);
+    z-index: 1001;
+    margin-top: -24px;
+    padding-top: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--sb-border);
 }
 
 .functional-row, .badge-row { margin-bottom: 32px; display: flex; flex-direction: column; gap: 12px; }

@@ -45,7 +45,9 @@ function renderSwatch(swatch, opts = {}){
   const gran = state.mode.granularity;
 
   // Account for Fixed scale offset in granularity filtering
-  const gridStep = swatch.step - (swatch.step % 10);
+  // Requirement: "Na paletach w rozkładzie 'fixed' brakuje badgy z progami. Logika badgy powinna być taka sama jak przy rozkłądzie absolute."
+  // We use the gridStep to snap to the nearest "clean" threshold even if slightly offset
+  const gridStep = Math.round(swatch.step / 10) * 10;
 
   // Requirement: "Kolor bazowy ma mieć badge widzony zawsze w każdej palecie i granulacji"
   if (gran === 50 && gridStep % 50 !== 0 && !swatch.isBase) return null;
@@ -80,17 +82,17 @@ function renderSwatch(swatch, opts = {}){
   }
 
   if (gran === 10) {
-      if (swatch.step % 100 === 0) {
+      if (gridStep % 100 === 0) {
           const badge = el('div', 'swatch-badge step100 visible', '100');
           if (swatch.isBase) badge.style.display = 'none';
           d.appendChild(badge);
-      } else if (swatch.step % 50 === 0) {
+      } else if (gridStep % 50 === 0) {
           const badge = el('div', 'swatch-badge step50 visible', '50');
           if (swatch.isBase) badge.style.display = 'none';
           d.appendChild(badge);
       }
   } else if (gran === 50) {
-      if (swatch.step % 100 === 0) {
+      if (gridStep % 100 === 0) {
           const badge = el('div', 'swatch-badge step100 visible', '100');
           if (swatch.isBase) badge.style.display = 'none';
           d.appendChild(badge);
@@ -402,12 +404,34 @@ function createSVGSwatch(swatch, x, y, width, height) {
     </g>`;
 }
 
-export function generateExportSVG() {
-    const state = getState();
-    const palettes = [];
+function createSVGContrastSwatch(x, y, width, height, label, hex, forceLch, actualRatio, bgIsDark) {
+    let c = hex;
+    if (!c && forceLch) {
+        const L = forceLch.L !== undefined ? forceLch.L : forceLch.l;
+        const C = forceLch.C !== undefined ? forceLch.C : forceLch.c;
+        const H = forceLch.h;
+        const lab = oklchToOklab(L, C, H);
+        c = rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
+    }
+    if (!c) c = '#000000';
 
-    palettes.push({ name: 'Paleta główna', scale: getMainPalette().scale });
-    getAdditionalPalettes().forEach(p => palettes.push({ name: `Kolor ${p.index + 1}`, scale: p.scale }));
+    const contrast = previewContrast(c);
+    const textColor = contrast.light.ratio > contrast.dark.ratio ? '#FFFFFF' : '#000000';
+
+    return `
+    <g>
+        <rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${c}" rx="12" />
+        <text x="${x+12}" y="${y+22}" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="${textColor}" opacity="0.7">${label}</text>
+        <text x="${x+12}" y="${y+height-12}" font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="${textColor}">${c.toUpperCase()}</text>
+        ${actualRatio !== undefined ? `<text x="${x+12}" y="${y+height-28}" font-family="Inter, sans-serif" font-size="10" font-weight="700" fill="${textColor}">Real: ${actualRatio.toFixed(2)}:1</text>` : ''}
+    </g>`;
+}
+
+export function generateExportSVG(type = 'main') {
+    const state = getState();
+    const isDark = state.mode.background === 'dark';
+    const bgFill = isDark ? '#000000' : '#FFFFFF';
+    const textFill = isDark ? '#FFFFFF' : '#000000';
 
     const swatchWidth = 110;
     const swatchHeight = 110;
@@ -418,28 +442,71 @@ export function generateExportSVG() {
     let maxW = 0;
     let svgContent = '';
 
-    const gran = state.mode.granularity;
+    if (type === 'contrast') {
+        const renderContrastToSVG = (lch, title) => {
+            const grid = generateContrastGrid(lch);
+            svgContent += `<text x="0" y="${currentY - 10}" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="${textFill}">${title}</text>`;
 
-    palettes.forEach(p => {
-        svgContent += `<text x="0" y="${currentY - 10}" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="${state.mode.background === 'dark' ? '#FFFFFF' : '#000000'}">${p.name}</text>`;
+            grid.forEach((row, rowIndex) => {
+                const baseHex = rgbToHex(oklabToRgb(...Object.values(oklchToOklab(lch.L || lch.l, lch.C || lch.c, lch.h))));
+                const baseVsL1 = contrastRatio(row.l1, baseHex);
 
-        const filteredScale = p.scale.filter(s => {
-            const gridStep = s.step - (s.step % 10);
-            if (gran === 50 && gridStep % 50 !== 0 && !s.isBase) return false;
-            if (gran === 100 && gridStep % 100 !== 0 && !s.isBase) return false;
-            return true;
+                const swatches = [
+                    { label: 'Tło', hex: row.bg },
+                    { label: 'L1', hex: row.l1, ratio: row.l1_actual },
+                    { label: 'AA vs BG', hex: row.c45_bg, ratio: row.c45_bg_actual },
+                    { label: 'AAA vs BG', hex: row.c7_bg, ratio: row.c7_bg_actual },
+                    { label: 'L2 vs L1', hex: row.l2, ratio: row.l2_actual },
+                    { label: 'AA vs L1', hex: row.c45_l1, ratio: row.c45_l1_actual },
+                    { label: 'Base vs BG', lch: lch, ratio: row.baseContrast },
+                    { label: 'Base vs L1', lch: lch, ratio: baseVsL1 }
+                ];
+
+                swatches.forEach((s, i) => {
+                    svgContent += createSVGContrastSwatch(i * (swatchWidth + gap), currentY + rowIndex * (swatchHeight + gap), swatchWidth, swatchHeight, s.label, s.hex, s.lch, s.ratio, isDark);
+                });
+                maxW = Math.max(maxW, swatches.length * (swatchWidth + gap));
+            });
+            currentY += grid.length * (swatchHeight + gap) + sectionGap;
+        };
+
+        const baseLch = state.base.lch || getMainPalette().scale.find(s=>s.isBase);
+        renderContrastToSVG(baseLch, 'Kontrast: Kolor Bazowy');
+        getAdditionalPalettes().forEach(p => {
+            const lch = p.scale.find(s=>s.isBase) || p.scale[Math.floor(p.scale.length/2)];
+            renderContrastToSVG(lch, `Kontrast: Kolor ${p.index+1}`);
         });
 
-        filteredScale.forEach((s, i) => {
-            svgContent += createSVGSwatch(s, i * (swatchWidth + gap), currentY, swatchWidth, swatchHeight);
-        });
+    } else {
+        const collections = [];
+        if (type === 'main') {
+            collections.push({ name: 'Paleta główna', scale: getMainPalette().scale });
+            getAdditionalPalettes().forEach(p => collections.push({ name: `Kolor ${p.index + 1}`, scale: p.scale }));
+        } else if (type === 'functional') {
+            Object.entries(getFunctionalPalettes()).forEach(([name, p]) => collections.push({ name: `Functional: ${name}`, scale: p.scale }));
+        } else if (type === 'badge') {
+            getBadgePalettes().forEach(p => collections.push({ name: `Badge ${p.index + 1}`, scale: p.scale }));
+        }
 
-        maxW = Math.max(maxW, filteredScale.length * (swatchWidth + gap));
-        currentY += swatchHeight + sectionGap;
-    });
+        const gran = state.mode.granularity;
+        collections.forEach(p => {
+            svgContent += `<text x="0" y="${currentY - 10}" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="${textFill}">${p.name}</text>`;
+            const filteredScale = p.scale.filter(s => {
+                const gridStep = Math.round(s.step / 10) * 10;
+                if (gran === 50 && gridStep % 50 !== 0 && !s.isBase) return false;
+                if (gran === 100 && gridStep % 100 !== 0 && !s.isBase) return false;
+                return true;
+            });
+            filteredScale.forEach((s, i) => {
+                svgContent += createSVGSwatch(s, i * (swatchWidth + gap), currentY, swatchWidth, swatchHeight);
+            });
+            maxW = Math.max(maxW, filteredScale.length * (swatchWidth + gap));
+            currentY += swatchHeight + sectionGap;
+        });
+    }
 
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${maxW}" height="${currentY}" viewBox="-20 -20 ${maxW + 40} ${currentY + 40}">
-        <rect x="-20" y="-20" width="${maxW + 40}" height="${currentY + 40}" fill="${state.mode.background === 'dark' ? '#000000' : '#FFFFFF'}" />
+        <rect x="-20" y="-20" width="${maxW + 40}" height="${currentY + 40}" fill="${bgFill}" />
         ${svgContent}
     </svg>`;
 }

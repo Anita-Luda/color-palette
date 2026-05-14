@@ -725,11 +725,21 @@ function setupSidebarControls() {
 }
 
 function setupExport() {
-    $('export-figma-btn')?.addEventListener('click', () => {
-        import('./ui.render.js').then(m => {
-            const svg = m.generateExportSVG();
-            navigator.clipboard.writeText(svg).then(() => {
-                alert('SVG Palety skopiowano do schowka. Możesz teraz wkleić go bezpośrednio w Figmie.');
+    const exportBtns = [
+        'export-figma-btn',
+        'export-figma-func-btn',
+        'export-figma-badge-btn',
+        'export-figma-contrast-btn'
+    ];
+
+    exportBtns.forEach(id => {
+        $(id)?.addEventListener('click', (e) => {
+            const type = e.target.dataset.type || 'main';
+            import('./ui.render.js').then(m => {
+                const svg = m.generateExportSVG(type);
+                navigator.clipboard.writeText(svg).then(() => {
+                    alert(`SVG (${type}) skopiowano do schowka. Możesz teraz wkleić go bezpośrednio w Figmie.`);
+                });
             });
         });
     });
