@@ -214,6 +214,10 @@ export function addGrayPalette() {
     addManualColor(grayHex, grayLCH, 0.5);
 }
 
+export function getAllHexesForFigma() {
+    return clone(EngineState);
+}
+
 export function updateColorRole(index, role) {
   if (!EngineState.colors[index]) return;
   EngineState.colors[index].role = role;

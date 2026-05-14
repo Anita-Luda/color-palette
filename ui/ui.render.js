@@ -162,6 +162,12 @@ export function updateSidebarPreviews() {
       if (hexLabel) hexLabel.textContent = anchor.hex.toUpperCase();
     }
   });
+
+  const state = getState();
+  const basePreview = document.getElementById('basePreview');
+  if (basePreview) {
+      basePreview.style.background = `rgb(${state.base.rgb.r}, ${state.base.rgb.g}, ${state.base.rgb.b})`;
+  }
 }
 
 function renderAdditional(){
@@ -359,16 +365,83 @@ export function getAllVisibleHexes() {
     return hexes;
 }
 
+function createSVGSwatch(swatch, x, y, width, height) {
+    const state = getState();
+    const contrast = previewContrast(swatch.hex);
+    const textColor = contrast.light.ratio > contrast.dark.ratio ? '#FFFFFF' : '#000000';
+    const bgMode = state.mode.background;
+    const info = contrast[bgMode];
+
+    let badges = '';
+    if (swatch.isBase) {
+        badges += `<rect x="${x+width/2-25}" y="${y-10}" width="50" height="18" rx="9" fill="#6366f1" />
+                   <text x="${x+width/2}" y="${y+2}" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="#FFFFFF">BASE</text>`;
+    } else {
+        const gran = state.mode.granularity;
+        if (gran === 10) {
+            if (swatch.step % 100 === 0) {
+                badges += `<rect x="${x+width/2-15}" y="${y-10}" width="30" height="18" rx="9" fill="#334155" />
+                           <text x="${x+width/2}" y="${y+2}" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="#FFFFFF">100</text>`;
+            } else if (swatch.step % 50 === 0) {
+                badges += `<rect x="${x+width/2-15}" y="${y-10}" width="30" height="18" rx="9" fill="#94a3b8" />
+                           <text x="${x+width/2}" y="${y+2}" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="#000000">50</text>`;
+            }
+        } else if (gran === 50 && swatch.step % 100 === 0) {
+            badges += `<rect x="${x+width/2-15}" y="${y-10}" width="30" height="18" rx="9" fill="#334155" />
+                       <text x="${x+width/2}" y="${y+2}" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="#FFFFFF">100</text>`;
+        }
+    }
+
+    return `
+    <g>
+        <rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${swatch.hex}" rx="12" />
+        <text x="${x+12}" y="${y+22}" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="${textColor}" opacity="0.7">${Math.round(swatch.step)}</text>
+        <text x="${x+12}" y="${y+height-12}" font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="${textColor}">${swatch.hex.toUpperCase()}</text>
+        <text x="${x+12}" y="${y+height-28}" font-family="Inter, sans-serif" font-size="10" font-weight="700" fill="${textColor}" opacity="0.6">${info.ratio} ${info.level}</text>
+        ${badges}
+    </g>`;
+}
+
 export function generateExportSVG() {
-    const hexes = Array.from(new Set(getAllVisibleHexes()));
-    let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${hexes.length * 120}" height="200">`;
-    hexes.forEach((hex, i) => {
-        svg += `
-        <rect x="${i * 120}" y="0" width="120" height="120" fill="${hex}" />
-        <text x="${i * 120 + 60}" y="150" font-family="Inter, sans-serif" font-size="12" text-anchor="middle" fill="#888">${hex}</text>`;
+    const state = getState();
+    const palettes = [];
+
+    palettes.push({ name: 'Paleta główna', scale: getMainPalette().scale });
+    getAdditionalPalettes().forEach(p => palettes.push({ name: `Kolor ${p.index + 1}`, scale: p.scale }));
+
+    const swatchWidth = 110;
+    const swatchHeight = 110;
+    const gap = 16;
+    const sectionGap = 64;
+
+    let currentY = 40;
+    let maxW = 0;
+    let svgContent = '';
+
+    const gran = state.mode.granularity;
+
+    palettes.forEach(p => {
+        svgContent += `<text x="0" y="${currentY - 10}" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="${state.mode.background === 'dark' ? '#FFFFFF' : '#000000'}">${p.name}</text>`;
+
+        const filteredScale = p.scale.filter(s => {
+            const gridStep = s.step - (s.step % 10);
+            if (gran === 50 && gridStep % 50 !== 0 && !s.isBase) return false;
+            if (gran === 100 && gridStep % 100 !== 0 && !s.isBase) return false;
+            return true;
+        });
+
+        filteredScale.forEach((s, i) => {
+            svgContent += createSVGSwatch(s, i * (swatchWidth + gap), currentY, swatchWidth, swatchHeight);
+        });
+
+        maxW = Math.max(maxW, filteredScale.length * (swatchWidth + gap));
+        currentY += swatchHeight + sectionGap;
     });
-    svg += '</svg>';
-    return svg;
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${maxW}" height="${currentY}" viewBox="-20 -20 ${maxW + 40} ${currentY + 40}">
+        <rect x="-20" y="-20" width="${maxW + 40}" height="${currentY + 40}" fill="${state.mode.background === 'dark' ? '#000000' : '#FFFFFF'}" />
+        ${svgContent}
+    </svg>`;
 }
 
 /* ---------- PUBLIC API ---------- */
@@ -393,4 +466,17 @@ export function renderAllPalettes(preserveFocus = false){
       frag.appendChild(renderBadge());
       root.appendChild(frag);
   }
+
+  // Update contrast grid background for Dark UI Preview requirement
+  const isDarkPreview = state.mode.background === 'dark';
+  document.querySelectorAll('.contrast-grid').forEach(g => {
+      if (isDarkPreview) g.style.backgroundColor = '#000000';
+      else g.style.backgroundColor = '#ffffff';
+  });
+
+  // Ensure headers are visible
+  const textColor = isDarkPreview ? '#ffffff' : '#000000';
+  document.querySelectorAll('.palette-title strong, .contrast-title, .role-tag').forEach(el => {
+      el.style.color = textColor;
+  });
 }

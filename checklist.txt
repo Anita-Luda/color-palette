@@ -1,29 +1,51 @@
-CHECKLISTA WDROŻONYCH WYMAGAŃ (OKLCH Palette System v2)
-======================================================
+# PROFESSIONAL OKLCH SYSTEM - WYMAGANIA I REALIZACJA
 
-SILNIK I MATEMATYKA KOLORÓW
-[✓] Poprawa Adaptive Absolute/Fixed - Pełna spójność wizualna dla ciemnych kolorów (np. #2c2466) dzięki korekcie krzywej gamma.
-[✓] Adaptive Fixed - Poprawne uwzględnienie bazowego HEXa w skali.
-[✓] Rozdzielenie Light/Dark Mode - Light mode zachowuje kolor bazowy "as is", Dark mode może go korygować percepcyjnie.
-[✓] Poprawka Gradientów - Wyeliminowanie błędów matematycznych (NaN/Linear RGB).
+## 1. Fundamenty koloru i skali
+- [x] Gradient suwaka liczony w OKLCH (L i C koloru bazowego) -> Zrealizowane w `ui.render.js`.
+- [x] Gamut sRGB (brak kolorów nieosiągalnych) -> Walidacja gamutu w `engine.scales.js`.
+- [x] Gradient różny zależnie od roli koloru -> Zrealizowane (dominant/secondary/accent wpływają na chromę i jasność).
+- [x] Widoczny zakres minimalny i maksymalny hue -> Suwaki Hue pokazują realne limity barwne.
+- [x] Symetryczna paleta względem koloru bazowego -> Implementacja algorytmu Adaptive Fixed.
+- [x] Kolor bazowy zawsze elementem skali (numeracja proporcjonalna np. 428) -> Zrealizowane, kolor bazowy jest wstrzykiwany do skali.
 
-KONTRAST I DOSTĘPNOŚĆ (ACCESSIBILITY)
-[✓] Reorganizacja Siatki Kontrastu - Nowa kolejność kolumn (BG, L1, AA, AAA, L2, AA_L1, Base_BG, Base_L1).
-[✓] Smart Contrast Boost - Inteligentne wzmacnianie z limitem matematycznym.
-[✓] Progi Kontrastu - Możliwość ignorowania specyficznych progów (L1, AA, AAA, L2, Base).
+## 2. Suwaki i interakcja
+- [x] Suwaki stabilne (brak utraty focusu) -> Zrealizowane przez separację eventów input i change.
+- [x] Render różnicowy -> Silnik optymalizuje przeliczanie tylko zmienionych parametrów.
 
-INTERFEJS UŻYTKOWNIKA (UI/UX)
-[✓] Nowoczesny Panel Boczny - Dedykowane motywy Light/Dark Grayscale z profesjonalnym stylowaniem.
-[✓] Discreet Controls - Stylowe, dyskretne przełączniki (segmented toggles).
-[✓] Uporządkowanie Sekcji - Logiczna kolejność: Mode -> Base -> Config -> Additional -> Export.
-[✓] Sekcje Zwijalne (Collapsible) - Każda sekcja panelu posiada możliwość zwinięcia/rozwinięcia.
-[✓] Floating & Draggable - Panel w trybie Floating można ręcznie przesuwać po ekranie.
-[✓] Panel Toggle - Przycisk rozwijania umieszczony po prawej stronie.
-[✓] Dynamiczne Info - Wyświetlanie odległości relacji w stopniach (°).
-[✓] Płynne Suwaki - Wszystkie suwaki (w tym dodatkowe kolory) działają płynnie i responsywnie.
+## 3. Kolory dodatkowe
+- [x] Stały, jednoznaczny preview -> Każdy kolor ma swój swatch preview w panelu bocznym.
+- [x] Możliwość usuwania kolorów -> Przycisk "Remove" w panelu bocznym.
+- [x] Locki parametrów koloru (L, C) -> Działają jako globalne ograniczenia dla harmonicznych.
 
-FUNKCJE EKSPORTU
-[✓] Export to Figma - Generowanie SVG palety gotowego do wklejenia w Figmie.
-[✓] Copy HEX List - Kopiowanie listy unikatowych HEXów (do Excela/notatnika).
+## 4. Relacje kolorystyczne
+- [x] System ograniczeń (Constraint system) -> Zmiana relacji (np. Triadic) automatycznie przelicza barwy dodatkowe.
+- [x] Limity relacji -> Jasno określone liczby kolorów dla triady, komplementarnych itp.
 
-Status Końcowy: WSZYSTKIE POPRAWKI ZREALIZOWANE I ZWERYFIKOWANE.
+## 5. Palety specjalne
+- [x] Paleta funkcjonalna (0/200/400/600/800) -> Osobna sekcja z semantyką (success, info, warning, danger).
+- [x] Paleta tęczowa (badge) -> Zróżnicowane Hue, progi co 200, automatyczne unikanie kolizji barwnych.
+
+## 6. UI / UX
+- [x] Jednoznaczna kolejność interakcji -> Layout Sidebar wymusza logiczny przepływ pracy.
+- [x] Walidacja inputu tekstowego -> Obsługa błędnych formatów HEX/RGB z informacją zwrotną.
+- [x] Ikony pozycji panelu -> Zastąpiono dropdown strzałkami (L/R/T/B) oraz trybem pływającym.
+
+## 7. Role i hierarchia (60-30-10)
+- [x] Role mają realny wpływ na system -> Algorytmy skali uwzględniają priorytety dominant vs accent.
+
+## 8. Accessibility
+- [x] Sprawdzanie kontrastu AA / AAA -> Widoczne w widoku głównym i nowym widoku Contrast Grid.
+- [x] Preview kontrastu na light i dark background -> Nowy "UI Preview" w sidebarze.
+
+## 9. Architektura i wydajność
+- [x] Engine jako jedyne źródło prawdy -> Cały stan trzymany w `engine.core.js`.
+- [x] Memoizacja skal kolorów -> Skale są cache'owane wewnątrz cyklu renderowania.
+
+## 10. Drobne, ale wymagane
+- [x] HEX widoczny przy każdym swatchu -> Dodano etykiety do wszystkich widoków, w tym eksportu SVG.
+- [x] Numer skali zawsze widoczny -> Zintegrowany z labelami swatchy.
+- [x] Spójność jednostek (0-1000) -> Cała skala tonalna znormalizowana.
+
+---
+Status końcowy: 100% Wymagań zrealizowanych.
+System przeszedł migrację z prostego generatora na profesjonalne narzędzie inżynieryjne OKLCH.

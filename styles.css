@@ -29,25 +29,33 @@
 }
 
 body.sb-light {
-  --sb-bg: #f0f2f5;
-  --sb-border: #d1d5db;
-  --sb-text: #111827;
-  --sb-text-muted: #4b5563;
-  --sb-input-bg: #ffffff;
-  --sb-group-bg: #e5e7eb;
-  --accent: #111827;
-  --accent-hover: #374151;
+  --sb-bg: #ffffff;
+  --sb-border: #e2e8f0;
+  --sb-text: #1a202c;
+  --sb-text-muted: #718096;
+  --sb-input-bg: #f7fafc;
+  --sb-group-bg: #edf2f7;
+  --accent: #2d3748;
+  --accent-hover: #1a202c;
+  --sb-toggle-bg: #cbd5e0;
+  --sb-toggle-text: #2d3748;
+  --sb-toggle-active-bg: #ffffff;
+  --sb-toggle-active-text: #000000;
 }
 
 body.sb-dark {
-  --sb-bg: #111111;
-  --sb-border: #2a2a2a;
-  --sb-text: #f9fafb;
-  --sb-text-muted: #9ca3af;
-  --sb-input-bg: #1a1a1a;
-  --sb-group-bg: #161616;
-  --accent: #f9fafb;
-  --accent-hover: #d1d5db;
+  --sb-bg: #0f172a;
+  --sb-border: #1e293b;
+  --sb-text: #f8fafc;
+  --sb-text-muted: #94a3b8;
+  --sb-input-bg: #1e293b;
+  --sb-group-bg: #0f172a;
+  --accent: #f8fafc;
+  --accent-hover: #cbd5e0;
+  --sb-toggle-bg: #1e293b;
+  --sb-toggle-text: #94a3b8;
+  --sb-toggle-active-bg: #334155;
+  --sb-toggle-active-text: #ffffff;
 }
 
 * {
@@ -148,14 +156,22 @@ input[type="number"] {
 
 button {
   cursor: pointer;
-  background: var(--accent);
-  border: none;
-  font-weight: 600;
-  color: var(--sb-bg);
+  background: var(--sb-input-bg);
+  border: 1px solid var(--sb-border);
+  font-weight: 500;
+  color: var(--sb-text);
   transition: all 0.2s;
 }
 
-button:hover { background: var(--accent-hover); opacity: 0.9; }
+button:hover { background: var(--sb-group-bg); border-color: var(--accent); }
+
+button.primary {
+    background: var(--accent);
+    color: var(--sb-bg);
+    border: none;
+    font-weight: 600;
+}
+button.primary:hover { background: var(--accent-hover); }
 button:active { transform: translateY(0); }
 
 button.btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
@@ -175,9 +191,10 @@ button.btn-danger:hover { background: var(--danger); color: white; }
   height: 100px;
   border-radius: 10px;
   cursor: pointer;
-  border: 2px solid var(--border);
+  border: 2px solid var(--sb-border);
   transition: transform 0.2s;
   position: relative;
+  background-color: var(--sb-bg);
 }
 .big-swatch:hover { transform: scale(1.02); }
 .big-swatch::after {
@@ -398,7 +415,7 @@ button.btn-danger:hover { background: var(--danger); color: white; }
 .role-tag { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); }
 
 .color-card { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-.color-mini-preview { height: 40px; border-radius: 8px; border: 1px solid var(--border); }
+.color-mini-preview { height: 40px; border-radius: 8px; border: 1px solid var(--sb-border); background-color: var(--sb-bg); }
 
 input[type="range"] { -webkit-appearance: none; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 2px; }
 input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: white; cursor: pointer; border: 3px solid var(--accent); }
@@ -424,10 +441,11 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
 
 .toggle-group {
     display: flex;
-    background: var(--sb-input-bg);
+    background: var(--sb-toggle-bg);
     border: 1px solid var(--sb-border);
-    border-radius: 6px;
-    padding: 2px;
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
 }
 
 .toggle-group input[type="radio"] {
@@ -437,19 +455,20 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
 .toggle-group label {
     flex: 1;
     text-align: center;
-    padding: 6px 0;
+    padding: 7px 0;
     margin: 0;
     cursor: pointer;
     font-size: 0.7rem;
     font-weight: 600;
-    color: var(--sb-text-muted);
-    border-radius: 4px;
-    transition: all 0.2s;
+    color: var(--sb-toggle-text);
+    border-radius: 6px;
+    transition: all 0.2s ease;
 }
 
 .toggle-group input[type="radio"]:checked + label {
-    background: var(--accent);
-    color: var(--sb-bg);
+    background: var(--sb-toggle-active-bg);
+    color: var(--sb-toggle-active-text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .toggle-group.discreet {

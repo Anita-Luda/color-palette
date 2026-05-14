@@ -90,7 +90,8 @@ export function generateContrastGrid(targetLch) {
         }
     }
 
-    // Full tonal scale co-10 (101 steps)
+    // Full tonal scale co-10 (101 steps).
+    // If scale mode is fixed, we MUST use fixed for background generation too to keep consistency.
     const fullScale = generateScaleForLCH(bgLch);
 
     // Window of 10 tones
@@ -101,27 +102,25 @@ export function generateContrastGrid(targetLch) {
     const backgrounds = [];
     if (isDark) {
         backgrounds.push("#000000"); // Black
-        if (brightness === 0) {
-            for (let i = 1; i <= 10; i++) backgrounds.push(fullScale[100 - i * 10].hex);
-        } else {
-            let startIdx = Math.round(brightness * 90);
-            for (let i = 1; i <= 10; i++) {
-                let idx = Math.max(0, Math.min(99, 100 - (startIdx + i)));
-                backgrounds.push(fullScale[idx].hex);
-            }
+
+        let startIdx = Math.round(brightness * (fullScale.length - 11));
+        for (let i = 1; i <= 10; i++) {
+            let idx = (fullScale.length - 1) - (startIdx + i);
+            idx = Math.max(0, Math.min(fullScale.length - 1, idx));
+            backgrounds.push(fullScale[idx].hex);
         }
+
         if (brightness > 0.95) backgrounds.push("#FFFFFF");
     } else {
         backgrounds.push("#FFFFFF"); // White
-        if (brightness === 0) {
-            for (let i = 1; i <= 10; i++) backgrounds.push(fullScale[i * 10].hex);
-        } else {
-            let startIdx = Math.round(brightness * 90);
-            for (let i = 1; i <= 10; i++) {
-                let idx = Math.max(1, Math.min(100, startIdx + i));
-                backgrounds.push(fullScale[idx].hex);
-            }
+
+        let startIdx = Math.round(brightness * (fullScale.length - 11));
+        for (let i = 1; i <= 10; i++) {
+            let idx = startIdx + i;
+            idx = Math.max(0, Math.min(fullScale.length - 1, idx));
+            backgrounds.push(fullScale[idx].hex);
         }
+
         if (brightness > 0.95) backgrounds.push("#000000");
     }
 

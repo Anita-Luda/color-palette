@@ -19,14 +19,14 @@
           <button id="hide-panel-btn" class="btn-hide">UKRYJ</button>
       </div>
       <div class="group collapsible-content">
-          <label>Pozycja</label>
-          <select id="sb-position">
-              <option value="left">Lewo</option>
-              <option value="right">Prawo</option>
-              <option value="top">Góra</option>
-              <option value="bottom">Dół</option>
-              <option value="floating">Floating</option>
-          </select>
+          <label>Pozycja panelu</label>
+          <div class="pos-btn-group">
+            <button class="pos-btn" data-val="left" title="Lewo">←</button>
+            <button class="pos-btn" data-val="right" title="Prawo">→</button>
+            <button class="pos-btn" data-val="top" title="Góra">↑</button>
+            <button class="pos-btn" data-val="bottom" title="Dół">↓</button>
+            <button class="pos-btn" data-val="floating" title="Pływający">⬚</button>
+          </div>
           <label>Motyw Panelu</label>
           <div class="toggle-group discreet">
             <input type="radio" name="sbTheme" id="sb-dark" value="dark" checked>

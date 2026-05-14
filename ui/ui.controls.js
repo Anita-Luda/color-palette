@@ -105,6 +105,12 @@ function updateSidebarLayout() {
     const state = getState();
     const body = document.body;
 
+    // Update active pos button
+    document.querySelectorAll('.pos-btn').forEach(btn => {
+        if (btn.dataset.val === state.mode.sidebarPosition) btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+
     // Clear previous classes
     body.classList.remove('pos-left', 'pos-right', 'pos-top', 'pos-bottom', 'pos-floating');
     body.classList.add(`pos-${state.mode.sidebarPosition}`);
@@ -176,7 +182,7 @@ function setupBasePicker() {
 
     const bgBtn = document.createElement('button');
     bgBtn.id = 'base-bg-btn';
-    bgBtn.className = 'bg-source-btn';
+    bgBtn.className = 'bg-source-btn primary';
     bgBtn.textContent = 'Ustaw jako tło';
     bgBtn.style.marginTop = '8px';
     bgBtn.onclick = () => {
@@ -433,7 +439,7 @@ function createSliderCard(c) {
   // Will be updated by renderer
 
   const bgBtn = document.createElement('button');
-  bgBtn.className = 'bg-source-btn';
+  bgBtn.className = 'bg-source-btn primary';
   bgBtn.textContent = 'Ustaw jako tło';
   bgBtn.style.width = '100%';
   bgBtn.style.marginBottom = '8px';
@@ -669,16 +675,18 @@ function setupContrastSliders() {
 }
 
 function setupSidebarControls() {
-    const posSel = $('sb-position');
+    const posBtns = document.querySelectorAll('.pos-btn');
     const hideBtn = $('hide-panel-btn');
     const toggleBtn = $('panel-toggle');
     const themeRadios = document.querySelectorAll('input[name="sbTheme"]');
 
-    posSel?.addEventListener('change', e => {
-        setSidebarPosition(e.target.value);
-        const sidebar = $('sidebar');
-        sidebar.style.left = ''; sidebar.style.top = ''; sidebar.style.bottom = ''; sidebar.style.right = '';
-        refreshUI();
+    posBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            setSidebarPosition(btn.dataset.val);
+            const sidebar = $('sidebar');
+            sidebar.style.left = ''; sidebar.style.top = ''; sidebar.style.bottom = ''; sidebar.style.right = '';
+            refreshUI();
+        });
     });
 
     hideBtn?.addEventListener('click', () => {
@@ -720,13 +728,9 @@ function setupExport() {
     $('export-figma-btn')?.addEventListener('click', () => {
         import('./ui.render.js').then(m => {
             const svg = m.generateExportSVG();
-            const blob = new Blob([svg], { type: 'image/svg+xml' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'palette-export.svg';
-            a.click();
-            URL.revokeObjectURL(url);
+            navigator.clipboard.writeText(svg).then(() => {
+                alert('SVG Palety skopiowano do schowka. Możesz teraz wkleić go bezpośrednio w Figmie.');
+            });
         });
     });
 
