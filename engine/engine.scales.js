@@ -97,10 +97,13 @@ function applyDarkModeBoost(L, C, H) {
   let newC = C;
   let newH = H;
 
+  // Requirement: "Boost" only affects light tones (L > 0.8 / 0.75)
+  // Step 100 corresponds to L = 0.9. Step 900 is L = 0.1.
+
   // 1. Chroma Boost for Light Tones (L > 0.8)
   if (L > 0.8) {
     const t = (L - 0.8) / 0.2;
-    const boost_strength = 0.25;
+    const boost_strength = 0.4; // Increased for visibility
     const chroma_boost = 1 + (t * boost_strength);
     newC = C * chroma_boost;
   }
@@ -108,7 +111,7 @@ function applyDarkModeBoost(L, C, H) {
   // 2. Hue Compensation for Light Tones (L > 0.75)
   if (L > 0.75) {
     const t = (L - 0.75) / 0.25;
-    const strength = 0.2;
+    const strength = 0.5; // Increased for visibility
     const H_target = getHueCompensationTarget(H);
 
     let diff = H_target - H;
@@ -207,19 +210,36 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
 
       if (isAdaptive) {
           let multiplier = isDarkMode ? 0.8 : 1.0;
-          H = hueShift(L, lch.L, lch.h);
+
+          // Original adaptive behavior: use hueShift and falloff only if boost is NOT applied here,
+          // or if we want them to be part of the base adaptive algorithm.
+          // The user says "Adaptive works like it has dark mode boost permanently on".
+          // In previous version, adaptive simply found max chroma.
+
+          H = lch.h;
           const maxC = maxChromaForL(L, H, lch.C);
+          C = Math.min(maxC, lch.C * multiplier);
+
+          // If it's adaptive, we might still want the falloff to avoid "neon" extremes away from base,
+          // but we'll make it part of the adaptive core, while hueShift and extra boosts move to applyDarkModeBoost.
           const falloff = chromaFalloff(L, lch.L);
-          C = Math.min(maxC, lch.C * multiplier * (isBaseStep ? 1 : falloff));
+          if (!isBaseStep) C *= falloff;
+
       } else {
           C = clampChroma(L, lch.C);
           H = lch.h;
       }
 
       if (isBoost) {
+        // Boost applies Hue Shift and extra Chroma for Light tones on Dark background
         const boosted = applyDarkModeBoost(L, C, H);
+
+        if (isAdaptive) {
+           H = hueShift(L, lch.L, lch.h);
+        } else {
+           H = boosted.H;
+        }
         C = boosted.C;
-        H = boosted.H;
       }
 
       const lab = oklchToOklab(L, C, H);
@@ -244,7 +264,7 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
           let C, H;
           if (isAdaptive) {
               let multiplier = isDarkMode ? 0.8 : 1.0;
-              H = hueShift(L, lch.L, lch.h);
+          H = lch.h;
               const maxC = maxChromaForL(L, H, lch.C);
               C = Math.min(maxC, lch.C * multiplier);
           } else {
@@ -255,7 +275,11 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
           if (isBoost) {
             const boosted = applyDarkModeBoost(L, C, H);
             C = boosted.C;
-            H = boosted.H;
+            if (isAdaptive) {
+                H = hueShift(L, lch.L, lch.h);
+            } else {
+                H = boosted.H;
+            }
           }
 
           const lab = oklchToOklab(L, C, H);
