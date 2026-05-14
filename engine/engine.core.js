@@ -17,6 +17,7 @@ export const EngineState = {
     pastelBoost: false,      // post-processing pastel effect
     glassmorphismBoost: false, // glassmorphism optimization
     inkSaveMode: false,      // print optimization
+    spectralBalance: false,  // perceived brightness correction (H-K effect)
     view: 'palettes',        // palettes | contrast
     granularity: 100,        // 10 | 50 | 100
     background: 'light',     // light | dark
@@ -106,6 +107,10 @@ export function setGlassmorphismBoost(enabled) {
 
 export function setInkSaveMode(enabled) {
   EngineState.mode.inkSaveMode = Boolean(enabled);
+}
+
+export function setSpectralBalance(enabled) {
+  EngineState.mode.spectralBalance = Boolean(enabled);
 }
 
 export function setView(view) {

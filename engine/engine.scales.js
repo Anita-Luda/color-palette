@@ -211,6 +211,26 @@ function applyInkSaveMode(L, C, H) {
   return { L, C: newC, H };
 }
 
+function applySpectralBalance(L, C, H) {
+  // Helmholtz–Kohlrausch effect compensation:
+  // Highly saturated colors are perceived as brighter than less saturated ones
+  // at the same physical lightness (L).
+  // To compensate, we lower the physical L for high C colors.
+
+  // Empirical weight: brightness perception increases with C.
+  // We use a simplified model: perceived brightness boost approx 0.15 * C
+  const perceived_boost = C * 0.18;
+
+  // To balance, we subtract a fraction of this boost from physical L.
+  // We avoid making it too dark in the low-L range.
+  let newL = L - (perceived_boost * Math.min(1, L * 1.5));
+
+  // Ensure L remains within [0, 1]
+  newL = Math.max(0, Math.min(1, newL));
+
+  return { L: newL, C, H };
+}
+
 function maxChromaForL(L, H, C_start) {
   let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
   let low = 0;
@@ -273,6 +293,7 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
   const isPastel = EngineState.mode.pastelBoost;
   const isGlass = EngineState.mode.glassmorphismBoost;
   const isInk = EngineState.mode.inkSaveMode;
+  const isSpectral = EngineState.mode.spectralBalance;
   const isDarkMode = EngineState.mode.palette === 'dark';
   const granularity = EngineState.mode.granularity || 100;
 
@@ -367,12 +388,17 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
         L = ink.L; C = ink.C; H = ink.H;
       }
 
+      if (isSpectral) {
+        const balanced = applySpectralBalance(L, C, H);
+        L = balanced.L; C = balanced.C; H = balanced.H;
+      }
+
       const lab = oklchToOklab(L, C, H);
       const rgb = oklabToRgb(lab.L, lab.a, lab.b);
       let hex = rgbToHex(rgb);
 
       // Base color preservation: ONLY if Light Mode AND NO boost active
-      const isAnyBoost = isBoost || isNeon || isPastel || isGlass || isInk;
+      const isAnyBoost = isBoost || isNeon || isPastel || isGlass || isInk || isSpectral;
       if (isBaseStep && !isDarkMode && !isAnyBoost && sourceHex) {
           hex = sourceHex;
       }
@@ -431,11 +457,16 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
             L = ink.L; C = ink.C; H = ink.H;
           }
 
+          if (isSpectral) {
+            const balanced = applySpectralBalance(L, C, H);
+            L = balanced.L; C = balanced.C; H = balanced.H;
+          }
+
           const lab = oklchToOklab(L, C, H);
           const rgb = oklabToRgb(lab.L, lab.a, lab.b);
           let hex = rgbToHex(rgb);
 
-          const isAnyBoost = isBoost || isNeon || isPastel || isGlass || isInk;
+          const isAnyBoost = isBoost || isNeon || isPastel || isGlass || isInk || isSpectral;
           if (!isDarkMode && !isAnyBoost && sourceHex) hex = sourceHex;
 
           scale.push({

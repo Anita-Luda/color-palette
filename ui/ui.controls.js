@@ -18,6 +18,7 @@ import {
   setPastelBoost,
   setGlassmorphismBoost,
   setInkSaveMode,
+  setSpectralBalance,
   setLock,
   getState,
   getWarnings,
@@ -144,6 +145,9 @@ function updateSidebarLayout() {
 
     const inkToggle = $('ink-toggle');
     if (inkToggle) inkToggle.checked = state.mode.inkSaveMode;
+
+    const spectralToggle = $('spectral-toggle');
+    if (spectralToggle) spectralToggle.checked = state.mode.spectralBalance;
 
     document.querySelectorAll('input[name="algoMode"]').forEach(r => {
         r.checked = (r.value === state.mode.algorithm);
@@ -589,6 +593,12 @@ function setupModes(){
 
   $('ink-toggle')?.addEventListener('change', e => {
       setInkSaveMode(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  $('spectral-toggle')?.addEventListener('change', e => {
+      setSpectralBalance(e.target.checked);
       clearGradientCache();
       refreshUI();
   });

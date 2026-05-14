@@ -20,6 +20,9 @@ Algorytm zorientowany na maksymalizację potencjału barwnego przy zachowaniu pe
 - **Optymalizacja Gamutu**: Dynamicznie przeszukuje (binary search) granice przestrzeni sRGB, aby znaleźć maksymalne możliwe nasycenie dla danej jasności.
 - **Krzywa Jasności**: Stosuje nieliniową korekcję gamma dopasowaną do fizycznej jasności koloru bazowego, co sprawia, że paleta wydaje się bardziej "spójna percepcyjnie" mimo zmian jasności.
 
+### Różnice między Standard a Adaptive
+Główną różnicą jest podejście do nasycenia (Chroma). Standard celuje w bezpieczne, "designerskie" limity, które gwarantują brak zmęczenia wzroku, podczas gdy Adaptive forsuje granice możliwości technicznych ekranu (gamut sRGB), dbając jedynie o to, by przejścia jasności były gładkie. Standard jest lepszy do klasycznych interfejsów biznesowych, Adaptive do projektów o wysokiej dynamice wizualnej (marketing, dark mode gamingowy).
+
 ## Nakładki (Boosts)
 System pozwala na nakładanie efektów post-processingu:
 - **Dark Mode Boost**: Koryguje przesunięcia barwne na czarnym tle (np. zapobiega "ocieplaniu" się błękitów).
@@ -27,6 +30,7 @@ System pozwala na nakładanie efektów post-processingu:
 - **Pastel Boost**: Tworzy łagodne, wysokotonowe barwy o minimalnym nasyceniu.
 - **Glassmorphism Boost**: Podnosi jasność i nasycenie, aby kolor był czytelny pod rozmyciem (blur).
 - **Ink-Save Mode**: Redukuje nasycenie w jasnych tonach, optymalizując zużycie tonera/atramentu.
+- **Spectral Balance**: Koryguje jasność w zależności od nasycenia (Helmholtz–Kohlrausch effect), aby barwy o różnej chromie wydawały się równie jasne dla oka.
 
 ## Propozycje Dalszego Rozwoju
 
