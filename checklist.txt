@@ -15,6 +15,7 @@
   - `Asym` (Asymmetric): Zagęszczenie stopni wokół koloru bazowego.
   - `Fixed`: Stałe progi jasności (np. co 10 jednostek) z zachowaniem koloru bazowego.
 - [x] **Adaptacja (Adaptive Mode)**: Inteligentne korygowanie nasycenia (Chroma) przy ekstremalnych jasnościach dla zachowania czystości koloru.
+- [x] **Dark Mode Boost**: Specjalny tryb korygujący percepcję jasnych kolorów na ciemnych tłach (chroma boost + hue compensation).
 - [x] **Personalizacja Kontrastu**: Możliwość ustawienia własnych targetów kontrastu (np. 4.5:1 dla AA).
 
 ## 3. UI/UX i Debugowanie (Zrealizowane)

@@ -86,6 +86,41 @@ function clampChroma(L, C){
 /* ---------- CORE GENERATORS ---------- */
 /* ---------- CORE GENERATORS ---------- */
 
+function getHueCompensationTarget(H) {
+  if (H >= 0 && H < 60) return H - 10;
+  if (H >= 60 && H < 180) return H + 10;
+  if (H >= 180 && H < 300) return H + 5;
+  return H;
+}
+
+function applyDarkModeBoost(L, C, H) {
+  let newC = C;
+  let newH = H;
+
+  // 1. Chroma Boost for Light Tones (L > 0.8)
+  if (L > 0.8) {
+    const t = (L - 0.8) / 0.2;
+    const boost_strength = 0.25;
+    const chroma_boost = 1 + (t * boost_strength);
+    newC = C * chroma_boost;
+  }
+
+  // 2. Hue Compensation for Light Tones (L > 0.75)
+  if (L > 0.75) {
+    const t = (L - 0.75) / 0.25;
+    const strength = 0.2;
+    const H_target = getHueCompensationTarget(H);
+
+    let diff = H_target - H;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+
+    newH = (H + diff * (t * strength) + 360) % 360;
+  }
+
+  return { C: newC, H: newH };
+}
+
 function maxChromaForL(L, H, C_start) {
   let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
   let low = 0;
@@ -136,7 +171,9 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
   const anchorStep = LToStep(lch.L);
   const isAsymmetric = EngineState.mode.scale === 'asymmetric';
   const isFixed = EngineState.mode.scale === 'fixed';
-  const isAdaptive = EngineState.mode.algorithm === 'adaptive';
+  const algo = EngineState.mode.algorithm;
+  const isAdaptive = algo === 'adaptive' || algo === 'boost';
+  const isBoost = algo === 'boost';
   const isDarkMode = EngineState.mode.palette === 'dark';
   const granularity = EngineState.mode.granularity || 100;
 
@@ -180,6 +217,12 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
           H = lch.h;
       }
 
+      if (isBoost) {
+        const boosted = applyDarkModeBoost(L, C, H);
+        C = boosted.C;
+        H = boosted.H;
+      }
+
       const lab = oklchToOklab(L, C, H);
       const rgb = oklabToRgb(lab.L, lab.a, lab.b);
       let hex = rgbToHex(rgb);
@@ -209,6 +252,13 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
               C = clampChroma(L, lch.C);
               H = lch.h;
           }
+
+          if (isBoost) {
+            const boosted = applyDarkModeBoost(L, C, H);
+            C = boosted.C;
+            H = boosted.H;
+          }
+
           const lab = oklchToOklab(L, C, H);
           const rgb = oklabToRgb(lab.L, lab.a, lab.b);
           let hex = rgbToHex(rgb);

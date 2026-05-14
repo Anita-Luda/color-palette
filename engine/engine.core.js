@@ -79,7 +79,7 @@ export function setScaleMode(mode) {
 }
 
 export function setAlgorithmMode(mode) {
-  if (mode !== 'standard' && mode !== 'adaptive') return;
+  if (mode !== 'standard' && mode !== 'adaptive' && mode !== 'boost') return;
   EngineState.mode.algorithm = mode;
 }
 
