@@ -15,6 +15,8 @@ export const EngineState = {
     darkModeBoost: false,    // post-processing boost
     neonBoost: false,        // post-processing neon effect
     pastelBoost: false,      // post-processing pastel effect
+    glassmorphismBoost: false, // glassmorphism optimization
+    inkSaveMode: false,      // print optimization
     view: 'palettes',        // palettes | contrast
     granularity: 100,        // 10 | 50 | 100
     background: 'light',     // light | dark
@@ -96,6 +98,14 @@ export function setNeonBoost(enabled) {
 
 export function setPastelBoost(enabled) {
   EngineState.mode.pastelBoost = Boolean(enabled);
+}
+
+export function setGlassmorphismBoost(enabled) {
+  EngineState.mode.glassmorphismBoost = Boolean(enabled);
+}
+
+export function setInkSaveMode(enabled) {
+  EngineState.mode.inkSaveMode = Boolean(enabled);
 }
 
 export function setView(view) {

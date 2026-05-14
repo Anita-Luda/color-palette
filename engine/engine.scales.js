@@ -71,14 +71,38 @@ function LToStep(L){
 }
 
 // Guardrail chromy - ulepszony, aby uniknąć "skoków" nasycenia
+function getHueDependentSafeChroma(L, H) {
+  // Żółcie (70-110) mają najwyższy gamut, błękity (230-270) niższy.
+  // Zwracamy "projektowo bezpieczny" limit nasycenia, który płynnie zmienia się z Hue.
+
+  let baseSafe = 0.18; // standardowy bezpieczny limit
+
+  // Podbijamy dla żółci/pomarańczy
+  if (H > 40 && H < 140) {
+      const t = 1 - Math.abs(H - 90) / 50;
+      baseSafe += 0.12 * Math.max(0, t);
+  }
+
+  // Obniżamy dla błękitów/fioletów (by uniknąć "neonowości" w standardzie)
+  if (H > 220 && H < 320) {
+      const t = 1 - Math.abs(H - 270) / 50;
+      baseSafe -= 0.04 * Math.max(0, t);
+  }
+
+  // Dopasowanie do jasności (najwięcej nasycenia w tonach średnich)
+  const lightnessMult = 1 - Math.pow(Math.abs(L - 0.5) * 2, 1.5);
+
+  return baseSafe * (0.6 + 0.4 * lightnessMult);
+}
+
 function clampChroma(L, C, H){
   let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
 
-  // Zamiast arbitralnych progów, używamy faktycznego limitu gamutu dla danego L i H.
-  // Zapobiega to sytuacji, gdzie kolor bazowy (np. #ffff00) ma wysokie nasycenie,
-  // a sąsiednie swatche są gwałtownie przygaszane do arbitralnego limitu.
   const maxGamut = maxChromaForL(L, H, C);
-  return Math.min(C * multiplier, maxGamut);
+  const designSafe = getHueDependentSafeChroma(L, H);
+
+  // W Standard mode celujemy w designSafe, ale nie przekraczamy gamutu ani oryginalnego C.
+  return Math.min(C * multiplier, maxGamut, designSafe);
 }
 
 /* ---------- CORE GENERATORS ---------- */
@@ -166,6 +190,27 @@ function applyPastelBoost(L, C, H) {
   return { L: newL, C: newC, H };
 }
 
+function applyGlassmorphismBoost(L, C, H) {
+  // Glassmorphism optimization: increase lightness and subtle saturation
+  // to ensure the color remains visible through blurred surfaces.
+  let newL = L + (1.0 - L) * 0.15;
+  let newC = C * 1.1;
+  return { L: newL, C: newC, H };
+}
+
+function applyInkSaveMode(L, C, H) {
+  // Ink-save mode: desaturate light tones (where ink is most visible as dots)
+  // to reduce ink consumption in print.
+  let newC = C;
+  // L range 0 (black) to 1 (white). Light tones are L > 0.6.
+  if (L > 0.5) {
+    const t = (L - 0.5) / 0.5;
+    // Aggressive desaturation for ink saving
+    newC = C * (1 - t * 0.9);
+  }
+  return { L, C: newC, H };
+}
+
 function maxChromaForL(L, H, C_start) {
   let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
   let low = 0;
@@ -183,11 +228,17 @@ function maxChromaForL(L, H, C_start) {
   return low;
 }
 
+function sigmoidalFalloff(x) {
+  // Funkcja sigmoidalna (S-curve) dla bardziej "aksamitnych" przejść nasycenia.
+  // x: 0..1 (odległość od bazy), zwraca 1..0
+  return 1 / (1 + Math.exp(12 * (x - 0.5)));
+}
+
 function chromaFalloff(L, baseL) {
-  const max_range = 0.6;
-  const alpha = 1.3;
   const d = Math.abs(L - baseL);
-  return Math.max(0, 1 - Math.pow(d / max_range, alpha));
+  // mapujemy d (0..1) na zakres sigmoidy
+  // 0 -> 1, 0.6 -> blisko 0
+  return sigmoidalFalloff(d * 1.5);
 }
 
 function hueShift(L, baseL, baseH) {
@@ -220,6 +271,8 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
   const isBoost = EngineState.mode.darkModeBoost;
   const isNeon = EngineState.mode.neonBoost;
   const isPastel = EngineState.mode.pastelBoost;
+  const isGlass = EngineState.mode.glassmorphismBoost;
+  const isInk = EngineState.mode.inkSaveMode;
   const isDarkMode = EngineState.mode.palette === 'dark';
   const granularity = EngineState.mode.granularity || 100;
 
@@ -301,9 +354,17 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
 
       if (isPastel) {
         const pastel = applyPastelBoost(L, C, H);
-        L = pastel.L;
-        C = pastel.C;
-        H = pastel.H;
+        L = pastel.L; C = pastel.C; H = pastel.H;
+      }
+
+      if (isGlass) {
+        const glass = applyGlassmorphismBoost(L, C, H);
+        L = glass.L; C = glass.C; H = glass.H;
+      }
+
+      if (isInk) {
+        const ink = applyInkSaveMode(L, C, H);
+        L = ink.L; C = ink.C; H = ink.H;
       }
 
       const lab = oklchToOklab(L, C, H);
@@ -311,7 +372,7 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
       let hex = rgbToHex(rgb);
 
       // Base color preservation: ONLY if Light Mode AND NO boost active
-      const isAnyBoost = isBoost || isNeon || isPastel;
+      const isAnyBoost = isBoost || isNeon || isPastel || isGlass || isInk;
       if (isBaseStep && !isDarkMode && !isAnyBoost && sourceHex) {
           hex = sourceHex;
       }
@@ -357,16 +418,24 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
 
           if (isPastel) {
             const pastel = applyPastelBoost(L, C, H);
-            L = pastel.L;
-            C = pastel.C;
-            H = pastel.H;
+            L = pastel.L; C = pastel.C; H = pastel.H;
+          }
+
+          if (isGlass) {
+            const glass = applyGlassmorphismBoost(L, C, H);
+            L = glass.L; C = glass.C; H = glass.H;
+          }
+
+          if (isInk) {
+            const ink = applyInkSaveMode(L, C, H);
+            L = ink.L; C = ink.C; H = ink.H;
           }
 
           const lab = oklchToOklab(L, C, H);
           const rgb = oklabToRgb(lab.L, lab.a, lab.b);
           let hex = rgbToHex(rgb);
 
-          const isAnyBoost = isBoost || isNeon || isPastel;
+          const isAnyBoost = isBoost || isNeon || isPastel || isGlass || isInk;
           if (!isDarkMode && !isAnyBoost && sourceHex) hex = sourceHex;
 
           scale.push({

@@ -15,7 +15,11 @@
   - `Asym` (Asymmetric): Zagęszczenie stopni wokół koloru bazowego.
   - `Fixed`: Stałe progi jasności (np. co 10 jednostek) z zachowaniem koloru bazowego.
 - [x] **Adaptacja (Adaptive Mode)**: Inteligentne korygowanie nasycenia (Chroma) przy ekstremalnych jasnościach dla zachowania czystości koloru.
-- [x] **Dark Mode Boost**: Specjalny tryb korygujący percepcję jasnych kolorów na ciemnych tłach (chroma boost + hue compensation).
+- [x] **Dark Mode Boost**: Specjalny tryb korygujący percepcję barw na ciemnych tłach.
+- [x] **Neon Boost**: Opcjonalna nakładka forsująca maksymalne nasycenie barw w ramach dostępnego gamutu.
+- [x] **Pastel Boost**: Tryb generujący łagodne, jasne barwy o niskim nasyceniu.
+- [x] **Glassmorphism Boost**: Optymalizacja jasności pod kątem elementów półprzezroczystych.
+- [x] **Ink-Save Mode**: Oszczędzanie barwnika w jasnych tonach (optymalizacja druku).
 - [x] **Personalizacja Kontrastu**: Możliwość ustawienia własnych targetów kontrastu (np. 4.5:1 dla AA).
 
 ## 3. UI/UX i Debugowanie (Zrealizowane)
@@ -24,7 +28,7 @@
 - [x] **Responsywność**: Interfejs dostosowuje się do szerokości ekranu, zachowując czytelność siatek.
 - [x] **Wizualne Wskaźniki**: Badge "BASE" dla koloru źródłowego oraz "100/50" dla progów systemowych w trybie Fixed.
 - [x] **Poprawki Layoutu**: Naprawione odstępy w grupach przycisków (gap: 8px) oraz spójne stylowanie przycisków tła.
-- [x] **Standard Mode Blend**: Naprawiony efekt "skoku" dla nasyconych kolorów (np. żółty #ffff00) poprzez dynamiczne mapowanie gamutu i subtelny falloff nasycenia.
+- [x] **Standard Mode Refinement**: Aksamitne przejścia tonalne (funkcja sigmoidalna) oraz bezpieczne limity nasycenia zależne od Hue.
 - [x] **Neon Boost**: Opcjonalna nakładka forsująca maksymalne nasycenie barw w ramach dostępnego gamutu dla uzyskania efektu "neonowego".
 
 ## Status Końcowy: 100% Zrealizowane

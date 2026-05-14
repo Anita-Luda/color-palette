@@ -7,6 +7,27 @@ System osiągnął dojrzałość produkcyjną. Kluczowe przewagi techniczne:
 - **Algorytmiczne Skalowanie**: Tryby `Asym` i `Fixed` pozwalają na budowę systemów projektowych o różnej dynamice.
 - **Zorientowanie na Kontrast**: System nie tylko generuje kolory, ale weryfikuje ich użyteczność w czasie rzeczywistym (WCAG).
 
+## Szczegóły Algorytmów
+
+### Algorytm Standard
+Klasyczne podejście tonalne oparte na przestrzeni OKLCH.
+- **Interpolacja**: Wykorzystuje funkcję sigmoidalną dla nasycenia (Chroma), co zapewnia "aksamitne" przejścia tonalne w stronę czerni i bieli.
+- **Bezpieczeństwo Projektowe**: Posiada wbudowane limity nasycenia zależne od Hue (np. wyższe dla żółci, niższe dla błękitów), co zapobiega powstawaniu nienaturalnych, męczących wzrok barw w standardowych widokach.
+- **Zachowanie Bazy**: W trybie Light Mode (bez nakładek) rygorystycznie zachowuje wejściowy kolor HEX.
+
+### Algorytm Adaptive
+Algorytm zorientowany na maksymalizację potencjału barwnego przy zachowaniu percepcji.
+- **Optymalizacja Gamutu**: Dynamicznie przeszukuje (binary search) granice przestrzeni sRGB, aby znaleźć maksymalne możliwe nasycenie dla danej jasności.
+- **Krzywa Jasności**: Stosuje nieliniową korekcję gamma dopasowaną do fizycznej jasności koloru bazowego, co sprawia, że paleta wydaje się bardziej "spójna percepcyjnie" mimo zmian jasności.
+
+## Nakładki (Boosts)
+System pozwala na nakładanie efektów post-processingu:
+- **Dark Mode Boost**: Koryguje przesunięcia barwne na czarnym tle (np. zapobiega "ocieplaniu" się błękitów).
+- **Neon Boost**: Forsuje maksymalne nasycenie gamutu dla efektu "electric".
+- **Pastel Boost**: Tworzy łagodne, wysokotonowe barwy o minimalnym nasyceniu.
+- **Glassmorphism Boost**: Podnosi jasność i nasycenie, aby kolor był czytelny pod rozmyciem (blur).
+- **Ink-Save Mode**: Redukuje nasycenie w jasnych tonach, optymalizując zużycie tonera/atramentu.
+
 ## Propozycje Dalszego Rozwoju
 
 ### 1. Rozszerzony Eksport i Integracja (Handoff)

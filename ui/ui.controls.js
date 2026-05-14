@@ -16,6 +16,8 @@ import {
   setDarkModeBoost,
   setNeonBoost,
   setPastelBoost,
+  setGlassmorphismBoost,
+  setInkSaveMode,
   setLock,
   getState,
   getWarnings,
@@ -136,6 +138,12 @@ function updateSidebarLayout() {
 
     const pastelToggle = $('pastel-toggle');
     if (pastelToggle) pastelToggle.checked = state.mode.pastelBoost;
+
+    const glassToggle = $('glass-toggle');
+    if (glassToggle) glassToggle.checked = state.mode.glassmorphismBoost;
+
+    const inkToggle = $('ink-toggle');
+    if (inkToggle) inkToggle.checked = state.mode.inkSaveMode;
 
     document.querySelectorAll('input[name="algoMode"]').forEach(r => {
         r.checked = (r.value === state.mode.algorithm);
@@ -569,6 +577,18 @@ function setupModes(){
 
   $('pastel-toggle')?.addEventListener('change', e => {
       setPastelBoost(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  $('glass-toggle')?.addEventListener('change', e => {
+      setGlassmorphismBoost(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  $('ink-toggle')?.addEventListener('change', e => {
+      setInkSaveMode(e.target.checked);
       clearGradientCache();
       refreshUI();
   });
