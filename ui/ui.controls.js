@@ -537,6 +537,12 @@ function setupModes(){
       clearGradientCache();
       refreshUI();
   }));
+
+  $('boost-toggle')?.addEventListener('change', e => {
+      setDarkModeBoost(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
 }
 
 function setupGranularity() {

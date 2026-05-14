@@ -171,9 +171,8 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
   const anchorStep = LToStep(lch.L);
   const isAsymmetric = EngineState.mode.scale === 'asymmetric';
   const isFixed = EngineState.mode.scale === 'fixed';
-  const algo = EngineState.mode.algorithm;
-  const isAdaptive = algo === 'adaptive' || algo === 'boost';
-  const isBoost = algo === 'boost';
+  const isAdaptive = EngineState.mode.algorithm === 'adaptive';
+  const isBoost = EngineState.mode.darkModeBoost;
   const isDarkMode = EngineState.mode.palette === 'dark';
   const granularity = EngineState.mode.granularity || 100;
 
