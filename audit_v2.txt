@@ -1,0 +1,43 @@
+# Audit Algorytmów Kolorystycznych V2
+
+## 1. Analiza Trybów (Light / Dark)
+
+### Light Mode
+- **Cel**: Zachowanie koloru bazowego i naturalne wblendowanie w paletę.
+- **Weryfikacja**: Algorytmy `Standard` i `Adaptive` poprawnie wymuszają `sourceHex` dla kroku bazowego, o ile nie są włączone nakładki (Boosts). Dzięki temu brandowy kolor pozostaje nienaruszony w standardowych widokach.
+- **Adaptive**: W trybie Adaptive (Light) nasycenie jest optymalizowane pod kątem gamutu, ale przy zachowaniu pierwotnego Hue, co pozwala zachować charakter wizualny barwy w szerokim zakresie jasności.
+
+### Dark Mode
+- **Cel**: Zmniejszenie intensywności wizualnej (komfort dla oczu).
+- **Weryfikacja**: Implementacja zawiera stały mnożnik chromy (0.8x) w trybie Dark Mode. Zapobiega to efektowi "świecenia" i wibracji kolorów na czarnym tle.
+
+## 2. Analiza Nakładek (Boosts)
+
+### Dark Mode Boost (Korekta Percepcyjna)
+- **Cel**: Zachowanie brandowego charakteru barw na czarnym tle poprzez korektę przesunięć hue i nasycenia.
+- **Poprawka**: Zidentyfikowano, że barwy niebieskie na czarnym tle "ciepleją". Zaimplementowano ulepszoną kompensację:
+  - Blues (180-300°): Przesunięcie w stronę chłodnego cyjanu (-15°).
+  - Warms (0-60°): Korekta w stronę czerwieni (-10°).
+  - Greens (60-180°): Przesunięcie w stronę czystej zieleni (+10°).
+- **Efekt**: Paleta w Dark Mode z włączonym Boostem wygląda wizualnie bliżej oryginału z Light Mode niż bez korekty.
+
+### Neon Boost
+- **Cel**: Generowanie świadomie jaskrawych, neonowych tonów.
+- **Weryfikacja**: Algorytm forsuje nasycenie do granic gamutu sRGB (maxC * 0.98) i lekko podnosi jasność w cieniach, co daje efekt "elektryzujący".
+
+### Pastel Boost (NOWOŚĆ)
+- **Cel**: Łagodne, jasne i lekkie tony dla projektów o charakterze "soft".
+- **Realizacja**: Drastyczne obniżenie nasycenia (max 0.04) i przesunięcie krzywej jasności w stronę wysokich tonów (0.85-0.95).
+
+## 3. Sugestie i Dalszy Rozwój
+
+### Sugestie Algorytmiczne
+1. **Glassmorphism Boost**: Nakładka optymalizująca kolory pod kątem przezroczystości (podniesienie jasności i specyficzne nasycenie, by kolor "nie ginał" pod blur-em).
+2. **Ink-Save Mode**: Algorytm minimalizujący zużycie nasyconych barw w jasnych tonach (optymalizacja pod druk).
+3. **Contrast-Safety Alg**: Czwarty algorytm (obok Standard/Adaptive), który generuje paletę, gdzie każdy krok wymusza minimum 4.5:1 względem sąsiada (automatyczne schodkowanie dostępności).
+
+### Logika do Poprawy
+- **Interpolacja Chroma**: Obecnie Standard mode używa uproszczonego falloffu. Warto rozważyć użycie funkcji sigmoidalnej dla nasycenia, by przejścia w stronę bieli/czerni były jeszcze bardziej "aksamitne".
+- **Hue-Dependent Chroma**: Żółcie mają naturalnie wyższy gamut niż błękity. Algorytm Adaptive radzi sobie z tym dobrze, ale Standard mógłby dynamicznie dopasowywać "bezpieczny limit" chromy w zależności od kąta Hue.
+
+## Status: Zgodny z wymaganiami V2.

@@ -15,6 +15,7 @@ import {
   setAlgorithmMode,
   setDarkModeBoost,
   setNeonBoost,
+  setPastelBoost,
   setLock,
   getState,
   getWarnings,
@@ -132,6 +133,9 @@ function updateSidebarLayout() {
 
     const neonToggle = $('neon-toggle');
     if (neonToggle) neonToggle.checked = state.mode.neonBoost;
+
+    const pastelToggle = $('pastel-toggle');
+    if (pastelToggle) pastelToggle.checked = state.mode.pastelBoost;
 
     document.querySelectorAll('input[name="algoMode"]').forEach(r => {
         r.checked = (r.value === state.mode.algorithm);
@@ -559,6 +563,12 @@ function setupModes(){
 
   $('neon-toggle')?.addEventListener('change', e => {
       setNeonBoost(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  $('pastel-toggle')?.addEventListener('change', e => {
+      setPastelBoost(e.target.checked);
       clearGradientCache();
       refreshUI();
   });

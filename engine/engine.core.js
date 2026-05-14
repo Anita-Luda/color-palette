@@ -14,6 +14,7 @@ export const EngineState = {
     algorithm: 'standard',   // standard | adaptive
     darkModeBoost: false,    // post-processing boost
     neonBoost: false,        // post-processing neon effect
+    pastelBoost: false,      // post-processing pastel effect
     view: 'palettes',        // palettes | contrast
     granularity: 100,        // 10 | 50 | 100
     background: 'light',     // light | dark
@@ -91,6 +92,10 @@ export function setDarkModeBoost(enabled) {
 
 export function setNeonBoost(enabled) {
   EngineState.mode.neonBoost = Boolean(enabled);
+}
+
+export function setPastelBoost(enabled) {
+  EngineState.mode.pastelBoost = Boolean(enabled);
 }
 
 export function setView(view) {

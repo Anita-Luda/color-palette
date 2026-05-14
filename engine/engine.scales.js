@@ -85,9 +85,17 @@ function clampChroma(L, C, H){
 /* ---------- CORE GENERATORS ---------- */
 
 function getHueCompensationTarget(H) {
+  // Requirement: "na czarnym tle ten sam kolor... zaczyna wpadać wizualnie w ciepło, beżowo, żółte... trzeba to skorygować"
+  // Blues (180-300) tend to look warmer/purplish on black if desaturated.
+  // We push them towards colder/cyan (subtract hue).
+  if (H >= 180 && H < 300) return H - 15;
+
+  // Warm colors (0-60) can look overly yellowish. Push them towards red/orange.
   if (H >= 0 && H < 60) return H - 10;
+
+  // Greens/Cyans (60-180) can look yellowish too. Push towards more pure green/cyan.
   if (H >= 60 && H < 180) return H + 10;
-  if (H >= 180 && H < 300) return H + 5;
+
   return H;
 }
 
@@ -95,8 +103,16 @@ function applyDarkModeBoost(L, C, H) {
   let newC = C;
   let newH = H;
 
-  // Requirement: "Boost" only affects light tones (L > 0.8 / 0.75)
-  // Step 100 corresponds to L = 0.9. Step 900 is L = 0.1.
+  // Always apply hue compensation to keep "brand identity" on black background
+  const H_target = getHueCompensationTarget(H);
+  let diff = H_target - H;
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
+
+  // Apply shift proportional to desaturation or just always?
+  // Let's apply it more strongly for lighter tones, but keep a base shift.
+  const shift_factor = L > 0.5 ? 0.8 : 0.4;
+  newH = (H + diff * shift_factor + 360) % 360;
 
   // 1. Chroma Boost for Light Tones (L > 0.8)
   if (L > 0.8) {
@@ -139,6 +155,14 @@ function applyNeonBoost(L, C, H) {
 
   // IMPORTANT: For neon to be visible, we must ensure it bypasses multipliers
   // We return a slightly modified L and forced high C
+  return { L: newL, C: newC, H };
+}
+
+function applyPastelBoost(L, C, H) {
+  // Pastel effect: low chroma, high lightness.
+  // We reduce chroma significantly and push lightness towards 0.85-0.95.
+  let newL = L + (0.9 - L) * 0.4;
+  let newC = Math.min(C, 0.05) * 0.8;
   return { L: newL, C: newC, H };
 }
 
@@ -195,6 +219,7 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
   const isAdaptive = EngineState.mode.algorithm === 'adaptive';
   const isBoost = EngineState.mode.darkModeBoost;
   const isNeon = EngineState.mode.neonBoost;
+  const isPastel = EngineState.mode.pastelBoost;
   const isDarkMode = EngineState.mode.palette === 'dark';
   const granularity = EngineState.mode.granularity || 100;
 
@@ -274,11 +299,20 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
         H = neon.H;
       }
 
+      if (isPastel) {
+        const pastel = applyPastelBoost(L, C, H);
+        L = pastel.L;
+        C = pastel.C;
+        H = pastel.H;
+      }
+
       const lab = oklchToOklab(L, C, H);
       const rgb = oklabToRgb(lab.L, lab.a, lab.b);
       let hex = rgbToHex(rgb);
 
-      if (isBaseStep && !isDarkMode && sourceHex) {
+      // Base color preservation: ONLY if Light Mode AND NO boost active
+      const isAnyBoost = isBoost || isNeon || isPastel;
+      if (isBaseStep && !isDarkMode && !isAnyBoost && sourceHex) {
           hex = sourceHex;
       }
 
@@ -321,10 +355,19 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
               H = neon.H;
           }
 
+          if (isPastel) {
+            const pastel = applyPastelBoost(L, C, H);
+            L = pastel.L;
+            C = pastel.C;
+            H = pastel.H;
+          }
+
           const lab = oklchToOklab(L, C, H);
           const rgb = oklabToRgb(lab.L, lab.a, lab.b);
           let hex = rgbToHex(rgb);
-          if (!isDarkMode && sourceHex) hex = sourceHex;
+
+          const isAnyBoost = isBoost || isNeon || isPastel;
+          if (!isDarkMode && !isAnyBoost && sourceHex) hex = sourceHex;
 
           scale.push({
               step: anchorStep,
