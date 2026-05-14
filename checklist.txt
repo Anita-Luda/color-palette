@@ -1,30 +1,29 @@
-CHECKLISTA WDROŻONYCH WYMAGAŃ (OKLCH Palette System)
+CHECKLISTA WDROŻONYCH WYMAGAŃ (OKLCH Palette System v2)
 ======================================================
 
 SILNIK I MATEMATYKA KOLORÓW
-[✓] Migracja na OKLCH - Cały system operuje na percepcyjnie jednolitym modelu barw.
-[✓] Rozdzielenie Algorytmu od Rozkładu Jasności - Możliwość niezależnego wyboru:
-    - Algorytm: Standardowy vs Adaptacyjny (z inteligentnym scalingiem chroma).
-    - Rozkład: Absolutny, Asymetryczny oraz Fixed (skorygowany pod kolor bazowy).
-[✓] Poprawa błędu NaN - Obsługa krawędziowych przypadków jasności (0% i 100%).
+[✓] Poprawa Adaptive Absolute/Fixed - Pełna spójność wizualna dla ciemnych kolorów (np. #2c2466) dzięki korekcie krzywej gamma.
+[✓] Adaptive Fixed - Poprawne uwzględnienie bazowego HEXa w skali.
+[✓] Rozdzielenie Light/Dark Mode - Light mode zachowuje kolor bazowy "as is", Dark mode może go korygować percepcyjnie.
+[✓] Poprawka Gradientów - Wyeliminowanie błędów matematycznych (NaN/Linear RGB).
 
 KONTRAST I DOSTĘPNOŚĆ (ACCESSIBILITY)
-[✓] Streamlined Contrast Grid - Czytelna siatka kontrastów dla wszystkich kolorów.
-[✓] Etykiety W/B - Każdy swatch w palecie głównej posiada etykietę kontrastu do Białego (W) i Czarnego (B).
-[✓] Smart Contrast Boost - Inteligentne wzmacnianie kontrastu z matematycznym limitem (quad capping), zapobiegającym niemożliwym do osiągnięcia celom.
-[✓] Real-time Contrast Validation - Natychmiastowa informacja o spełnieniu norm AA/AAA.
+[✓] Reorganizacja Siatki Kontrastu - Nowa kolejność kolumn (BG, L1, AA, AAA, L2, AA_L1, Base_BG, Base_L1).
+[✓] Smart Contrast Boost - Inteligentne wzmacnianie z limitem matematycznym.
+[✓] Progi Kontrastu - Możliwość ignorowania specyficznych progów (L1, AA, AAA, L2, Base).
 
 INTERFEJS UŻYTKOWNIKA (UI/UX)
-[✓] Profesjonalny Panel Boczny - Motyw szarości (Light/Dark Grayscale) eliminujący przekłamania percepcji kolorów palety.
-[✓] Elastyczne Pozycjonowanie - Możliwość umieszczenia panelu: Lewo, Prawo, Góra, Dół, Floating.
-[✓] Zarządzanie Widocznością - Przycisk "Ukryj/Pokaż" panel dla pełnego podglądu palety.
-[✓] Nowoczesne Kontrolki - Zamiana standardowych inputów na stylowe "Segmented Toggles".
-[✓] Kontekstowe Priorytety - Automatyczne eksponowanie ustawień kontrastu w zakładce Kontrast.
+[✓] Nowoczesny Panel Boczny - Dedykowane motywy Light/Dark Grayscale z profesjonalnym stylowaniem.
+[✓] Discreet Controls - Stylowe, dyskretne przełączniki (segmented toggles).
+[✓] Uporządkowanie Sekcji - Logiczna kolejność: Mode -> Base -> Config -> Additional -> Export.
+[✓] Sekcje Zwijalne (Collapsible) - Każda sekcja panelu posiada możliwość zwinięcia/rozwinięcia.
+[✓] Floating & Draggable - Panel w trybie Floating można ręcznie przesuwać po ekranie.
+[✓] Panel Toggle - Przycisk rozwijania umieszczony po prawej stronie.
+[✓] Dynamiczne Info - Wyświetlanie odległości relacji w stopniach (°).
+[✓] Płynne Suwaki - Wszystkie suwaki (w tym dodatkowe kolory) działają płynnie i responsywnie.
 
-LOGIKA I STATE MANAGEMENT
-[✓] Automatyczny Reset Tła - Powrót do tła bazowego po usunięciu koloru używanego jako tło.
-[✓] Poprawka "Set as Background" - Naprawienie routingu dla kolorów dodatkowych i funkcyjnych.
-[✓] Synchronizacja Sidebar/Preview - Automatyczna zmiana tła podglądu przy zmianie motywu panelu (Dark -> Black, Light -> White).
-[✓] Poprawne Podglądy Boczne - Naprawienie wyświetlania kolorów dodatkowych w widoku kontrastu.
+FUNKCJE EKSPORTU
+[✓] Export to Figma - Generowanie SVG palety gotowego do wklejenia w Figmie.
+[✓] Copy HEX List - Kopiowanie listy unikatowych HEXów (do Excela/notatnika).
 
-Status Końcowy: WSZYSTKIE WYMAGANIA ZREALIZOWANE I ZWERYFIKOWANE.
+Status Końcowy: WSZYSTKIE POPRAWKI ZREALIZOWANE I ZWERYFIKOWANE.

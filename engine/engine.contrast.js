@@ -101,28 +101,28 @@ export function generateContrastGrid(targetLch) {
     const backgrounds = [];
     if (isDark) {
         backgrounds.push("#000000"); // Black
-        let startIdx = Math.round(brightness * 90);
-        for (let i = 1; i <= 10; i++) {
-            let idx = 100 - (startIdx + i);
-            idx = Math.max(0, Math.min(99, idx));
-            backgrounds.push(fullScale[idx].hex);
+        if (brightness === 0) {
+            for (let i = 1; i <= 10; i++) backgrounds.push(fullScale[100 - i * 10].hex);
+        } else {
+            let startIdx = Math.round(brightness * 90);
+            for (let i = 1; i <= 10; i++) {
+                let idx = Math.max(0, Math.min(99, 100 - (startIdx + i)));
+                backgrounds.push(fullScale[idx].hex);
+            }
         }
-        // "dla maksymalnej jasności tła w dark mode dodawaj biały"
-        if (brightness > 0.95) {
-            backgrounds.push("#FFFFFF");
-        }
+        if (brightness > 0.95) backgrounds.push("#FFFFFF");
     } else {
         backgrounds.push("#FFFFFF"); // White
-        let startIdx = Math.round(brightness * 90);
-        for (let i = 1; i <= 10; i++) {
-            let idx = startIdx + i;
-            idx = Math.max(1, Math.min(100, idx));
-            backgrounds.push(fullScale[idx].hex);
+        if (brightness === 0) {
+            for (let i = 1; i <= 10; i++) backgrounds.push(fullScale[i * 10].hex);
+        } else {
+            let startIdx = Math.round(brightness * 90);
+            for (let i = 1; i <= 10; i++) {
+                let idx = Math.max(1, Math.min(100, startIdx + i));
+                backgrounds.push(fullScale[idx].hex);
+            }
         }
-        // "dla maksymalnej ciemności tła w light mode dodawaj czarny"
-        if (brightness > 0.95) {
-            backgrounds.push("#000000");
-        }
+        if (brightness > 0.95) backgrounds.push("#000000");
     }
 
     const grid = [];

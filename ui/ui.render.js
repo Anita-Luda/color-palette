@@ -74,18 +74,26 @@ function renderSwatch(swatch, opts = {}){
   // - Granularity 50: 100 visible.
 
   if (swatch.isBase) {
-      d.appendChild(el('div', 'swatch-badge base visible', 'BASE'));
+      const badge = el('div', 'swatch-badge base visible', 'BASE');
+      badge.style.zIndex = "10";
+      d.appendChild(badge);
   }
 
   if (gran === 10) {
       if (swatch.step % 100 === 0) {
-          d.appendChild(el('div', 'swatch-badge step100 visible', '100'));
+          const badge = el('div', 'swatch-badge step100 visible', '100');
+          if (swatch.isBase) badge.style.display = 'none';
+          d.appendChild(badge);
       } else if (swatch.step % 50 === 0) {
-          d.appendChild(el('div', 'swatch-badge step50 visible', '50'));
+          const badge = el('div', 'swatch-badge step50 visible', '50');
+          if (swatch.isBase) badge.style.display = 'none';
+          d.appendChild(badge);
       }
   } else if (gran === 50) {
       if (swatch.step % 100 === 0) {
-          d.appendChild(el('div', 'swatch-badge step100 visible', '100'));
+          const badge = el('div', 'swatch-badge step100 visible', '100');
+          if (swatch.isBase) badge.style.display = 'none';
+          d.appendChild(badge);
       }
   }
 
@@ -209,28 +217,36 @@ function renderContrastGridForLCH(lch, title) {
 
     // Header
     const header = el('div', 'contrast-row header');
+    header.style.gridTemplateColumns = '100px repeat(8, 1fr)';
     header.append(
         el('div', null, 'Tło (Background)'),
         el('div', null, 'Lvl 1 (3:1) vs BG'),
         el('div', null, 'AA (4.5:1) vs BG'),
-        el('div', null, 'AA (4.5:1) vs L1'),
         el('div', null, 'AAA (7:1) vs BG'),
         el('div', null, 'Lvl 2 (3:1) vs L1'),
-        el('div', null, 'Brand vs BG')
+        el('div', null, 'AA (4.5:1) vs L1'),
+        el('div', null, 'Base vs BG'),
+        el('div', null, 'Base vs L1')
     );
     container.appendChild(header);
 
     grid.forEach(row => {
         const r = el('div', 'contrast-row');
+        r.style.gridTemplateColumns = '100px repeat(8, 1fr)';
+
+        // Calculate Base vs L1 ratio
+        const baseHex = rgbToHex(oklabToRgb(...Object.values(oklchToOklab(lch.L || lch.l, lch.C || lch.c, lch.h))));
+        const baseVsL1 = contrastRatio(row.l1, baseHex);
 
         r.append(
             createContrastSwatch('Tło', row.bg),
             createContrastSwatch(`Min: ${row.l1_target.toFixed(1)}`, row.l1, null, row.l1_actual),
             createContrastSwatch(`Min: ${row.c45_bg_target.toFixed(1)}`, row.c45_bg, null, row.c45_bg_actual),
-            createContrastSwatch(`Min: ${row.c45_l1_target.toFixed(1)}`, row.c45_l1, null, row.c45_l1_actual),
             createContrastSwatch(`Min: ${row.c7_bg_target.toFixed(1)}`, row.c7_bg, null, row.c7_bg_actual),
             createContrastSwatch(`Min: ${row.l2_target.toFixed(1)}`, row.l2, null, row.l2_actual),
-            createContrastSwatch('Base', null, lch, row.baseContrast)
+            createContrastSwatch(`Min: ${row.c45_l1_target.toFixed(1)}`, row.c45_l1, null, row.c45_l1_actual),
+            createContrastSwatch('Base', null, lch, row.baseContrast),
+            createContrastSwatch('Base', null, lch, baseVsL1)
         );
         container.appendChild(r);
     });
@@ -320,6 +336,39 @@ function createContrastSwatch(label, hex, forceLch, actualRatio) {
     }
 
     return d;
+}
+
+export function getAllVisibleHexes() {
+    const state = getState();
+    const hexes = [];
+    const collect = (scale) => {
+        scale.forEach(s => {
+            const gridStep = s.step - (s.step % 10);
+            if (state.mode.granularity === 50 && gridStep % 50 !== 0 && !s.isBase) return;
+            if (state.mode.granularity === 100 && gridStep % 100 !== 0 && !s.isBase) return;
+            hexes.push(s.hex.toUpperCase());
+        });
+    };
+
+    collect(getMainPalette().scale);
+    getAdditionalPalettes().forEach(p => collect(p.scale));
+    // Functional and badges usually fixed granularity, but we follow same logic
+    Object.values(getFunctionalPalettes()).forEach(p => collect(p.scale));
+    getBadgePalettes().forEach(p => collect(p.scale));
+
+    return hexes;
+}
+
+export function generateExportSVG() {
+    const hexes = Array.from(new Set(getAllVisibleHexes()));
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${hexes.length * 120}" height="200">`;
+    hexes.forEach((hex, i) => {
+        svg += `
+        <rect x="${i * 120}" y="0" width="120" height="120" fill="${hex}" />
+        <text x="${i * 120 + 60}" y="150" font-family="Inter, sans-serif" font-size="12" text-anchor="middle" fill="#888">${hex}</text>`;
+    });
+    svg += '</svg>';
+    return svg;
 }
 
 /* ---------- PUBLIC API ---------- */

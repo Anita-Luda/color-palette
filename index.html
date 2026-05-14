@@ -12,12 +12,13 @@
 
 <body>
   <aside id="sidebar">
-    <section class="sidebar-section">
+    <!-- SEKCOJA: USTAWIENIA PANELU -->
+    <section class="sidebar-section collapsible" id="sec-panel-settings">
       <div class="sidebar-header">
           <h3>Ustawienia Panelu</h3>
           <button id="hide-panel-btn" class="btn-hide">UKRYJ</button>
       </div>
-      <div class="group">
+      <div class="group collapsible-content">
           <label>Pozycja</label>
           <select id="sb-position">
               <option value="left">Lewo</option>
@@ -27,52 +28,44 @@
               <option value="floating">Floating</option>
           </select>
           <label>Motyw Panelu</label>
-          <div class="toggle-group">
+          <div class="toggle-group discreet">
             <input type="radio" name="sbTheme" id="sb-dark" value="dark" checked>
             <label for="sb-dark">Dark</label>
             <input type="radio" name="sbTheme" id="sb-light" value="light">
             <label for="sb-light">Light</label>
           </div>
+          <label>Podgląd tła (UI Preview)</label>
+          <div class="toggle-group discreet">
+            <input type="radio" name="previewBg" id="pbg-light" value="light" checked>
+            <label for="pbg-light">Jasne</label>
+            <input type="radio" name="previewBg" id="pbg-dark" value="dark">
+            <label for="pbg-dark">Ciemne</label>
+          </div>
+          <label>Widok</label>
+          <div class="toggle-group discreet">
+            <input type="radio" name="viewMode" id="view-palettes" value="palettes" checked>
+            <label for="view-palettes">Palety</label>
+            <input type="radio" name="viewMode" id="view-contrast" value="contrast">
+            <label for="view-contrast">Kontrast</label>
+          </div>
       </div>
     </section>
 
-    <div id="contrast-controls-top" style="display: none;">
-        <section class="sidebar-section">
-            <h3>Ustawienia Kontrastu</h3>
-            <div class="group">
-                <div id="active-bg-source-top" style="font-size: 0.7rem; opacity: 0.8; margin-bottom: 8px;">Tło z: Paleta Główna</div>
-                <label>Jasność tła</label>
-                <input type="range" id="contrast-brightness-top" min="0" max="1" step="0.01" value="0.5">
-                <label>Boost kontrastu</label>
-                <input type="range" id="contrast-boost-top" min="0" max="5" step="0.1" value="0">
-
-                <div id="ignore-thresholds-top" style="margin-top: 12px;">
-                    <label style="font-size: 0.75rem; display: block; margin-bottom: 8px;">Ignoruj progi:</label>
-
-                    <div class="ignore-group">
-                        <span>Relatywne do Tła (BG):</span>
-                        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
-                            <button class="ignore-btn" data-val="L1_BG">Lvl1 (3:1)</button>
-                            <button class="ignore-btn" data-val="C45_BG">AA (4.5:1)</button>
-                            <button class="ignore-btn" data-val="C7_BG">AAA (7:1)</button>
-                        </div>
-                    </div>
-
-                    <div class="ignore-group" style="margin-top: 8px;">
-                        <span>Relatywne do Lvl1:</span>
-                        <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
-                            <button class="ignore-btn" data-val="L2_L1">Lvl2 (3:1)</button>
-                            <button class="ignore-btn" data-val="C45_L1">AA (4.5:1)</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </div>
-
+    <!-- SEKCOJA: TRYB PALETY -->
     <section class="sidebar-section">
-      <h3>Kolor bazowy</h3>
-      <div class="group">
+        <label>Tryb palety (Algorytm główny)</label>
+        <div class="toggle-group">
+            <input type="radio" name="mode" id="mode-light" value="light" checked>
+            <label for="mode-light">LIGHT</label>
+            <input type="radio" name="mode" id="mode-dark" value="dark">
+            <label for="mode-dark">DARK</label>
+        </div>
+    </section>
+
+    <!-- SEKCOJA: KOLOR BAZOWY -->
+    <section class="sidebar-section collapsible" id="sec-base-color">
+      <div class="sidebar-header"><h3>Kolor bazowy</h3></div>
+      <div class="group collapsible-content">
         <div id="basePreview" class="big-swatch"></div>
         <label>HEX / RGB</label>
         <input id="textColor" placeholder="#7c6cff lub rgb(124,108,255)" />
@@ -80,18 +73,10 @@
       </div>
     </section>
 
-    <section class="sidebar-section">
-      <h3>Konfiguracja palety</h3>
-      <div class="group">
-        <div id="batchContainer"></div>
-
-        <label>Granulacja skali</label>
-        <div class="granularity-btns">
-            <button class="gran-btn" data-val="10">10</button>
-            <button class="gran-btn" data-val="50">50</button>
-            <button class="gran-btn active" data-val="100">100</button>
-        </div>
-
+    <!-- SEKCOJA: KONFIGURACJA PALETY -->
+    <section class="sidebar-section collapsible" id="sec-config">
+      <div class="sidebar-header"><h3>Konfiguracja palety</h3></div>
+      <div class="group collapsible-content">
         <label>Algorytm</label>
         <div class="toggle-group">
           <input type="radio" name="algoMode" id="algo-standard" value="standard" checked>
@@ -100,7 +85,7 @@
           <label for="algo-adaptive">Adaptive</label>
         </div>
 
-        <label>Rozkład jasności (Distribution)</label>
+        <label>Rozkład jasności</label>
         <div class="toggle-group">
           <input type="radio" name="scaleMode" id="scale-absolute" value="absolute" checked>
           <label for="scale-absolute">Abs</label>
@@ -108,6 +93,13 @@
           <label for="scale-asymmetric">Asym</label>
           <input type="radio" name="scaleMode" id="scale-fixed" value="fixed">
           <label for="scale-fixed">Fixed</label>
+        </div>
+
+        <label>Granulacja skali</label>
+        <div class="granularity-btns">
+            <button class="gran-btn" data-val="10">10</button>
+            <button class="gran-btn" data-val="50">50</button>
+            <button class="gran-btn active" data-val="100">100</button>
         </div>
 
         <label>Relacja kolorystyczna</label>
@@ -121,43 +113,71 @@
           <option value="warmcool">Warm / cool</option>
         </select>
 
-        <label>Tryb palety (Light/Dark)</label>
-        <select id="mode">
-          <option value="light">Light</option>
-          <option value="dark">Dark</option>
-        </select>
-
-        <label>Podgląd tła (UI Preview)</label>
-        <select id="previewBg">
-          <option value="light">Jasne</option>
-          <option value="dark">Ciemne</option>
-        </select>
+        <div id="batchContainer"></div>
       </div>
     </section>
 
-    <section class="sidebar-section">
-      <h3>Kolory dodatkowe</h3>
-      <div class="group">
+    <!-- SEKCOJA: USTAWIENIA KONTRASTU (widoczne tylko w widoku kontrastu) -->
+    <section class="sidebar-section collapsible" id="sec-contrast" style="display: none;">
+        <div class="sidebar-header"><h3>Ustawienia Kontrastu</h3></div>
+        <div class="group collapsible-content">
+            <div id="active-bg-source-top" style="font-size: 0.7rem; opacity: 0.8; margin-bottom: 8px;">Tło z: Paleta Główna</div>
+            <label>Jasność tła</label>
+            <input type="range" id="contrast-brightness-top" min="0" max="1" step="0.01" value="0.5">
+            <label>Boost kontrastu</label>
+            <input type="range" id="contrast-boost-top" min="0" max="5" step="0.1" value="0">
+
+            <div id="ignore-thresholds-top" style="margin-top: 12px;">
+                <label style="font-size: 0.75rem; display: block; margin-bottom: 8px;">Ignoruj progi:</label>
+                <div class="ignore-group">
+                    <span>Relatywne do Tła:</span>
+                    <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
+                        <button class="ignore-btn" data-val="L1_BG">L1</button>
+                        <button class="ignore-btn" data-val="C45_BG">AA</button>
+                        <button class="ignore-btn" data-val="C7_BG">AAA</button>
+                    </div>
+                </div>
+                <div class="ignore-group" style="margin-top: 8px;">
+                    <span>Relatywne do L1:</span>
+                    <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
+                        <button class="ignore-btn" data-val="L2_L1">L2</button>
+                        <button class="ignore-btn" data-val="C45_L1">AA</button>
+                        <button class="ignore-btn" data-val="BASE_L1">Base</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SEKCOJA: KOLORY DODATKOWE -->
+    <section class="sidebar-section collapsible" id="sec-additional">
+      <div class="sidebar-header"><h3>Kolory dodatkowe</h3></div>
+      <div class="group collapsible-content">
           <input id="addManualColorInput" placeholder="#hex lub rgb()" style="margin-bottom: 8px;">
           <button id="addManualColorBtn">Dodaj ten kolor</button>
           <div id="manualColorMsg" style="font-size: 0.75rem; color: #ffca28; margin-top: 4px;"></div>
           <button id="addColor" style="margin-top: 8px;">Dodaj auto kolor</button>
           <button id="addGrayBtn" style="margin-top: 8px; background: #555;">Dodaj paletę szarości</button>
+          <div id="colorList"></div>
       </div>
-      <div id="colorList"></div>
+    </section>
+
+    <!-- EKSPORT -->
+    <section class="sidebar-section">
+        <h3>Eksport</h3>
+        <div class="group">
+            <button id="export-figma-btn">Export to Figma (SVG)</button>
+            <button id="copy-hex-list-btn">Copy HEX List</button>
+        </div>
     </section>
 
   </aside>
 
   <main id="output-container">
-    <div class="tabs">
-        <button class="tab-btn active" data-view="palettes">Palety</button>
-        <button class="tab-btn" data-view="contrast">Kontrast</button>
-    </div>
     <div id="output" class="preview-light"></div>
   </main>
 
-  <button id="panel-toggle">☰</button>
+  <button id="panel-toggle" title="Pokaż panel">☰</button>
 
   <script type="module">
     import { initControls } from './ui/ui.controls.js';
@@ -166,13 +186,7 @@
     import { renderMessages } from './ui/ui.messages.js';
 
     initControls();
-    if (window.refreshUI) {
-        window.refreshUI();
-    } else {
-        renderAllPalettes();
-        renderAllGradients();
-        renderMessages();
-    }
+    window.refreshUI();
 
     // reaguj na zmiany tła preview
     document.getElementById('previewBg')?.addEventListener('change', e => {

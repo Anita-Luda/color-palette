@@ -86,10 +86,19 @@ function refreshUI() {
   renderWarnings();
   updateContrastInfos();
   updateContrastSidebarLabels();
+  updateDegreeDisplay();
 
   // Gradients are recalculated here (base color change / batch change)
   import('./ui.gradients.js').then(m => m.renderAllGradients());
   import('./ui.messages.js').then(m => m.renderMessages());
+}
+
+function updateDegreeDisplay() {
+    const state = getState();
+    const label = document.querySelector('label[for="relationDistance"]');
+    if (label) {
+        label.textContent = `Dystans relacji (${state.relation.distance}°)`;
+    }
 }
 
 function updateSidebarLayout() {
@@ -214,9 +223,9 @@ function setupRelations(){
   if (!sel) return;
 
   const distContainer = document.createElement('div');
-  distContainer.className = 'group';
+  distContainer.className = 'rel-dist-group';
   distContainer.innerHTML = `
-    <label>Dystans relacji</label>
+    <label for="relationDistance">Dystans relacji</label>
     <input id="relationDistance" type="range" min="0" max="180" value="30">
   `;
   sel.parentNode.insertBefore(distContainer, sel.nextSibling);
@@ -224,10 +233,9 @@ function setupRelations(){
   const distInput = distContainer.querySelector('#relationDistance');
   distInput.addEventListener('input', e => {
       setRelationDistance(e.target.value);
+      updateDegreeDisplay();
       clearGradientCache();
-      renderAllPalettes();
-      // Gradients depend on base LCH and role mult, not relation distance itself usually,
-      // but if relation changes roles or hues, we refresh.
+      renderAllPalettes(true);
       import('./ui.gradients.js').then(m => m.renderAllGradients());
   });
 
@@ -451,9 +459,9 @@ function createSliderCard(c) {
 
   slider.addEventListener('input', e => {
     setColorSlider(c.index, Number(e.target.value));
-    // Optimized: only render palettes
-    // Gradients are NOT recalculated here to avoid jumping and for performance
     renderAllPalettes(true);
+    // Refresh sidebar previews immediately for feedback
+    import('./ui.render.js').then(m => m.updateSidebarPreviews());
   });
 
   const del = document.createElement('button');
@@ -471,55 +479,58 @@ function createSliderCard(c) {
 
 /* ---------- MODES ---------- */
 function setupModes(){
-  const modeSel = $('mode');
-  const previewBgSel = $('previewBg');
-
-  modeSel?.addEventListener('change', e => {
-    setPaletteMode(e.target.value);
-    // Reset contrast brightness to 0 (default: White for light, Black for dark)
-    setContrastSettings('brightness', 0);
-    const slider = $('contrast-brightness');
-    if (slider) slider.value = 0;
-
-    clearGradientCache();
-    refreshUI();
+  document.querySelectorAll('input[name="mode"]').forEach(r => {
+      r.addEventListener('change', e => {
+          setPaletteMode(e.target.value);
+          setContrastSettings('brightness', 0);
+          const slider = $('contrast-brightness-top');
+          if (slider) slider.value = 0;
+          clearGradientCache();
+          refreshUI();
+      });
   });
 
-  $('previewBg')?.addEventListener('change', e => {
-      const mode = e.target.value;
-      setBackgroundMode(mode);
-
-      const out = $('output');
-      if (mode === 'dark') {
-          document.body.classList.add('preview-dark');
-          document.body.classList.remove('preview-light');
-          out.classList.add('preview-dark');
-          out.classList.remove('preview-light');
-      } else {
-          document.body.classList.add('preview-light');
-          document.body.classList.remove('preview-dark');
-          out.classList.add('preview-light');
-          out.classList.remove('preview-dark');
-      }
-      // No need for refreshUI if only CSS classes change, but let's be safe
-      renderAllPalettes();
+  document.querySelectorAll('input[name="previewBg"]').forEach(r => {
+      r.addEventListener('change', e => {
+          const mode = e.target.value;
+          setBackgroundMode(mode);
+          const out = $('output');
+          if (mode === 'dark') {
+              out.classList.add('preview-dark');
+              out.classList.remove('preview-light');
+          } else {
+              out.classList.add('preview-light');
+              out.classList.remove('preview-dark');
+          }
+          renderAllPalettes();
+      });
   });
 
-  document
-    .querySelectorAll('input[name="scaleMode"]')
-    .forEach(r => r.addEventListener('change', e => {
+  document.querySelectorAll('input[name="viewMode"]').forEach(r => {
+      r.addEventListener('change', e => {
+          const view = e.target.value;
+          setView(view);
+          const contrastSec = $('sec-contrast');
+          if (view === 'contrast') {
+              if (contrastSec) contrastSec.style.display = 'block';
+          } else {
+              if (contrastSec) contrastSec.style.display = 'none';
+          }
+          refreshUI();
+      });
+  });
+
+  document.querySelectorAll('input[name="scaleMode"]').forEach(r => r.addEventListener('change', e => {
       setScaleMode(e.target.value);
       clearGradientCache();
       refreshUI();
-    }));
+  }));
 
-  document
-    .querySelectorAll('input[name="algoMode"]')
-    .forEach(r => r.addEventListener('change', e => {
+  document.querySelectorAll('input[name="algoMode"]').forEach(r => r.addEventListener('change', e => {
       setAlgorithmMode(e.target.value);
       clearGradientCache();
       refreshUI();
-    }));
+  }));
 }
 
 function setupGranularity() {
@@ -582,26 +593,46 @@ function setupReorder() {
   });
 }
 
-function setupTabs() {
-    const btns = document.querySelectorAll('.tab-btn');
-    btns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            btns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            const view = btn.dataset.view;
-            setView(view);
+function setupCollapsibles() {
+    document.addEventListener('click', (e) => {
+        const header = e.target.closest('.sidebar-header');
+        if (!header) return;
+        if (e.target.closest('button')) return;
 
-            // Toggle sidebar controls
-            const contrastCtrlTop = $('contrast-controls-top');
+        const section = header.closest('.sidebar-section');
+        if (section && section.classList.contains('collapsible')) {
+            section.classList.toggle('collapsed');
+        }
+    });
+}
 
-            if (view === 'contrast') {
-                if (contrastCtrlTop) contrastCtrlTop.style.display = 'block';
-            } else {
-                if (contrastCtrlTop) contrastCtrlTop.style.display = 'none';
-            }
+function setupFloatingPanel() {
+    const sidebar = $('sidebar');
+    let isDragging = false;
+    let offset = { x: 0, y: 0 };
 
-            refreshUI();
-        });
+    sidebar.addEventListener('mousedown', e => {
+        const state = getState();
+        if (state.mode.sidebarPosition !== 'floating') return;
+        if (e.target.closest('input, select, button, .big-swatch')) return;
+
+        isDragging = true;
+        offset.x = e.clientX - sidebar.offsetLeft;
+        offset.y = e.clientY - sidebar.offsetTop;
+        sidebar.style.transition = 'none';
+    });
+
+    document.addEventListener('mousemove', e => {
+        if (!isDragging) return;
+        sidebar.style.left = (e.clientX - offset.x) + 'px';
+        sidebar.style.top = (e.clientY - offset.y) + 'px';
+        sidebar.style.bottom = 'auto';
+        sidebar.style.right = 'auto';
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+        sidebar.style.transition = '';
     });
 }
 
@@ -645,6 +676,8 @@ function setupSidebarControls() {
 
     posSel?.addEventListener('change', e => {
         setSidebarPosition(e.target.value);
+        const sidebar = $('sidebar');
+        sidebar.style.left = ''; sidebar.style.top = ''; sidebar.style.bottom = ''; sidebar.style.right = '';
         refreshUI();
     });
 
@@ -663,32 +696,47 @@ function setupSidebarControls() {
             const theme = e.target.value;
             setSidebarTheme(theme);
 
-            // Requirements:
-            // Dark Sidebar -> Black Palette Background
-            // Light Sidebar -> White Palette Background
+            const pbgDark = $('pbg-dark');
+            const pbgLight = $('pbg-light');
+
             if (theme === 'dark') {
                 setBackgroundMode('dark');
-                const pBg = $('previewBg');
-                if (pBg) pBg.value = 'dark';
-
-                const out = $('output');
-                document.body.classList.add('preview-dark');
-                document.body.classList.remove('preview-light');
-                out.classList.add('preview-dark');
-                out.classList.remove('preview-light');
+                if (pbgDark) pbgDark.checked = true;
+                $('output').classList.add('preview-dark');
+                $('output').classList.remove('preview-light');
             } else {
                 setBackgroundMode('light');
-                const pBg = $('previewBg');
-                if (pBg) pBg.value = 'light';
-
-                const out = $('output');
-                document.body.classList.add('preview-light');
-                document.body.classList.remove('preview-dark');
-                out.classList.add('preview-light');
-                out.classList.remove('preview-dark');
+                if (pbgLight) pbgLight.checked = true;
+                $('output').classList.add('preview-light');
+                $('output').classList.remove('preview-dark');
             }
 
             refreshUI();
+        });
+    });
+}
+
+function setupExport() {
+    $('export-figma-btn')?.addEventListener('click', () => {
+        import('./ui.render.js').then(m => {
+            const svg = m.generateExportSVG();
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'palette-export.svg';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    });
+
+    $('copy-hex-list-btn')?.addEventListener('click', () => {
+        import('./ui.render.js').then(m => {
+            const hexes = m.getAllVisibleHexes();
+            const list = Array.from(new Set(hexes)).join(', ');
+            navigator.clipboard.writeText(list).then(() => {
+                alert('Skopiowano listę unikatowych HEXów.');
+            });
         });
     });
 }
@@ -707,8 +755,10 @@ export function initControls(){
   setupLocks();
   setupGranularity();
   setupReorder();
-  setupTabs();
+  setupCollapsibles();
   setupContrastSliders();
+  setupFloatingPanel();
+  setupExport();
 
   updateSidebarLayout();
   onBaseChange();

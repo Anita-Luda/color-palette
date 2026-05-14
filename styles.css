@@ -29,14 +29,25 @@
 }
 
 body.sb-light {
-  --sb-bg: #f5f5f5;
-  --sb-border: #e0e0e0;
-  --sb-text: #1a1a1a;
-  --sb-text-muted: #666666;
+  --sb-bg: #f0f2f5;
+  --sb-border: #d1d5db;
+  --sb-text: #111827;
+  --sb-text-muted: #4b5563;
   --sb-input-bg: #ffffff;
-  --sb-group-bg: #ececec;
-  --accent: #000000;
-  --accent-hover: #333333;
+  --sb-group-bg: #e5e7eb;
+  --accent: #111827;
+  --accent-hover: #374151;
+}
+
+body.sb-dark {
+  --sb-bg: #111111;
+  --sb-border: #2a2a2a;
+  --sb-text: #f9fafb;
+  --sb-text-muted: #9ca3af;
+  --sb-input-bg: #1a1a1a;
+  --sb-group-bg: #161616;
+  --accent: #f9fafb;
+  --accent-hover: #d1d5db;
 }
 
 * {
@@ -113,13 +124,22 @@ label {
 
 input, select, button {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
   border: 1px solid var(--sb-border);
   background: var(--sb-input-bg);
   color: var(--sb-text);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   outline: none;
+  transition: all 0.2s;
+}
+
+select {
+  cursor: pointer;
+}
+
+input:focus, select:focus {
+  border-color: var(--accent);
 }
 
 input[type="number"] {
@@ -130,12 +150,12 @@ button {
   cursor: pointer;
   background: var(--accent);
   border: none;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--sb-bg);
-  transition: transform 0.1s, background 0.15s;
+  transition: all 0.2s;
 }
 
-button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+button:hover { background: var(--accent-hover); opacity: 0.9; }
 button:active { transform: translateY(0); }
 
 button.btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
@@ -177,8 +197,8 @@ button.btn-danger:hover { background: var(--danger); color: white; }
 .preview-light { background: var(--bg-light); color: var(--text-light); }
 .preview-light #output { background: var(--bg-light); }
 
-.preview-dark { background: var(--bg-dark); color: var(--text-dark); }
-.preview-dark #output { background: var(--bg-dark); }
+.preview-dark { background: #000000; color: #ffffff; }
+.preview-dark #output { background: #000000; }
 .preview-dark aside { background: rgba(10, 12, 16, 0.95); }
 
 .tabs {
@@ -404,11 +424,10 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
 
 .toggle-group {
     display: flex;
-    background: rgba(15, 17, 21, 0.6);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    background: var(--sb-input-bg);
+    border: 1px solid var(--sb-border);
+    border-radius: 6px;
     padding: 2px;
-    margin-bottom: 8px;
 }
 
 .toggle-group input[type="radio"] {
@@ -418,27 +437,67 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
 .toggle-group label {
     flex: 1;
     text-align: center;
-    padding: 8px 0;
+    padding: 6px 0;
     margin: 0;
     cursor: pointer;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
-    color: var(--text-muted);
-    border-radius: 6px;
+    color: var(--sb-text-muted);
+    border-radius: 4px;
     transition: all 0.2s;
 }
 
 .toggle-group input[type="radio"]:checked + label {
     background: var(--accent);
-    color: white;
+    color: var(--sb-bg);
+}
+
+.toggle-group.discreet {
+    border: none;
+    background: rgba(128,128,128,0.1);
+}
+
+.toggle-group.discreet label {
+    font-weight: 400;
 }
 
 .sidebar-section {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 24px;
+    border-bottom: 1px solid var(--sb-border);
+    padding-bottom: 20px;
+}
+
+.sidebar-header {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+}
+
+.collapsible.collapsed .collapsible-content {
+    display: none !important;
+}
+
+.sidebar-header::after {
+    content: '▾';
+    font-size: 0.8rem;
+    opacity: 0.5;
+    transition: transform 0.2s;
+}
+
+.collapsible.collapsed .sidebar-header::after {
+    transform: rotate(-90deg);
+}
+
+.sidebar-header:has(button)::after {
+    display: none;
 }
 .sidebar-section:last-child {
     border-bottom: none;
@@ -487,7 +546,7 @@ body.sb-hidden.pos-floating aside { transform: scale(0.9); opacity: 0; }
 #panel-toggle {
     position: fixed;
     bottom: 24px;
-    left: 24px;
+    right: 24px;
     width: 48px;
     height: 48px;
     border-radius: 24px;
