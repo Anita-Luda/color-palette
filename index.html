@@ -69,7 +69,14 @@
     <section class="sidebar-section collapsible" id="sec-contrast" style="display: none;">
         <div class="sidebar-header"><h3>Ustawienia Kontrastu</h3></div>
         <div class="group collapsible-content">
-            <div id="active-bg-source-top" style="font-size: 0.7rem; opacity: 0.8; margin-bottom: 8px;">Tło z: Paleta Główna</div>
+            <label>Algorytm kontrastu</label>
+            <div class="toggle-group discreet">
+                <input type="radio" name="contrastAlgo" id="algo-wcag" value="wcag" checked>
+                <label for="algo-wcag">WCAG 2.1</label>
+                <input type="radio" name="contrastAlgo" id="algo-apca" value="apca">
+                <label for="algo-apca">APCA (V3)</label>
+            </div>
+            <div id="active-bg-source-top" style="font-size: 0.7rem; opacity: 0.8; margin-bottom: 8px; margin-top: 12px;">Tło z: Paleta Główna</div>
             <label>Jasność tła</label>
             <input type="range" id="contrast-brightness-top" min="0" max="1" step="0.01" value="0.5">
             <label>Boost kontrastu</label>

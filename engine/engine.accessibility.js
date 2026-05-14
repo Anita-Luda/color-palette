@@ -23,6 +23,44 @@ function relativeLuminance({r,g,b}){
   return 0.2126*R + 0.7152*G + 0.0722*B;
 }
 
+/**
+ * APCA (Advanced Perceptual Contrast Algorithm) implementation.
+ * Simplified version of SAPC-8.
+ */
+export function apcaContrast(hexTxt, hexBg) {
+    const rgbTxt = hexToRgb(hexTxt);
+    const rgbBg = hexToRgb(hexBg);
+
+    // APCA specific luminance (Y)
+    const getY = (rgb) => {
+        const r = Math.pow(rgb.r / 255, 2.4);
+        const g = Math.pow(rgb.g / 255, 2.4);
+        const b = Math.pow(rgb.b / 255, 2.4);
+        return 0.2126729 * r + 0.7151522 * g + 0.0721750 * b;
+    };
+
+    let Ytxt = getY(rgbTxt);
+    let Ybg = getY(rgbBg);
+
+    // Clamping
+    const blkThrs = 0.022;
+    const blkClmp = 1.414;
+    if (Ytxt < blkThrs) Ytxt += Math.pow(blkThrs - Ytxt, blkClmp);
+    if (Ybg < blkThrs) Ybg += Math.pow(blkThrs - Ybg, blkClmp);
+
+    let Lc;
+    if (Ybg >= Ytxt) {
+        Lc = (Math.pow(Ybg, 0.56) - Math.pow(Ytxt, 0.57)) * 1.14;
+    } else {
+        Lc = (Math.pow(Ybg, 0.65) - Math.pow(Ytxt, 0.62)) * 1.14;
+    }
+
+    if (Math.abs(Lc) < 0.1) return 0;
+
+    // Scale and round
+    return Lc * 100;
+}
+
 /* ---------- CONTRAST ---------- */
 export function contrastRatio(hexA, hexB){
   const L1 = relativeLuminance(hexToRgb(hexA)) + 0.05;

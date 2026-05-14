@@ -149,6 +149,10 @@ function updateSidebarLayout() {
     const spectralToggle = $('spectral-toggle');
     if (spectralToggle) spectralToggle.checked = state.mode.spectralBalance;
 
+    document.querySelectorAll('input[name="contrastAlgo"]').forEach(r => {
+        r.checked = (r.value === state.contrastSettings.algorithm);
+    });
+
     document.querySelectorAll('input[name="algoMode"]').forEach(r => {
         r.checked = (r.value === state.mode.algorithm);
     });
@@ -710,6 +714,13 @@ function setupFloatingPanel() {
 function setupContrastSliders() {
     const bTop = $('contrast-brightness-top');
     const bBoostTop = $('contrast-boost-top');
+
+    document.querySelectorAll('input[name="contrastAlgo"]').forEach(r => {
+        r.addEventListener('change', e => {
+            setContrastSettings('algorithm', e.target.value);
+            renderAllPalettes();
+        });
+    });
 
     bTop?.addEventListener('input', e => {
         setContrastSettings('brightness', e.target.value);

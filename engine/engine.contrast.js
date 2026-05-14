@@ -3,7 +3,7 @@ import {
     getBaseLCH, oklchToOklab, oklabToRgb, rgbToHex,
     oklabToOklch, rgbToOklab, srgbToLinear, generateScaleForLCH
 } from './engine.scales.js';
-import { contrastRatio } from './engine.accessibility.js';
+import { contrastRatio, apcaContrast } from './engine.accessibility.js';
 import { getAdditionalPalettes } from './engine.palettes.js';
 
 function LToStep(L){
@@ -21,10 +21,15 @@ function rgbToOklab_local(hex) {
 /**
  * Finds a color with a specific contrast ratio relative to a base color.
  */
-function findColorByContrast(baseHex, targetRatio, direction, hue, chroma) {
+function findColorByContrast(baseHex, targetRatio, direction, hue, chroma, algo = 'wcag') {
     let low = 0;
     let high = 1;
     let bestL = direction === 'lighter' ? 1 : 0;
+
+    const getRatio = (hex) => {
+        if (algo === 'apca') return Math.abs(apcaContrast(hex, baseHex));
+        return contrastRatio(baseHex, hex);
+    };
 
     // Binary search for Lightness
     for (let i = 0; i < 15; i++) {
@@ -32,7 +37,7 @@ function findColorByContrast(baseHex, targetRatio, direction, hue, chroma) {
         const lab = oklchToOklab(mid, chroma, hue);
         const rgb = oklabToRgb(lab.L, lab.a, lab.b);
         const hex = rgbToHex(rgb);
-        const currentRatio = contrastRatio(baseHex, hex);
+        const currentRatio = getRatio(hex);
 
         if (currentRatio < targetRatio) {
             if (direction === 'lighter') low = mid;
@@ -71,7 +76,7 @@ export function generateContrastGrid(targetLch) {
         h: lch.h !== undefined ? lch.h : 0
     };
 
-    const { brightness, boost, ignoredThresholds } = EngineState.contrastSettings;
+    const { algorithm, brightness, boost, ignoredThresholds } = EngineState.contrastSettings;
     const isDark = EngineState.mode.palette === 'dark';
     const bgSource = EngineState.mode.backgroundSource;
 
@@ -148,29 +153,41 @@ export function generateContrastGrid(targetLch) {
 
         // Calculate maximum possible contrast boost for this row
         const extremeHex = direction === 'darker' ? '#000000' : '#FFFFFF';
-        const maxRatio = contrastRatio(bgHex, extremeHex);
 
-        // Boost can only go up to what's achievable for ALL required thresholds in the row
-        // Lvl1, AA (4.5), AAA (7) relative to BG
-        // Lvl2 (3), AA (4.5) relative to Lvl1
-        // The most restrictive is AA (4.5) relative to Lvl1, but Lvl1 itself is pushed by boost.
-        // If boost is B, Lvl1 target is 3+B. Then Lvl2 target is 4.5+B relative to Lvl1.
-        // Rough estimate of required total ratio to background: (3+B) * (4.5+B)
-        // Let's find B such that (3+B)*(4.5+B) <= maxRatio
-        // B^2 + 7.5B + 13.5 - maxRatio = 0
-        // Quadratic formula: B = (-7.5 + sqrt(7.5^2 - 4 * (13.5 - maxRatio))) / 2
+        const getRawRatio = (a, b) => algorithm === 'apca' ? Math.abs(apcaContrast(a, b)) : contrastRatio(a, b);
 
+        const maxRatio = getRawRatio(bgHex, extremeHex);
+
+        // Thresholds mapping WCAG vs APCA
+        // Lvl1: 3:1 vs Lc 30
+        // AA: 4.5:1 vs Lc 60
+        // AAA: 7:1 vs Lc 90
+        const thBaseL1 = algorithm === 'apca' ? 30 : 3.0;
+        const thBaseAA = algorithm === 'apca' ? 60 : 4.5;
+        const thBaseAAA = algorithm === 'apca' ? 90 : 7.0;
+
+        // Roughly find achievable boost for APCA too.
+        // For WCAG: B^2 + 7.5B + 13.5 - maxRatio = 0
+        // For APCA: Simple linear scaling for now as Lc is linear-ish perceptually
         let achievableBoost = boost;
-        const delta = 7.5 * 7.5 - 4 * (13.5 - maxRatio);
-        if (delta >= 0) {
-            const maxB = (-7.5 + Math.sqrt(delta)) / 2;
-            achievableBoost = Math.max(0, Math.min(boost, maxB));
+        if (algorithm === 'wcag') {
+            const delta = 7.5 * 7.5 - 4 * (13.5 - maxRatio);
+            if (delta >= 0) {
+                const maxB = (-7.5 + Math.sqrt(delta)) / 2;
+                achievableBoost = Math.max(0, Math.min(boost, maxB));
+            } else achievableBoost = 0;
         } else {
-            achievableBoost = 0;
+            // APCA Boost: try to keep sum of Lc (BG->L1 + L1->AA) <= maxRatio
+            // Lc(BG, L1) = 30 + B
+            // Lc(L1, AA) = 60 + B
+            // Approx Lc(BG, AA) = Lc(BG, L1) + Lc(L1, AA) = 90 + 2B
+            // So 90 + 2B <= maxRatio => B = (maxRatio - 90)/2
+            const maxB = (maxRatio - 90) / 2;
+            achievableBoost = Math.max(0, Math.min(boost * 15, maxB)); // Boost is 0..5, map to Lc scale
         }
 
         const getAchievableTarget = (base, id) => {
-            if (ignoredThresholds.includes(id)) return 1.0;
+            if (ignoredThresholds.includes(id)) return algorithm === 'apca' ? 0 : 1.0;
             return base + achievableBoost;
         };
 
@@ -178,39 +195,39 @@ export function generateContrastGrid(targetLch) {
         const forbidden = [bgHex];
 
         const findUnique = (target, base, dir) => {
-            let color = findColorByContrast(base, target, dir, lch.h, lch.C);
+            let color = findColorByContrast(base, target, dir, lch.h, lch.C, algorithm);
             color = ensureUnique(color, forbidden, lch, dir);
             forbidden.push(color);
             return color;
         };
 
-        const tL1 = getAchievableTarget(3.0, 'L1_BG');
+        const tL1 = getAchievableTarget(thBaseL1, 'L1_BG');
         row.l1 = findUnique(tL1, bgHex, direction);
         row.l1_target = tL1;
-        row.l1_actual = contrastRatio(bgHex, row.l1);
+        row.l1_actual = getRawRatio(bgHex, row.l1);
 
-        const t45bg = getAchievableTarget(4.5, 'C45_BG');
+        const t45bg = getAchievableTarget(thBaseAA, 'C45_BG');
         row.c45_bg = findUnique(t45bg, bgHex, direction);
         row.c45_bg_target = t45bg;
-        row.c45_bg_actual = contrastRatio(bgHex, row.c45_bg);
+        row.c45_bg_actual = getRawRatio(bgHex, row.c45_bg);
 
-        const t45l1 = getAchievableTarget(4.5, 'C45_L1');
+        const t45l1 = getAchievableTarget(thBaseAA, 'C45_L1');
         row.c45_l1 = findUnique(t45l1, row.l1, direction);
         row.c45_l1_target = t45l1;
-        row.c45_l1_actual = contrastRatio(row.l1, row.c45_l1);
+        row.c45_l1_actual = getRawRatio(row.l1, row.c45_l1);
 
-        const t7bg = getAchievableTarget(7.0, 'C7_BG');
+        const t7bg = getAchievableTarget(thBaseAAA, 'C7_BG');
         row.c7_bg = findUnique(t7bg, bgHex, direction);
         row.c7_bg_target = t7bg;
-        row.c7_bg_actual = contrastRatio(bgHex, row.c7_bg);
+        row.c7_bg_actual = getRawRatio(bgHex, row.c7_bg);
 
-        const tL2 = getAchievableTarget(3.0, 'L2_L1');
+        const tL2 = getAchievableTarget(thBaseL1, 'L2_L1');
         row.l2 = findUnique(tL2, row.l1, direction);
         row.l2_target = tL2;
-        row.l2_actual = contrastRatio(row.l1, row.l2);
+        row.l2_actual = getRawRatio(row.l1, row.l2);
 
         const baseLab = oklchToOklab(lch.L, lch.C, lch.h);
-        row.baseContrast = contrastRatio(bgHex, rgbToHex(oklabToRgb(baseLab.L, baseLab.a, baseLab.b)));
+        row.baseContrast = getRawRatio(bgHex, rgbToHex(oklabToRgb(baseLab.L, baseLab.a, baseLab.b)));
         grid.push(row);
     }
 

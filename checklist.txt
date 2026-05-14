@@ -20,6 +20,8 @@
 - [x] **Pastel Boost**: Tryb generujący łagodne, jasne barwy o niskim nasyceniu.
 - [x] **Glassmorphism Boost**: Optymalizacja jasności pod kątem elementów półprzezroczystych.
 - [x] **Ink-Save Mode**: Oszczędzanie barwnika w jasnych tonach (optymalizacja druku).
+- [x] **Spectral Balance**: Korekta jasności H-K (Helmholtz-Kohlrausch).
+- [x] **APCA Contrast**: Obsługa standardu WCAG 3.0 z percepcyjnym wyliczaniem kontrastu.
 - [x] **Personalizacja Kontrastu**: Możliwość ustawienia własnych targetów kontrastu (np. 4.5:1 dla AA).
 
 ## 3. UI/UX i Debugowanie (Zrealizowane)

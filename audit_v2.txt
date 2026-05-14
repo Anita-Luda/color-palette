@@ -46,5 +46,6 @@
 ### Sugestie Algorytmiczne
 1. **Contrast-Safety Alg**: Czwarty algorytm (obok Standard/Adaptive), który generuje paletę, gdzie każdy krok wymusza minimum 4.5:1 względem sąsiada (automatyczne schodkowanie dostępności).
 2. **Spectral Balance**: Nakładka korygująca jasność w zależności od nasycenia (Helmholtz–Kohlrausch effect), aby barwy o różnej chromie wydawały się równie jasne dla oka.
+3. **APCA Support**: Implementacja percepcyjnego modelu kontrastu (Lc) dla nowoczesnych interfejsów, umożliwiająca precyzyjniejsze projektowanie hierarchii wizualnej.
 
 ## Status: Zgodny z wymaganiami V2.

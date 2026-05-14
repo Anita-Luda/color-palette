@@ -8,7 +8,7 @@ import {
   getBadgePalettes
 } from '../engine/engine.palettes.js';
 
-import { previewContrast, contrastRatio } from '../engine/engine.accessibility.js';
+import { previewContrast, contrastRatio, apcaContrast } from '../engine/engine.accessibility.js';
 import { getState } from '../engine/engine.core.js';
 import { generateContrastGrid } from '../engine/engine.contrast.js';
 
@@ -239,23 +239,26 @@ function renderContrastGridForLCH(lch, title) {
     );
     container.appendChild(header);
 
+    const state = getState();
+    const isApca = state.contrastSettings.algorithm === "apca";
+
     grid.forEach(row => {
         const r = el('div', 'contrast-row');
         r.style.gridTemplateColumns = '100px repeat(8, 1fr)';
 
         // Calculate Base vs L1 ratio
         const baseHex = rgbToHex(oklabToRgb(...Object.values(oklchToOklab(lch.L || lch.l, lch.C || lch.c, lch.h))));
-        const baseVsL1 = contrastRatio(row.l1, baseHex);
+        const baseVsL1 = isApca ? Math.abs(apcaContrast(row.l1, baseHex)) : contrastRatio(row.l1, baseHex);
 
         r.append(
             createContrastSwatch('Tło', row.bg),
-            createContrastSwatch(`Min: ${row.l1_target.toFixed(1)}`, row.l1, null, row.l1_actual),
-            createContrastSwatch(`Min: ${row.c45_bg_target.toFixed(1)}`, row.c45_bg, null, row.c45_bg_actual),
-            createContrastSwatch(`Min: ${row.c7_bg_target.toFixed(1)}`, row.c7_bg, null, row.c7_bg_actual),
-            createContrastSwatch(`Min: ${row.l2_target.toFixed(1)}`, row.l2, null, row.l2_actual),
-            createContrastSwatch(`Min: ${row.c45_l1_target.toFixed(1)}`, row.c45_l1, null, row.c45_l1_actual),
-            createContrastSwatch('Base', null, lch, row.baseContrast),
-            createContrastSwatch('Base', null, lch, baseVsL1)
+            createContrastSwatch(`${isApca ? 'Lc' : 'Min'}: ${row.l1_target.toFixed(isApca ? 0 : 1)}`, row.l1, null, row.l1_actual, isApca),
+            createContrastSwatch(`${isApca ? 'Lc' : 'Min'}: ${row.c45_bg_target.toFixed(isApca ? 0 : 1)}`, row.c45_bg, null, row.c45_bg_actual, isApca),
+            createContrastSwatch(`${isApca ? 'Lc' : 'Min'}: ${row.c7_bg_target.toFixed(isApca ? 0 : 1)}`, row.c7_bg, null, row.c7_bg_actual, isApca),
+            createContrastSwatch(`${isApca ? 'Lc' : 'Min'}: ${row.l2_target.toFixed(isApca ? 0 : 1)}`, row.l2, null, row.l2_actual, isApca),
+            createContrastSwatch(`${isApca ? 'Lc' : 'Min'}: ${row.c45_l1_target.toFixed(isApca ? 0 : 1)}`, row.c45_l1, null, row.c45_l1_actual, isApca),
+            createContrastSwatch('Base', null, lch, row.baseContrast, isApca),
+            createContrastSwatch('Base', null, lch, baseVsL1, isApca)
         );
         container.appendChild(r);
     });
@@ -311,7 +314,7 @@ function renderContrastView() {
 
 import { oklchToOklab, oklabToRgb, rgbToHex } from '../engine/engine.scales.js';
 
-function createContrastSwatch(label, hex, forceLch, actualRatio) {
+function createContrastSwatch(label, hex, forceLch, actualRatio, isApca = false) {
     const d = el('div', 'contrast-swatch');
     let c = hex;
     if (!c && forceLch) {
@@ -340,7 +343,9 @@ function createContrastSwatch(label, hex, forceLch, actualRatio) {
     d.append(l, h, wb);
 
     if (actualRatio !== undefined) {
-        const r = el('div', 'contrast-ratio', `Real: ${actualRatio.toFixed(2)}:1`);
+        const val = isApca ? Math.abs(actualRatio).toFixed(0) : actualRatio.toFixed(2);
+        const suffix = isApca ? '' : ':1';
+        const r = el('div', 'contrast-ratio', `Real: ${val}${suffix}`);
         d.appendChild(r);
     }
 
@@ -410,7 +415,7 @@ function createSVGSwatch(swatch, x, y, width, height) {
     </g>`;
 }
 
-function createSVGContrastSwatch(x, y, width, height, label, hex, forceLch, actualRatio, bgIsDark) {
+function createSVGContrastSwatch(x, y, width, height, label, hex, forceLch, actualRatio, bgIsDark, isApca = false) {
     let c = hex;
     if (!c && forceLch) {
         const L = forceLch.L !== undefined ? forceLch.L : forceLch.l;
@@ -429,7 +434,7 @@ function createSVGContrastSwatch(x, y, width, height, label, hex, forceLch, actu
         <rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${c}" rx="12" />
         <text x="${x+12}" y="${y+22}" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="${textColor}" opacity="0.7">${label}</text>
         <text x="${x+12}" y="${y+height-12}" font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="${textColor}">${c.toUpperCase()}</text>
-        ${actualRatio !== undefined ? `<text x="${x+12}" y="${y+height-28}" font-family="Inter, sans-serif" font-size="10" font-weight="700" fill="${textColor}">Real: ${actualRatio.toFixed(2)}:1</text>` : ''}
+        ${actualRatio !== undefined ? `<text x="${x+12}" y="${y+height-28}" font-family="Inter, sans-serif" font-size="10" font-weight="700" fill="${textColor}">Real: ${isApca ? Math.abs(actualRatio).toFixed(0) : actualRatio.toFixed(2)}${isApca ? '' : ':1'}</text>` : ''}
     </g>`;
 }
 
@@ -453,9 +458,10 @@ export function generateExportSVG(type = 'main') {
             const grid = generateContrastGrid(lch);
             svgContent += `<text x="0" y="${currentY - 10}" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="${textFill}">${title}</text>`;
 
+            const isApca = state.contrastSettings.algorithm === "apca";
             grid.forEach((row, rowIndex) => {
                 const baseHex = rgbToHex(oklabToRgb(...Object.values(oklchToOklab(lch.L || lch.l, lch.C || lch.c, lch.h))));
-                const baseVsL1 = contrastRatio(row.l1, baseHex);
+                const baseVsL1 = isApca ? Math.abs(apcaContrast(row.l1, baseHex)) : contrastRatio(row.l1, baseHex);
 
                 const swatches = [
                     { label: 'Tło', hex: row.bg },
@@ -469,7 +475,7 @@ export function generateExportSVG(type = 'main') {
                 ];
 
                 swatches.forEach((s, i) => {
-                    svgContent += createSVGContrastSwatch(i * (swatchWidth + gap), currentY + rowIndex * (swatchHeight + gap), swatchWidth, swatchHeight, s.label, s.hex, s.lch, s.ratio, isDark);
+                    svgContent += createSVGContrastSwatch(i * (swatchWidth + gap), currentY + rowIndex * (swatchHeight + gap), swatchWidth, swatchHeight, s.label, s.hex, s.lch, s.ratio, isDark, isApca);
                 });
                 maxW = Math.max(maxW, swatches.length * (swatchWidth + gap));
             });

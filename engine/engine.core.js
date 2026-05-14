@@ -28,6 +28,7 @@ export const EngineState = {
   },
 
   contrastSettings: {
+    algorithm: 'wcag',       // wcag | apca
     brightness: 0.5,
     boost: 0,
     ignoredThresholds: []    // list of contrast ratios to ignore
@@ -149,6 +150,8 @@ export function setBackgroundSource(source) {
 export function setContrastSettings(key, value) {
   if (EngineState.contrastSettings.hasOwnProperty(key)) {
     if (key === 'ignoredThresholds') {
+        EngineState.contrastSettings[key] = value;
+    } else if (key === 'algorithm') {
         EngineState.contrastSettings[key] = value;
     } else {
         EngineState.contrastSettings[key] = Number(value);

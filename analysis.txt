@@ -5,7 +5,7 @@ System osiągnął dojrzałość produkcyjną. Kluczowe przewagi techniczne:
 - **Precyzja Percepcyjna**: Dzięki OKLCH kolory zachowują stałą jasność wizualną przy zmianie barwy.
 - **Dynamiczne Gamut-Clamping**: Algorytmy automatycznie dopasowują nasycenie do granic przestrzeni sRGB, eliminując visual spikes.
 - **Algorytmiczne Skalowanie**: Tryby `Asym` i `Fixed` pozwalają na budowę systemów projektowych o różnej dynamice.
-- **Zorientowanie na Kontrast**: System nie tylko generuje kolory, ale weryfikuje ich użyteczność w czasie rzeczywistym (WCAG).
+- **Zorientowanie na Kontrast**: System nie tylko generuje kolory, ale weryfikuje ich użyteczność w czasie rzeczywistym (WCAG 2.1 oraz APCA/WCAG 3.0).
 
 ## Szczegóły Algorytmów
 
@@ -31,6 +31,11 @@ System pozwala na nakładanie efektów post-processingu:
 - **Glassmorphism Boost**: Podnosi jasność i nasycenie, aby kolor był czytelny pod rozmyciem (blur).
 - **Ink-Save Mode**: Redukuje nasycenie w jasnych tonach, optymalizując zużycie tonera/atramentu.
 - **Spectral Balance**: Koryguje jasność w zależności od nasycenia (Helmholtz–Kohlrausch effect), aby barwy o różnej chromie wydawały się równie jasne dla oka.
+
+## Standardy Kontrastu
+System obsługuje dwa niezależne silniki weryfikacji dostępności:
+1. **WCAG 2.1 (Luminance-based)**: Tradycyjny model oparty na stosunku luminancji względnej (3:1, 4.5:1, 7:1).
+2. **APCA (SAPC-8 Perceptual)**: Nowoczesny algorytm z nadchodzącego standardu WCAG 3.0, który uwzględnia nieliniowość percepcji ludzkiego oka oraz kontekst (np. tekst czarny na białym vs biały na czarnym). Progi Lc 30/60/90 odpowiadają kolejnym poziomom hierarchii UI.
 
 ## Propozycje Dalszego Rozwoju
 
