@@ -36,7 +36,7 @@ import {
   addGrayPalette
 } from '../engine/engine.core.js';
 
-import { rgbToOklab, oklabToOklch, rgbToHex } from '../engine/engine.scales.js';
+import { rgbToOklab, oklabToOklch, rgbToHex } from '../engine/engine.math.js';
 import { clearGradientCache } from '../engine/engine.gradients.js';
 import { renderAllPalettes } from './ui.render.js';
 import { contrastRatio } from '../engine/engine.accessibility.js';

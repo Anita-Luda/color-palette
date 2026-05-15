@@ -10,6 +10,7 @@ import {
 
 import { previewContrast, contrastRatio, apcaContrast } from '../engine/engine.accessibility.js';
 import { getState } from '../engine/engine.core.js';
+import { oklchToOklab, oklabToRgb, rgbToHex } from '../engine/engine.math.js';
 import { generateContrastGrid } from '../engine/engine.contrast.js';
 
 /* ---------- ROOT ---------- */
@@ -312,7 +313,6 @@ function renderContrastView() {
     return frag;
 }
 
-import { oklchToOklab, oklabToRgb, rgbToHex } from '../engine/engine.scales.js';
 
 function createContrastSwatch(label, hex, forceLch, actualRatio, isApca = false) {
     const d = el('div', 'contrast-swatch');

@@ -18,23 +18,27 @@ export function applyBoosts(swatch, baseLch, mode) {
 
     // 2. Neon Boost: Technical intensity while preserving tonality
     if (mode.neonBoost) {
-        const maxC = maxChromaForL(l, h);
-        // We boost chroma towards max but keep a significant part of the original rhythm
-        c = c * 0.4 + maxC * 0.6;
-        c = Math.min(c, maxC * 0.99);
+        const technicalMax = maxChromaForL(l, h);
+        // We boost chroma towards max but keep the original saturation delta to preserve "tonality"
+        // Blend current C with technical max, biased heavily towards max (70%)
+        c = c * 0.3 + technicalMax * 0.7;
+        c = Math.min(c, technicalMax * 0.99);
 
+        // Ensure tonal range remains wide: only lift extreme blacks
         if (l < 0.1) l = 0.1;
     }
 
     // 3. Pastel Boost: Fresh tones with preserved tonal hierarchy
     if (mode.pastelBoost) {
         // Requirement: "pastel boost całkowicie traci barwę i kolory zamiast lekkich... robią się brudne"
-        // Freshness comes from high Lightness and pure (not gray) barwa.
-        // We shift the scale to 0.7 - 0.98 range to preserve hierarchy.
-        l = 0.7 + (l * 0.28);
+        // Goal: fresh high-key tones. Freshness comes from high Lightness and pure (not gray) barwa.
+        // Map L range 0..1 to 0.5..0.98 to preserve hierarchy from dark to light.
+        l = 0.5 + (l * 0.48);
 
-        // C is fixed to a "fresh" range + small influence of base to keep the family feel.
-        c = 0.055 + (c * 0.1);
+        // Freshness: clean C.
+        // We ensure a floor of "freshness" (0.05) and scale it with L to keep it airy.
+        const freshC = 0.05 * (0.5 + 0.5 * l);
+        c = freshC + (c * 0.15);
     }
 
     // 4. Glassmorphism: Lightness for blur transparency

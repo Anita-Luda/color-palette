@@ -34,17 +34,16 @@ export function generateAdaptiveScale(baseLch, steps, isDarkMode) {
 
         // Preserve brand intensity across the scale
         // We use the same 'relative saturation' as the base color
-        // with a slight boost for mid-tones to keep it "vibrant"
-        const dist = Math.abs(L - baseLch.L);
-        const boost = 1 + 0.2 * (1 - dist); // Mid-tone vibrancy
+        // but ensure a floor to prevent "gray-out" in highlights/shadows.
+        const floor = 0.1 * intensity;
+        let C = stepMaxC * Math.max(floor, intensity);
 
-        let C = stepMaxC * intensity * boost;
-
-        // Ensure we don't exceed step boundaries
+        // Ensure we don't exceed technical gamut
         C = Math.min(C, stepMaxC);
 
         if (isDarkMode) {
-            C *= (0.7 + 0.3 * (1 - L));
+            // Nieliniowe tłumienie dla Dark Mode
+            C *= (0.65 + 0.3 * (1 - L));
         }
 
         const lab = oklchToOklab(L, C, baseLch.h);

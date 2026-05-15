@@ -1,8 +1,9 @@
 import { EngineState } from './engine.core.js';
+import { getBaseLCH, generateScaleForLCH } from './engine.scales.js';
 import {
-    getBaseLCH, oklchToOklab, oklabToRgb, rgbToHex,
-    oklabToOklch, rgbToOklab, srgbToLinear, generateScaleForLCH
-} from './engine.scales.js';
+    oklchToOklab, oklabToRgb, rgbToHex,
+    oklabToOklch, rgbToOklab, srgbToLinear
+} from './engine.math.js';
 import { contrastRatio, apcaContrast } from './engine.accessibility.js';
 import { getAdditionalPalettes } from './engine.palettes.js';
 
@@ -130,10 +131,6 @@ export function generateContrastGrid(targetLch) {
     }
 
     const grid = [];
-    const getTarget = (base, id) => {
-        if (ignoredThresholds.includes(id)) return 1.0;
-        return base + boost;
-    };
 
     for (let i = 0; i < backgrounds.length; i++) {
         let bgHex = backgrounds[i];

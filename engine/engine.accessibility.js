@@ -1,4 +1,4 @@
-// engine/engine.accessibility.js// engine/engine// Accessibility utilities: contrast (AA/AAA), previews, suggestions. No DOM.
+// Accessibility utilities: contrast (AA/AAA), previews, suggestions. No DOM.
 
 import { EngineState } from './engine.core.js';
 import { generateScaleForLCH, getBaseLCH } from './engine.scales.js';

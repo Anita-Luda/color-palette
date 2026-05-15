@@ -1,39 +1,29 @@
 // engine/algo.standard.js
-// Rebuilt: Purest tonal scale logic for consistent UI palettes.
+// Rebuilt: simplest possible tonal scale with smooth visual blending.
 
 import { oklchToOklab, oklabToRgb, rgbToHex } from './engine.math.js';
 
-/**
- * Standard tonal algorithm: focuses on smooth, predictable blending.
- * High fidelity to the base color's LCH while tapering chroma at extremes.
- */
 export function generateStandardScale(baseLch, steps, isDarkMode) {
     const stepToL = s => 1 - (s / 1000);
 
     return steps.map(step => {
         const L = stepToL(step);
 
-        // Intensity handling for Dark Mode
+        // Dark Mode: non-linear intensity reduction
         let chromaMult = 1.0;
         if (isDarkMode) {
-            // Nonlinear damping: strong in lights, soft in shadows.
-            // This ensures colors blend into dark backgrounds without "glowing".
-            chromaMult = 0.55 + 0.35 * Math.pow(1 - L, 1.5);
+            // Stronger reduction in lights, subtle in darks
+            chromaMult = 0.6 + 0.3 * (1 - L);
         }
 
-        // Simplest possible falloff:
-        // Chroma must converge to zero at absolute white and black.
-        // We use a simple linear distance-based falloff centered on base L.
-        const dist = Math.abs(L - baseLch.L);
-        const maxDist = L > baseLch.L ? (1 - baseLch.L) : baseLch.L;
+        // Tonal falloff: smooth curve that peaks at baseLch.L and hits 0 at L=0, L=1.
+        // We use a simple parabolic curve to ensure the transition is "velvety".
+        const normalizedDist = (L > baseLch.L)
+            ? (L - baseLch.L) / (1 - baseLch.L || 0.01)
+            : (baseLch.L - L) / (baseLch.L || 0.01);
 
-        let falloff = 1.0;
-        if (maxDist > 0) {
-            falloff = 1 - (dist / maxDist);
-        }
-
-        // We use a slight power to make the transition more "tonal" and less "grey-ish" in the middle.
-        falloff = Math.pow(Math.max(0, falloff), 0.7);
+        // Power 1.5 for a "tonal" (slightly muted) look away from the base
+        const falloff = Math.pow(Math.max(0, 1 - Math.pow(normalizedDist, 2)), 1.5);
 
         const C = baseLch.C * chromaMult * falloff;
         const H = baseLch.h;
