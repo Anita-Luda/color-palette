@@ -10,27 +10,27 @@ System osiągnął dojrzałość produkcyjną. Kluczowe przewagi techniczne:
 ## Szczegóły Algorytmów
 
 ### Algorytm Standard
-Klasyczne podejście tonalne, którego celem jest budowa zrównoważonych palet UI.
-- **Filozofia**: Priorytetem jest visual balance i brak "szumów" wizualnych.
-- **Interpolacja**: Wykorzystuje zaawansowaną funkcję sigmoidalną (S-curve) dla nasycenia. Dzięki temu przejścia w stronę czerni i bieli są "aksamitne" — kolor nie desaturuje się liniowo, lecz zachowuje swoją głębię w tonach średnich, gładko gasnąc na krańcach.
-- **Bezpieczeństwo Projektowe**: Implementuje rygorystyczny system `Hue-Dependent Safe Chroma`. System rozpoznaje, że żółcie mają naturalnie szerszy gamut niż błękity i dopasowuje limity nasycenia tak, by żadna barwa nie "wybijała się" nienaturalnie z zestawienia.
-- **Zastosowanie**: Systemy designu, interfejsy SaaS, dashboardy.
+Najprostszy, rygorystyczny algorytm tonalny.
+- **Filozofia**: Pełne skupienie na płynnym wblendowaniu koloru bazowego w tonalny przekrój.
+- **Interpolacja**: Nasycenie (Chroma) jest precyzyjnie wygaszane do zera na krańcach skali (White/Black), osiągając swój szczyt dokładnie w punkcie jasności koloru bazowego. Eliminuje to wszelkie "skoki" intensywności i sprawia, że paleta wydaje się spójną, aksamitną całością.
+- **Dark Mode**: Implementuje nieliniowe tłumienie barwy w zależności od jasności (L), zapobiegając męczeniu wzroku przez jaskrawe elementy na ciemnym tle.
+- **Zastosowanie**: Klasyczne systemy projektowe, interfejsy SaaS, gdzie spójność jest ważniejsza od nasycenia.
 
 ### Algorytm Adaptive
-Algorytm nastawiony na ekspresję i maksymalne wykorzystanie technologii ekranu.
-- **Filozofia**: Priorytetem jest "Brand Glow" i intensywność.
-- **Optymalizacja Gamutu**: Zamiast bezpiecznych limitów, algorytm przeprowadza dynamiczne przeszukiwanie binarne granic gamutu sRGB dla każdej jasności. Pozwala to uzyskać najmocniejszą możliwą barwę, jaką dany ekran jest w stanie wyświetlić przy zadanej jasności.
-- **Krzywa Jasności**: Stosuje adaptacyjną korekcję gamma, która "kotwiczy" się na fizycznej jasności koloru bazowego. Dzięki temu skala jasności nie jest sztywna, lecz dopasowuje się do dynamiki barwy źródłowej.
-- **Zastosowanie**: Gaming, kampanie marketingowe, nowoczesne aplikacje mobilne.
+Algorytm zorientowany na maksymalizację technicznego potencjału barwy.
+- **Filozofia**: "Brand Glow" — zachowanie unikatowego charakteru koloru w każdym tonie.
+- **Metoda**: Algorytm wylicza "intensywność brandową" koloru bazowego (jego pozycję względem fizycznej granicy gamutu sRGB) i stara się utrzymać ten sam poziom nasycenia relatywnego na całej skali jasności.
+- **Optymalizacja**: Wykorzystuje przeszukiwanie binarne limitów gamutu dla każdej jasności (L), dbając o to, by cienie i światła nigdy nie były "brudne" czy wyblakłe, lecz zawsze nasycone zgodnie z duchem marki.
+- **Zastosowanie**: Marketing, aplikacje konsumenckie, designy zorientowane na silną identyfikację wizualną.
 
 ### Różnice między Standard a Adaptive
 Standard to "bezpieczeństwo i harmonia" (matematycznie ograniczona do projektowo akceptowalnych ram), natomiast Adaptive to "siła i technika" (wyciśnięcie maksimum z przestrzeni barwnej). Standard dba o to, by błękit obok żółtego nie wydawał się szary, a Adaptive dba o to, by oba były tak jaskrawe, jak to tylko możliwe.
 
 ## Nakładki (Boosts)
-System pozwala na nakładanie efektów post-processingu, które "podkręcają" bazowe algorytmy bez niszczenia ich tonalnej hierarchii:
-- **Dark Mode Boost**: Kluczowa korekta dla czarnych teł. Zapobiega wizualnemu "ocieplaniu się" kolorów (np. błękitów w stronę zieleni) poprzez kierunkową kompensację Hue.
-- **Neon Boost**: Hybrydowe podejście — miksuje bazowe nasycenie z technicznym limitem gamutu (bias 85%). Pozwala to uzyskać "elektryzujące" barwy przy zachowaniu wyczuwalnego rytmu jasny-ciemny.
-- **Pastel Boost**: Wykorzystuje nieliniową krzywą jasności (zakres 0.5 – 0.95) oraz stałą, "świeżą" domieszkę chromy. Dzięki temu pastele są lekkie i czyste, a nie "brudne" czy szare.
+System pozwala na nakładanie efektów post-processingu, które "podkręcają" bazowe algorytmy:
+- **Dark Mode Boost**: Percepcyjna korekta identity na czarnym tle. Eliminuje zjawisko ocieplania się zimnych barw na ciemnych powierzchniach.
+- **Neon Boost**: Hybrydowe wzmocnienie techniczne (mnożnik chromy + headroom gamutu). Uzyskuje jaskrawość bez spłaszczania różnic jasności.
+- **Pastel Boost**: Mapuje całą paletę na wysoki rejestr jasności (0.55 - 0.98), utrzymując stałą, czystą dawkę barwy (C=0.06). Wynikiem są świeże, tonalne pastele.
 - **Glassmorphism Boost**: Optymalizuje czytelność pod warstwami blur. Podnosi jasność i nasycenie tonów średnich, by barwa "nie ginęła" po rozmyciu.
 - **Ink-Save Mode**: Inteligentna redukcja pigmentu w jasnych tonach (powyżej L=0.4), oszczędzająca toner przy zachowaniu rozpoznawalności barwy (tintu).
 - **Spectral Balance**: Zaawansowana korekta efektu Helmholtz–Kohlrausch. Balansuje fizyczną jasność tak, by nasycony fiolet i blada zieleń wydawały się oku tak samo jasne.

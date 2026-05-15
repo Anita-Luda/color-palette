@@ -20,8 +20,6 @@ export function getMainPalette(){
   };
 }
 
-import { rgbToHex } from './engine.scales.js';
-
 /* ---------- ADDITIONAL PALETTES ---------- */
 function getHarmonyHue(baseHue, index, total, type, distance){
   const step = 360 / (total + 1);

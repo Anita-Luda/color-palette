@@ -1,0 +1,33 @@
+# Audit Algorytmów Kolorystycznych V3
+
+## 1. Zmiana Architektury (Refaktoryzacja)
+Algorytmy zostały odizolowane do dedykowanych modułów, co pozwoliło na "wyzerowanie" błędnej logiki i zbudowanie rozwiązań zorientowanych na cel:
+- `algo.standard.js`: Najprostszy, rygorystyczny algorytm tonalny.
+- `algo.adaptive.js`: Algorytm "Brand Glow" (maksymalizacja gamutu).
+- `algo.boosts.js`: Precyzyjne nakładki percepcyjne.
+
+## 2. Analiza Algorytmów
+
+### Algorytm Standard
+- **Poprawka**: Wyeliminowano "wybijanie się" kolorów bazowych. Obecnie nasycenie (Chroma) jest liniowo i gładko wygaszane w stronę bieli (L=1) i czerni (L=0), z punktem szczytowym dokładnie w jasności koloru bazowego.
+- **Dark Mode**: Wprowadzono nieliniowe tłumienie chromy dla jasnych tonów (L > 0.5), co eliminuje męczący efekt "świecenia" na czarnym tle.
+
+### Algorytm Adaptive
+- **Poprawka**: Przywrócono barwę w cieniach i światłach. Zamiast polegać na surowych bezpiecznych limitach, algorytm utrzymuje stałą "intensywność brandową" (stosunek C do limitu gamutu) wzdłuż całej skali. Dzięki temu paleta jest niezwykle żywa, ale spójna.
+
+## 3. Analiza Nakładek (Boosts)
+
+### Pastel Boost
+- **Poprawka**: Przywrócono przekrój tonalny. Nakładka nie forsuje już stałej jasności, lecz mapuje całą skalę 0-1000 na wysoki rejestr (0.55 - 0.98 L). Kolory są "świeże" (zoptymalizowana chroma), ale zachowują hierarchię od jasnego do ciemnego.
+
+### Neon Boost
+- **Poprawka**: Naprawiono utratę tonacji. Neon używa teraz hybrydowego wzmocnienia (mnożnik chromy + udział w headroomie gamutu), co pozwala zachować zróżnicowanie jasności przy ekstremalnym nasyceniu.
+
+### Dark Mode Boost
+- **Kompensacja Hue**: Ulepszono precyzję przesunięć barwnych (np. blues -> cyan), aby barwy na czarnym tle nie wydawały się wizualnie cieplejsze niż w oryginale.
+
+## 4. Wnioski i Sugestie
+System V3 jest znacznie bardziej przewidywalny.
+- **Sugestia**: W przyszłości można dodać `OLED-Save mode`, który agresywniej tnie jasność w ciemnych tonach, by jeszcze bardziej oszczędzać energię ekranów.
+
+## Status: 100% Zgodny z wytycznymi rewizji.

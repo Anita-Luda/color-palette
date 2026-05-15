@@ -62,3 +62,23 @@ export function oklchToOklab(L,C,h){
 export function rgbToHex({r,g,b}){
   return `#${((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}`;
 }
+
+/**
+ * Binary search for maximum displayable chroma in sRGB for a given L and H.
+ */
+export function maxChromaForL(L, H) {
+    let low = 0;
+    let high = 0.45; // Technical limit for OKLCH
+    for (let i = 0; i < 16; i++) {
+        const mid = (low + high) / 2;
+        const lab = oklchToOklab(L, mid, H);
+        const rgb = oklabToRgb(lab.L, lab.a, lab.b);
+        // Check sRGB bounds
+        if (rgb.r >= 0 && rgb.r <= 255 && rgb.g >= 0 && rgb.g <= 255 && rgb.b >= 0 && rgb.b <= 255) {
+            low = mid;
+        } else {
+            high = mid;
+        }
+    }
+    return low;
+}
