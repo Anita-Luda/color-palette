@@ -3,6 +3,8 @@
 import { EngineState } from './engine.core.js';
 import { generateScaleForLCH, getBaseLCH } from './engine.scales.js';
 
+import { srgbToLinearWCAG, rgbToOklab } from './engine.math.js';
+
 /* ---------- COLOR UTILS ---------- */
 function hexToRgb(hex){
   const h = hex.replace('#','');
@@ -12,14 +14,11 @@ function hexToRgb(hex){
     b: parseInt(h.slice(4,6),16)
   };
 }
-function srgbToLinear(c){
-  c /= 255;
-  return c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
-}
+
 function relativeLuminance({r,g,b}){
-  const R = srgbToLinear(r);
-  const G = srgbToLinear(g);
-  const B = srgbToLinear(b);
+  const R = srgbToLinearWCAG(r);
+  const G = srgbToLinearWCAG(g);
+  const B = srgbToLinearWCAG(b);
   return 0.2126*R + 0.7152*G + 0.0722*B;
 }
 

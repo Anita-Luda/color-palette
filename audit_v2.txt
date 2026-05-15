@@ -9,7 +9,7 @@
 
 ### Dark Mode
 - **Cel**: Zmniejszenie intensywności wizualnej (komfort dla oczu).
-- **Weryfikacja**: Implementacja zawiera stały mnożnik chromy (0.8x) w trybie Dark Mode. Zapobiega to efektowi "świecenia" i wibracji kolorów na czarnym tle.
+- **Weryfikacja**: Implementacja wykorzystuje nieliniową logikę nasycenia uzależnioną od jasności (L). Jasne tony są tłumione mocniej (unikanie "świecenia"), podczas gdy ciemne zachowują więcej barwy dla lepszej czytelności. Zapobiega to wibracji kolorów na czarnym tle.
 
 ## 2. Analiza Nakładek (Boosts)
 
@@ -22,12 +22,12 @@
 - **Efekt**: Paleta w Dark Mode z włączonym Boostem wygląda wizualnie bliżej oryginału z Light Mode niż bez korekty.
 
 ### Neon Boost
-- **Cel**: Generowanie świadomie jaskrawych, neonowych tonów.
-- **Weryfikacja**: Algorytm forsuje nasycenie do granic gamutu sRGB (maxC * 0.98) i lekko podnosi jasność w cieniach, co daje efekt "elektryzujący".
+- **Cel**: Generowanie świadomie jaskrawych, neonowych tonów przy zachowaniu rytmu tonalnego.
+- **Weryfikacja**: Algorytm stosuje hybrydowe wzmocnienie (2.5x bazowej chromy) z podłogą nasycenia na poziomie 70% limitu gamutu. Pozwala to uzyskać efekt "elektryzujący" bez spłaszczania różnic między jasnymi a ciemnymi stopniami skali.
 
 ### Pastel Boost
-- **Cel**: Łagodne, jasne i lekkie tony dla projektów o charakterze "soft".
-- **Realizacja**: Drastyczne obniżenie nasycenia (max 0.04) i przesunięcie krzywej jasności w stronę wysokich tonów (0.85-0.95).
+- **Cel**: Łagodne, świeże i czyste tony dla projektów o charakterze "soft".
+- **Realizacja**: Wykorzystuje nieliniowe przesunięcie jasności do wysokiego rejestru (0.75-0.98 L) oraz precyzyjnie dobrany cel nasycenia (C=0.055). Zapobiega to "brudzeniu się" kolorów i utracie ich świeżości.
 
 ### Glassmorphism Boost (NOWOŚĆ)
 - **Cel**: Optymalizacja widoczności koloru pod warstwami rozmycia (blur).

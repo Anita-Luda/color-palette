@@ -2,58 +2,16 @@
 // Absolute & Asymmetric scales (anchor-aware). No DOM.
 
 import { EngineState } from './engine.core.js';
+import {
+  oklchToOklab, oklabToRgb, rgbToHex,
+  oklabToOklch, rgbToOklab, srgbToLinear,
+  linearToSrgb
+} from './engine.math.js';
 
-/* ---------- OKLCH MATH ---------- */
-export function srgbToLinear(c){
-  c /= 255;
-  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-}
-export function linearToSrgb(c){
-  return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
-}
-export function rgbToOklab(r,g,b){
-  r = srgbToLinear(r); g = srgbToLinear(g); b = srgbToLinear(b);
-  const l = 0.4122214708*r + 0.5363325363*g + 0.0514459929*b;
-  const m = 0.2119034982*r + 0.6806995451*g + 0.1073969566*b;
-  const s = 0.0883024619*r + 0.2817188376*g + 0.6299787005*b;
-  const l_ = Math.cbrt(l), m_ = Math.cbrt(m), s_ = Math.cbrt(s);
-  return {
-    L: 0.2104542553*l_ + 0.7936177850*m_ - 0.0040720468*s_,
-    a: 1.9779984951*l_ - 2.4285922050*m_ + 0.4505937099*s_,
-    b: 0.0259040371*l_ + 0.7827717662*m_ - 0.8086757660*s_
-  };
-}
-export function oklabToRgb(L,a,b){
-  const l_ = L + 0.3963377774*a + 0.2158037573*b;
-  const m_ = L - 0.1055613458*a - 0.0638541728*b;
-  const s_ = L - 0.0894841775*a - 1.2914855480*b;
-  const l = l_**3, m = m_**3, s = s_**3;
-  let r =  4.0767416621*l - 3.3077115913*m + 0.2309699292*s;
-  let g = -1.2684380046*l + 2.6097574011*m - 0.3413193965*s;
-  let b2= -0.0041960863*l - 0.7034186147*m + 1.7076147010*s;
-
-  // Clamp linear RGB to [0, 1] before conversion to non-linear sRGB to avoid NaN
-  r = Math.max(0, r);
-  g = Math.max(0, g);
-  b2 = Math.max(0, b2);
-
-  r = linearToSrgb(r); g = linearToSrgb(g); b2 = linearToSrgb(b2);
-  return {
-    r: Math.round(Math.min(1, r) * 255),
-    g: Math.round(Math.min(1, g) * 255),
-    b: Math.round(Math.min(1, b2) * 255)
-  };
-}
-export function oklabToOklch({L,a,b}){
-  return { L, C: Math.sqrt(a*a+b*b), h: (Math.atan2(b,a)*180/Math.PI+360)%360 };
-}
-export function oklchToOklab(L,C,h){
-  const hr = h*Math.PI/180;
-  return { L, a: Math.cos(hr)*C, b: Math.sin(hr)*C };
-}
-export function rgbToHex({r,g,b}){
-  return `#${((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}`;
-}
+export {
+  srgbToLinear, linearToSrgb, rgbToOklab, oklabToRgb,
+  oklabToOklch, oklchToOklab, rgbToHex
+};
 
 /* ---------- HELPERS ---------- */
 const DEFAULT_STEPS = Array.from({length:101},(_,i)=>i*10);
@@ -70,38 +28,54 @@ function LToStep(L){
   return Math.round((1 - L) * 1000);
 }
 
-// Guardrail chromy - ulepszony, aby uniknąć "skoków" nasycenia
+/**
+ * Wyznacza bezpieczne nasycenie (Chroma) dla algorytmu Standard.
+ * Zapobiega "wybijaniu się" agresywnych barw.
+ */
 function getHueDependentSafeChroma(L, H) {
-  // Żółcie (70-110) mają najwyższy gamut, błękity (230-270) niższy.
-  // Zwracamy "projektowo bezpieczny" limit nasycenia, który płynnie zmienia się z Hue.
+  // Bazowy limit nasycenia dla zrównoważonych palet UI
+  let baseSafe = 0.11;
 
-  let baseSafe = 0.18; // standardowy bezpieczny limit
-
-  // Podbijamy dla żółci/pomarańczy
-  if (H > 40 && H < 140) {
-      const t = 1 - Math.abs(H - 90) / 50;
-      baseSafe += 0.12 * Math.max(0, t);
+  // Żółcie i pomarańcze (40-130°) mogą przyjąć więcej energii bez drażnienia oka
+  if (H > 40 && H < 130) {
+      const weight = 1 - Math.abs(H - 85) / 45;
+      baseSafe += 0.07 * Math.max(0, weight);
   }
 
-  // Obniżamy dla błękitów/fioletów (by uniknąć "neonowości" w standardzie)
-  if (H > 220 && H < 320) {
-      const t = 1 - Math.abs(H - 270) / 50;
-      baseSafe -= 0.04 * Math.max(0, t);
+  // Błękity, fiolety i róże są najbardziej drażniące przy wysokiej chromie
+  // Dodatkowe tłumienie dla tych zakresów
+  if (H > 220 && H < 340) {
+      baseSafe *= 0.85;
+  }
+  if (H > 140 && H < 200) { // Chłodne zielenie/cyjan
+      baseSafe *= 0.9;
   }
 
-  // Dopasowanie do jasności (najwięcej nasycenia w tonach średnich)
-  const lightnessMult = 1 - Math.pow(Math.abs(L - 0.5) * 2, 1.5);
+  // Krzywa jasności: nasycenie osiąga szczyt w tonach średnich.
+  // Stosujemy agresywny falloff (power 2.2), aby uniknąć "neonowości" w światłach i cieniach.
+  const lDist = Math.abs(L - 0.5) * 2;
+  const lightnessMult = Math.pow(Math.max(0, 1 - lDist), 2.2);
 
-  return baseSafe * (0.6 + 0.4 * lightnessMult);
+  return baseSafe * (0.4 + 0.6 * lightnessMult);
 }
 
+/**
+ * Główny strażnik nasycenia dla palet tonalnych.
+ */
 function clampChroma(L, C, H){
-  let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
+  let multiplier = 1.0;
+
+  if (EngineState.mode.palette === 'dark') {
+      // Nieliniowa kompensacja dla Dark Mode:
+      // Im jaśniejszy kolor bazowy, tym bardziej go tłumimy na ciemnym tle.
+      // Ciemne kolory mogą zachować więcej nasycenia dla czytelności.
+      multiplier = 0.6 + 0.3 * Math.pow(1 - L, 1.5);
+  }
 
   const maxGamut = maxChromaForL(L, H, C);
   const designSafe = getHueDependentSafeChroma(L, H);
 
-  // W Standard mode celujemy w designSafe, ale nie przekraczamy gamutu ani oryginalnego C.
+  // Standard mode dąży do balansu między oryginalną intencją a bezpieczeństwem wizualnym
   return Math.min(C * multiplier, maxGamut, designSafe);
 }
 
@@ -162,51 +136,59 @@ function applyDarkModeBoost(L, C, H) {
   return { C: newC, H: newH };
 }
 
+/**
+ * Wzmocnienie Neon: Techniczna intensywność przy zachowaniu gradacji.
+ */
 function applyNeonBoost(L, C, H) {
-  // Neon effect: maximize chroma within gamut and slightly shift lightness for vibrancy.
-  // We ignore current C and find the absolute maximum for this L and H.
-  const maxC = maxChromaForL(L, H, 0.4);
+  const maxC = maxChromaForL(L, H, 0.5);
 
-  // To make it look "neon", we want very high saturation.
-  // We take the max gamut chroma but cap it slightly to avoid extreme "broken" colors
-  // and keep it in a "vibrant" zone.
-  let newC = maxC * 0.98;
+  // Zamiast spłaszczać nasycenie, wzmacniamy obecną chromę o stały czynnik (2.8x),
+  // ale pilnujemy "podłogi", żeby nawet stłumione kolory nabrały neonowego blasku.
+  let newC = C * 2.8;
+  newC = Math.max(newC, maxC * 0.75);
+  newC = Math.min(newC, maxC * 0.99); // Blisko fizycznej granicy gamutu
 
-  // Optional: subtle lightness shift to a "sweeter" spot for neon colors
-  // (e.g. making it slightly lighter if it's too dark)
+  // Zachowujemy rytm tonalny L, jedynie delikatnie rozjaśniając najgłębsze cienie.
   let newL = L;
-  if (L < 0.5) newL = L + (0.5 - L) * 0.2;
+  if (L < 0.15) newL = L + (0.15 - L) * 0.4;
 
-  // IMPORTANT: For neon to be visible, we must ensure it bypasses multipliers
-  // We return a slightly modified L and forced high C
   return { L: newL, C: newC, H };
 }
 
+/**
+ * Wzmocnienie Pastel: Świeżość i czystość w wysokim kluczu.
+ */
 function applyPastelBoost(L, C, H) {
-  // Pastel effect: low chroma, high lightness.
-  // We reduce chroma significantly and push lightness towards 0.85-0.95.
-  let newL = L + (0.9 - L) * 0.4;
-  let newC = Math.min(C, 0.05) * 0.8;
+  // Pastele wymagają wysokiej jasności, ale nie mogą być "wyprane" z barwy (brudne).
+  // Mapujemy jasność na zakres 0.82 - 0.98, zachowując relacje między stopniami.
+  const newL = 0.82 + (L * 0.16);
+
+  // Idealna "świeża" chroma dla pastelowych barw w OKLCH to ok. 0.05 - 0.07.
+  // Używamy stabilnego targetu z lekkim wpływem barwy bazowej.
+  const newC = 0.05 + (C * 0.12);
+
   return { L: newL, C: newC, H };
 }
 
 function applyGlassmorphismBoost(L, C, H) {
-  // Glassmorphism optimization: increase lightness and subtle saturation
-  // to ensure the color remains visible through blurred surfaces.
-  let newL = L + (1.0 - L) * 0.15;
-  let newC = C * 1.1;
+  // Requirement: Lightness boost for readability under blur.
+  // We use a non-linear shift to keep more detail in the mid-tones.
+  const newL = L + (1.0 - L) * 0.2;
+
+  // Saturation boost: slightly higher for mid-tones to avoid "gray-out" under blur.
+  const boost = 1 + (0.15 * (1 - Math.abs(L - 0.5) * 2));
+  const newC = C * boost;
+
   return { L: newL, C: newC, H };
 }
 
 function applyInkSaveMode(L, C, H) {
-  // Ink-save mode: desaturate light tones (where ink is most visible as dots)
-  // to reduce ink consumption in print.
+  // Goal: reduce ink in high-key while preserving the "tint" of the color.
   let newC = C;
-  // L range 0 (black) to 1 (white). Light tones are L > 0.6.
-  if (L > 0.5) {
-    const t = (L - 0.5) / 0.5;
-    // Aggressive desaturation for ink saving
-    newC = C * (1 - t * 0.9);
+  if (L > 0.4) {
+    const t = (L - 0.4) / 0.6;
+    // Soft desaturation (up to 70%) to keep the color identifiable.
+    newC = C * (1 - t * 0.7);
   }
   return { L, C: newC, H };
 }
@@ -256,9 +238,8 @@ function sigmoidalFalloff(x) {
 
 function chromaFalloff(L, baseL) {
   const d = Math.abs(L - baseL);
-  // mapujemy d (0..1) na zakres sigmoidy
-  // 0 -> 1, 0.6 -> blisko 0
-  return sigmoidalFalloff(d * 1.5);
+  // Steeper mapping (2.0 instead of 1.5) for a more "tonal" look (faster desaturation away from base)
+  return sigmoidalFalloff(d * 2.0);
 }
 
 function hueShift(L, baseL, baseH) {
@@ -347,11 +328,12 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
           H = lch.h;
           C = clampChroma(L, lch.C, H);
 
-          // Dodajemy delikatny falloff dla skali standard, aby kolory nie były
-          // nienaturalnie nasycone w bardzo ciemnych/jasnych partiach,
-          // co pomaga zachować spójność wizualną "zlejania się" palety.
+          // Agresywniejszy falloff dla Standard, aby uzyskać gładsze wblendowanie w biel/czerń
           const falloff = chromaFalloff(L, lch.L);
-          if (!isBaseStep) C *= (0.7 + 0.3 * falloff); // Mniej agresywny falloff niż w adaptive
+          if (!isBaseStep) {
+              // Płynne przejście nasycenia: im dalej od bazy, tym mocniej wyciszamy barwę
+              C *= (0.55 + 0.45 * falloff);
+          }
       }
 
       if (isBoost) {

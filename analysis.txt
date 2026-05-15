@@ -10,27 +10,30 @@ System osiągnął dojrzałość produkcyjną. Kluczowe przewagi techniczne:
 ## Szczegóły Algorytmów
 
 ### Algorytm Standard
-Klasyczne podejście tonalne oparte na przestrzeni OKLCH.
-- **Interpolacja**: Wykorzystuje funkcję sigmoidalną dla nasycenia (Chroma), co zapewnia "aksamitne" przejścia tonalne w stronę czerni i bieli.
-- **Bezpieczeństwo Projektowe**: Posiada wbudowane limity nasycenia zależne od Hue (np. wyższe dla żółci, niższe dla błękitów), co zapobiega powstawaniu nienaturalnych, męczących wzrok barw w standardowych widokach.
-- **Zachowanie Bazy**: W trybie Light Mode (bez nakładek) rygorystycznie zachowuje wejściowy kolor HEX.
+Klasyczne podejście tonalne, którego celem jest budowa zrównoważonych palet UI.
+- **Filozofia**: Priorytetem jest visual balance i brak "szumów" wizualnych.
+- **Interpolacja**: Wykorzystuje zaawansowaną funkcję sigmoidalną (S-curve) dla nasycenia. Dzięki temu przejścia w stronę czerni i bieli są "aksamitne" — kolor nie desaturuje się liniowo, lecz zachowuje swoją głębię w tonach średnich, gładko gasnąc na krańcach.
+- **Bezpieczeństwo Projektowe**: Implementuje rygorystyczny system `Hue-Dependent Safe Chroma`. System rozpoznaje, że żółcie mają naturalnie szerszy gamut niż błękity i dopasowuje limity nasycenia tak, by żadna barwa nie "wybijała się" nienaturalnie z zestawienia.
+- **Zastosowanie**: Systemy designu, interfejsy SaaS, dashboardy.
 
 ### Algorytm Adaptive
-Algorytm zorientowany na maksymalizację potencjału barwnego przy zachowaniu percepcji.
-- **Optymalizacja Gamutu**: Dynamicznie przeszukuje (binary search) granice przestrzeni sRGB, aby znaleźć maksymalne możliwe nasycenie dla danej jasności.
-- **Krzywa Jasności**: Stosuje nieliniową korekcję gamma dopasowaną do fizycznej jasności koloru bazowego, co sprawia, że paleta wydaje się bardziej "spójna percepcyjnie" mimo zmian jasności.
+Algorytm nastawiony na ekspresję i maksymalne wykorzystanie technologii ekranu.
+- **Filozofia**: Priorytetem jest "Brand Glow" i intensywność.
+- **Optymalizacja Gamutu**: Zamiast bezpiecznych limitów, algorytm przeprowadza dynamiczne przeszukiwanie binarne granic gamutu sRGB dla każdej jasności. Pozwala to uzyskać najmocniejszą możliwą barwę, jaką dany ekran jest w stanie wyświetlić przy zadanej jasności.
+- **Krzywa Jasności**: Stosuje adaptacyjną korekcję gamma, która "kotwiczy" się na fizycznej jasności koloru bazowego. Dzięki temu skala jasności nie jest sztywna, lecz dopasowuje się do dynamiki barwy źródłowej.
+- **Zastosowanie**: Gaming, kampanie marketingowe, nowoczesne aplikacje mobilne.
 
 ### Różnice między Standard a Adaptive
-Główną różnicą jest podejście do nasycenia (Chroma). Standard celuje w bezpieczne, "designerskie" limity, które gwarantują brak zmęczenia wzroku, podczas gdy Adaptive forsuje granice możliwości technicznych ekranu (gamut sRGB), dbając jedynie o to, by przejścia jasności były gładkie. Standard jest lepszy do klasycznych interfejsów biznesowych, Adaptive do projektów o wysokiej dynamice wizualnej (marketing, dark mode gamingowy).
+Standard to "bezpieczeństwo i harmonia" (matematycznie ograniczona do projektowo akceptowalnych ram), natomiast Adaptive to "siła i technika" (wyciśnięcie maksimum z przestrzeni barwnej). Standard dba o to, by błękit obok żółtego nie wydawał się szary, a Adaptive dba o to, by oba były tak jaskrawe, jak to tylko możliwe.
 
 ## Nakładki (Boosts)
-System pozwala na nakładanie efektów post-processingu:
-- **Dark Mode Boost**: Koryguje przesunięcia barwne na czarnym tle (np. zapobiega "ocieplaniu" się błękitów).
-- **Neon Boost**: Forsuje maksymalne nasycenie gamutu dla efektu "electric".
-- **Pastel Boost**: Tworzy łagodne, wysokotonowe barwy o minimalnym nasyceniu.
-- **Glassmorphism Boost**: Podnosi jasność i nasycenie, aby kolor był czytelny pod rozmyciem (blur).
-- **Ink-Save Mode**: Redukuje nasycenie w jasnych tonach, optymalizując zużycie tonera/atramentu.
-- **Spectral Balance**: Koryguje jasność w zależności od nasycenia (Helmholtz–Kohlrausch effect), aby barwy o różnej chromie wydawały się równie jasne dla oka.
+System pozwala na nakładanie efektów post-processingu, które "podkręcają" bazowe algorytmy bez niszczenia ich tonalnej hierarchii:
+- **Dark Mode Boost**: Kluczowa korekta dla czarnych teł. Zapobiega wizualnemu "ocieplaniu się" kolorów (np. błękitów w stronę zieleni) poprzez kierunkową kompensację Hue.
+- **Neon Boost**: Hybrydowe podejście — miksuje bazowe nasycenie z technicznym limitem gamutu (bias 85%). Pozwala to uzyskać "elektryzujące" barwy przy zachowaniu wyczuwalnego rytmu jasny-ciemny.
+- **Pastel Boost**: Wykorzystuje nieliniową krzywą jasności (zakres 0.5 – 0.95) oraz stałą, "świeżą" domieszkę chromy. Dzięki temu pastele są lekkie i czyste, a nie "brudne" czy szare.
+- **Glassmorphism Boost**: Optymalizuje czytelność pod warstwami blur. Podnosi jasność i nasycenie tonów średnich, by barwa "nie ginęła" po rozmyciu.
+- **Ink-Save Mode**: Inteligentna redukcja pigmentu w jasnych tonach (powyżej L=0.4), oszczędzająca toner przy zachowaniu rozpoznawalności barwy (tintu).
+- **Spectral Balance**: Zaawansowana korekta efektu Helmholtz–Kohlrausch. Balansuje fizyczną jasność tak, by nasycony fiolet i blada zieleń wydawały się oku tak samo jasne.
 
 ## Standardy Kontrastu
 System obsługuje dwa niezależne silniki weryfikacji dostępności:
