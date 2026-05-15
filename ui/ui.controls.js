@@ -19,6 +19,10 @@ import {
   setGlassmorphismBoost,
   setInkSaveMode,
   setSpectralBalance,
+  setPerceptualPolish,
+  setInterpolationMode,
+  setGamutProfile,
+  setChromaShapingFactor,
   setLock,
   getState,
   getWarnings,
@@ -148,6 +152,20 @@ function updateSidebarLayout() {
 
     const spectralToggle = $('spectral-toggle');
     if (spectralToggle) spectralToggle.checked = state.mode.spectralBalance;
+
+    const polishToggle = $('polish-toggle');
+    if (polishToggle) polishToggle.checked = state.mode.perceptualPolish;
+
+    const labelShaping = $('label-shaping');
+    if (labelShaping) labelShaping.textContent = `Chroma Shaping: ${state.mode.chromaShapingFactor.toFixed(2)}`;
+
+    document.querySelectorAll('input[name="interpMode"]').forEach(r => {
+        r.checked = (r.value === state.mode.interpolation);
+    });
+
+    document.querySelectorAll('input[name="gamutMode"]').forEach(r => {
+        r.checked = (r.value === state.mode.gamutProfile);
+    });
 
     document.querySelectorAll('input[name="contrastAlgo"]').forEach(r => {
         r.checked = (r.value === state.contrastSettings.algorithm);
@@ -605,6 +623,36 @@ function setupModes(){
       setSpectralBalance(e.target.checked);
       clearGradientCache();
       refreshUI();
+  });
+
+  $('polish-toggle')?.addEventListener('change', e => {
+      setPerceptualPolish(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  document.querySelectorAll('input[name="interpMode"]').forEach(r => {
+      r.addEventListener('change', e => {
+          setInterpolationMode(e.target.value);
+          clearGradientCache();
+          refreshUI();
+      });
+  });
+
+  document.querySelectorAll('input[name="gamutMode"]').forEach(r => {
+      r.addEventListener('change', e => {
+          setGamutProfile(e.target.value);
+          clearGradientCache();
+          refreshUI();
+      });
+  });
+
+  $('shaping-slider')?.addEventListener('input', e => {
+      setChromaShapingFactor(e.target.value);
+      const label = $('label-shaping');
+      if (label) label.textContent = `Chroma Shaping: ${Number(e.target.value).toFixed(2)}`;
+      clearGradientCache();
+      renderAllPalettes(true);
   });
 }
 

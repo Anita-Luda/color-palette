@@ -2,6 +2,8 @@
 // Adaptive Perceptual algorithm
 
 import { oklchToOklab, oklabToRgb, rgbToHex, maxChromaForL } from './engine.math.js';
+import { getPerceptualCompensation, getHuePathShift } from './engine.curves.js';
+import { EngineState } from './engine.core.js';
 
 function getAdaptiveGamma(baseL, baseT) {
   const L_max = 0.98;
@@ -27,16 +29,27 @@ export function generateAdaptiveScale(baseLch, steps, isDarkMode) {
     const baseMaxC = maxChromaForL(baseLch.L, baseLch.h);
     const intensity = baseMaxC > 0 ? (baseLch.C / baseMaxC) : 0;
 
+    const profile = EngineState.mode.gamutProfile || 'srgb';
+
     return steps.map(step => {
         const t = step / 1000;
-        const L = lightnessCurve(t, gamma);
-        const stepMaxC = maxChromaForL(L, baseLch.h);
+        let L = lightnessCurve(t, gamma);
+
+        // Perceptual compensation for lightness
+        const { chromaScale, lBias } = getPerceptualCompensation({ L, C: baseLch.C, h: baseLch.h });
+        L = Math.max(0, Math.min(1, L + lBias));
+
+        // Dynamic Hue Path
+        const hShift = getHuePathShift({ L, h: baseLch.h }, baseLch.L);
+        const H = (baseLch.h + hShift + 360) % 360;
+
+        const stepMaxC = maxChromaForL(L, H, profile);
 
         // Preserve brand intensity across the scale
         // We use the same 'relative saturation' as the base color
         // but ensure a floor to prevent "gray-out" in highlights/shadows.
         const floor = 0.1 * intensity;
-        let C = stepMaxC * Math.max(floor, intensity);
+        let C = stepMaxC * Math.max(floor, intensity) * chromaScale;
 
         // Ensure we don't exceed technical gamut
         C = Math.min(C, stepMaxC);
@@ -46,7 +59,7 @@ export function generateAdaptiveScale(baseLch, steps, isDarkMode) {
             C *= (0.65 + 0.3 * (1 - L));
         }
 
-        const lab = oklchToOklab(L, C, baseLch.h);
+        const lab = oklchToOklab(L, C, H);
         const hex = rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
 
         return { step, hex, l: L, c: C, h: baseLch.h };

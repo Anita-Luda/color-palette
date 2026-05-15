@@ -1,7 +1,9 @@
 // engine/algo.standard.js
 // Rebuilt: simplest possible tonal scale with smooth visual blending.
 
-import { oklchToOklab, oklabToRgb, rgbToHex } from './engine.math.js';
+import { oklchToOklab, oklabToRgb, rgbToHex, oklchToOkluv, okluvToOklch } from './engine.math.js';
+import { getPerceptualCompensation } from './engine.curves.js';
+import { EngineState } from './engine.core.js';
 
 export function generateStandardScale(baseLch, steps, isDarkMode) {
     const stepToL = s => 1 - (s / 1000);
@@ -22,13 +24,33 @@ export function generateStandardScale(baseLch, steps, isDarkMode) {
             ? (L - baseLch.L) / (1 - baseLch.L || 0.01)
             : (baseLch.L - L) / (baseLch.L || 0.01);
 
-        // Power 1.5 for a "tonal" (slightly muted) look away from the base
-        const falloff = Math.pow(Math.max(0, 1 - Math.pow(normalizedDist, 2)), 1.5);
+        // Cubic Easing for Chroma Falloff (Non-linear Chroma Curve)
+        const shaping = EngineState.mode.chromaShapingFactor || 1.0;
+        const ease = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; // easeInOutCubic
 
-        const C = baseLch.C * chromaMult * falloff;
+        // We use easeInCubic for tints (L > base) and easeOutCubic for shades (L < base)
+        const t = normalizedDist;
+        const curve = (L > baseLch.L)
+            ? 1 - Math.pow(t, 3 * shaping) // easeIn-like
+            : Math.pow(1 - t, 3 / shaping); // easeOut-like
+
+        const falloff = Math.max(0, curve);
+
+        // Perceptual hue-dependent adjustments
+        const { chromaScale, lBias } = getPerceptualCompensation({ L, C: baseLch.C, h: baseLch.h });
+
+        let adjustedL = Math.max(0, Math.min(1, L + lBias * falloff));
+        let C = baseLch.C * chromaMult * falloff * chromaScale;
         const H = baseLch.h;
 
-        const lab = oklchToOklab(L, C, H);
+        // OKLUV Interpolation Support
+        if (EngineState.mode.interpolation === 'okluv') {
+            const uv = oklchToOkluv(baseLch.L, baseLch.C, baseLch.h);
+            const luv = okluvToOklch(adjustedL, uv.saturation * falloff * chromaMult * chromaScale, H);
+            C = luv.C;
+        }
+
+        const lab = oklchToOklab(adjustedL, C, H);
         const hex = rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
 
         return { step, hex, l: L, c: C, h: H };

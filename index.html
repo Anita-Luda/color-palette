@@ -129,6 +129,10 @@
 
         <div style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;">
           <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="polish-toggle" style="width: auto;">
+            <label for="polish-toggle" style="margin-bottom: 0; cursor: pointer;"><strong>CAM16 Perceptual Polish</strong></label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
             <input type="checkbox" id="boost-toggle" style="width: auto;">
             <label for="boost-toggle" style="margin-bottom: 0; cursor: pointer;">Dark Mode Boost (Korekta jasnych tonów)</label>
           </div>
@@ -152,6 +156,27 @@
             <input type="checkbox" id="spectral-toggle" style="width: auto;">
             <label for="spectral-toggle" style="margin-bottom: 0; cursor: pointer;">Spectral Balance (Korekta jasności H-K)</label>
           </div>
+        </div>
+
+        <div class="v4-settings" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <label>Interpolacja (Engine)</label>
+            <div class="toggle-group discreet">
+                <input type="radio" name="interpMode" id="interp-oklch" value="oklch" checked>
+                <label for="interp-oklch">OKLCH</label>
+                <input type="radio" name="interpMode" id="interp-okluv" value="okluv">
+                <label for="interp-okluv">OKLUV</label>
+            </div>
+
+            <label>Profil Gamutu</label>
+            <div class="toggle-group discreet">
+                <input type="radio" name="gamutMode" id="gamut-srgb" value="srgb" checked>
+                <label for="gamut-srgb">sRGB</label>
+                <input type="radio" name="gamutMode" id="gamut-p3" value="p3">
+                <label for="gamut-p3">P3</label>
+            </div>
+
+            <label id="label-shaping">Chroma Shaping: 1.0</label>
+            <input type="range" id="shaping-slider" min="0.5" max="1.5" step="0.05" value="1.0">
         </div>
 
         <label>Rozkład jasności</label>

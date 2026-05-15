@@ -4,7 +4,8 @@
 import { EngineState } from './engine.core.js';
 import {
   srgbToLinear, linearToSrgb, rgbToOklab, oklabToRgb,
-  oklabToOklch, oklchToOklab, rgbToHex
+  oklabToOklch, oklchToOklab, rgbToHex,
+  oklabToXyz, xyzToCam16, maxChromaForL
 } from './engine.math.js';
 import { generateStandardScale } from './algo.standard.js';
 import { generateAdaptiveScale } from './algo.adaptive.js';
@@ -49,11 +50,31 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
   const isAnyBoost = mode.darkModeBoost || mode.neonBoost || mode.pastelBoost ||
                      mode.glassmorphismBoost || mode.inkSaveMode || mode.spectralBalance;
 
+  // CAM16 Perceptual Polish
+  const polish = mode.perceptualPolish || false;
+
   scale = scale.map(swatch => {
       const isBaseStep = Math.abs(swatch.step - anchorStep) < 0.1;
 
       // Apply boosts
       let processed = applyBoosts(swatch, lch, mode);
+
+      // CAM16-UCS Perceptual Polish (Hybrid)
+      // Corrects lightness based on CAM16 J/C correlates to improve uniformity
+      if (polish) {
+          const lab = oklchToOklab(processed.l, processed.c, processed.h);
+          const xyz = oklabToXyz(lab.L, lab.a, lab.b);
+          const cam = xyzToCam16(xyz.X, xyz.Y, xyz.Z);
+
+          // Hybrid adjustment: nudge OKLCH lightness towards CAM16 J (normalized)
+          const targetL = cam.J / 100;
+          processed.l = processed.l * 0.7 + targetL * 0.3; // Gentle nudge
+
+          // Re-derive LCH after polish
+          const lab2 = oklchToOklab(processed.l, processed.c, processed.h);
+          const rgb = oklabToRgb(lab2.L, lab2.a, lab2.b);
+          processed.hex = rgbToHex(rgb);
+      }
 
       // Light Mode Base preservation: ONLY if NOT in Dark Mode and NO boosts active
       if (isBaseStep && !isDarkMode && !isAnyBoost && sourceHex) {
@@ -61,6 +82,15 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
       }
 
       processed.isBase = isBaseStep;
+
+      // Calculate Gamut Clipping Point
+      const profile = mode.gamutProfile || 'srgb';
+      const idealC = processed.c;
+      const actualMaxC = maxChromaForL(processed.l, processed.h, profile);
+      processed.clipping = (idealC > actualMaxC + 0.001)
+          ? Math.round((1 - (actualMaxC / idealC)) * 100)
+          : 0;
+
       return processed;
   });
 

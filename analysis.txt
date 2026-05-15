@@ -1,63 +1,22 @@
-# Analiza Rozwojowa: Profesjonalny System Palet OKLCH
+# Analiza Rozwojowa: Hybrydowy System Percepcyjny V4
 
-## Stan Obecny (V2)
-System osiągnął dojrzałość produkcyjną. Kluczowe przewagi techniczne:
-- **Precyzja Percepcyjna**: Dzięki OKLCH kolory zachowują stałą jasność wizualną przy zmianie barwy.
-- **Dynamiczne Gamut-Clamping**: Algorytmy automatycznie dopasowują nasycenie do granic przestrzeni sRGB, eliminując visual spikes.
-- **Algorytmiczne Skalowanie**: Tryby `Asym` i `Fixed` pozwalają na budowę systemów projektowych o różnej dynamice.
-- **Zorientowanie na Kontrast**: System nie tylko generuje kolory, ale weryfikuje ich użyteczność w czasie rzeczywistym (WCAG 2.1 oraz APCA/WCAG 3.0).
+## Filozofia Systemu
+Wersja V4 odchodzi od czystej matematyki OKLCH na rzecz hybrydowego podejścia percepcyjnego. OKLCH pozostaje bazą roboczą ze względu na swoją intuicyjność, ale CAM16-UCS służy jako "szlif końcowy", korygując błędy percepcji jasności (J) wynikające ze specyfiki ludzkiego wzroku (których sam OKLCH nie adresuje w 100%).
 
-## Szczegóły Algorytmów
+## Kluczowe Ulepszenia (V4)
 
-### Algorytm Standard
-Najprostszy, rygorystyczny algorytm tonalny.
-- **Filozofia**: Pełne skupienie na płynnym wblendowaniu koloru bazowego w tonalny przekrój.
-- **Interpolacja**: Nasycenie (Chroma) jest precyzyjnie wygaszane do zera na krańcach skali (White/Black), osiągając swój szczyt dokładnie w punkcie jasności koloru bazowego. Eliminuje to wszelkie "skoki" intensywności i sprawia, że paleta wydaje się spójną, aksamitną całością.
-- **Dark Mode**: Implementuje nieliniowe tłumienie barwy w zależności od jasności (L), zapobiegając męczeniu wzroku przez jaskrawe elementy na ciemnym tle.
-- **Zastosowanie**: Klasyczne systemy projektowe, interfejsy SaaS, gdzie spójność jest ważniejsza od nasycenia.
+### 1. Modelowanie Natury (Hue Path & Cubic Easing)
+Zastąpienie liniowej interpolacji chromy funkcjami sześciennymi pozwala na tworzenie palet, które "trzymają kolor" aż do skrajnych wartości jasności. "Hue Path" symuluje zachowanie światła w naturze – cienie nie tylko ciemnieją, ale zmieniają temperaturę (np. żółcie dążą do pomarańczu/czerwieni).
 
-### Algorytm Adaptive
-Algorytm zorientowany na maksymalizację technicznego potencjału barwy.
-- **Filozofia**: "Brand Glow" — zachowanie unikatowego charakteru koloru w każdym tonie.
-- **Metoda**: Algorytm wylicza "intensywność brandową" koloru bazowego (jego pozycję względem fizycznej granicy gamutu sRGB) i stara się utrzymać ten sam poziom nasycenia relatywnego na całej skali jasności.
-- **Optymalizacja**: Wykorzystuje przeszukiwanie binarne limitów gamutu dla każdej jasności (L), dbając o to, by cienie i światła nigdy nie były "brudne" czy wyblakłe, lecz zawsze nasycone zgodnie z duchem marki.
-- **Zastosowanie**: Marketing, aplikacje konsumenckie, designy zorientowane na silną identyfikację wizualną.
+### 2. Stabilność Cyfrowa (Constancy Guard)
+Największym problemem systemów OKLCH było "rozjeżdżanie się" barwy przy krawędzi gamutu sRGB (np. błękit stający się fioletem). Implementacja Hue Constancy Guard z rygorem ΔH < 0.5° gwarantuje, że brandowe kolory zachowają swoją tożsamość niezależnie od stopnia jasności.
 
-### Różnice między Standard a Adaptive
-Standard to "bezpieczeństwo i harmonia" (matematycznie ograniczona do projektowo akceptowalnych ram), natomiast Adaptive to "siła i technika" (wyciśnięcie maksimum z przestrzeni barwnej). Standard dba o to, by błękit obok żółtego nie wydawał się szary, a Adaptive dba o to, by oba były tak jaskrawe, jak to tylko możliwe.
+### 3. Nowoczesne Interfejsy (Glassmorphism & APCA)
+Wprowadzenie symulacji kontrastu przez warstwę blur pozwala projektantom na bezpieczne stosowanie szkieł w UI. Standard APCA zapewnia precyzyjniejsze dane o czytelności tekstu niż klasyczne WCAG 2.1, co jest kluczowe dla dostępności cyfrowej nowej generacji.
 
-## Nakładki (Boosts)
-System pozwala na nakładanie efektów post-processingu, które "podkręcają" bazowe algorytmy:
-- **Dark Mode Boost**: Percepcyjna korekta identity na czarnym tle. Eliminuje zjawisko ocieplania się zimnych barw na ciemnych powierzchniach.
-- **Neon Boost**: Hybrydowe wzmocnienie techniczne (mnożnik chromy + headroom gamutu). Uzyskuje jaskrawość bez spłaszczania różnic jasności.
-- **Pastel Boost**: Mapuje całą paletę na wysoki rejestr jasności (0.55 - 0.98), utrzymując stałą, czystą dawkę barwy (C=0.06). Wynikiem są świeże, tonalne pastele.
-- **Glassmorphism Boost**: Optymalizuje czytelność pod warstwami blur. Podnosi jasność i nasycenie tonów średnich, by barwa "nie ginęła" po rozmyciu.
-- **Ink-Save Mode**: Inteligentna redukcja pigmentu w jasnych tonach (powyżej L=0.4), oszczędzająca toner przy zachowaniu rozpoznawalności barwy (tintu).
-- **Spectral Balance**: Zaawansowana korekta efektu Helmholtz–Kohlrausch. Balansuje fizyczną jasność tak, by nasycony fiolet i blada zieleń wydawały się oku tak samo jasne.
+## Kierunki Dalszego Rozwoju
 
-## Standardy Kontrastu
-System obsługuje dwa niezależne silniki weryfikacji dostępności:
-1. **WCAG 2.1 (Luminance-based)**: Tradycyjny model oparty na stosunku luminancji względnej (3:1, 4.5:1, 7:1).
-2. **APCA (SAPC-8 Perceptual)**: Nowoczesny algorytm z nadchodzącego standardu WCAG 3.0, który uwzględnia nieliniowość percepcji ludzkiego oka oraz kontekst (np. tekst czarny na białym vs biały na czarnym). Progi Lc 30/60/90 odpowiadają kolejnym poziomom hierarchii UI.
-
-## Propozycje Dalszego Rozwoju
-
-### 1. Rozszerzony Eksport i Integracja (Handoff)
-- **Design Tokens (JSON)**: Eksport w formacie zgodnym ze standardem W3C Design Tokens, ułatwiający integrację z narzędziami takimi jak Style Dictionary.
-- **CSS Variables Generator**: Automatyczne generowanie arkusza stylów z zmiennymi CSS, obsługującego Dark Mode (prefers-color-scheme).
-- **Tailwind Plugin**: Generowanie konfiguracji `tailwind.config.js` na podstawie stworzonych palet.
-
-### 2. Zaawansowana Edycja Krzywych
-- **Edytor Krzywych Beziera**: Wizualny edytor dla parametrów L, C, H, pozwalający na ręczne dociąganie gradacji kolorów zamiast polegania wyłącznie na algorytmie.
-- **Interpolacja Przestrzeni**: Możliwość wyboru między OKLCH, OKLUV lub HSL dla porównania wyników.
-
-### 3. Dostępność (Accessibility 2.0)
-- **Symulator Ślepoty Barw**: Nakładka na interfejs symulująca Protanopię, Deuteranopię i Tritanopię dla całej palety.
-- **APCA (Advanced Perceptual Contrast Algorithm)**: Implementacja nadchodzącego standardu kontrastu z WCAG 3.0.
-
-### 4. Funkcje Kolaboracyjne i Zarządzanie
-- **Zapis w Chmurze/LocalStorage**: Możliwość zapisywania wielu projektów palet i ich późniejszej edycji.
-- **Porównywarka Palet**: Tryb side-by-side do porównywania dwóch różnych zestawów kolorów.
-
-## Wnioski
-Obecna architektura jest modularna i pozwala na łatwe dodawanie nowych algorytmów (folder `core/`) oraz widoków (folder `ui/`). System stanowi solidny fundament pod zaawansowane narzędzie typu "Color Design System" dla dużych organizacji.
+1.  **AI Color Harmonizer**: Integracja modelu sugestii opartego o wektory estetyczne, który dopasowuje dystanse w CAM16-UCS do konkretnych "nastrojów" (np. "Professional", "Playful").
+2.  **Lottie Gradient Animation Export**: Bezpośredni eksport gradientów percepcyjnych do formatów animowanych.
+3.  **Variable Color Scales**: Implementacja zmiennych (variables) dla Figmy, które automatycznie przełączają profil sRGB/P3 w zależności od urządzenia docelowego.
+4.  **Spatial Contrast Analysis**: Analiza kontrastu nie tylko między dwoma kolorami, ale na poziomie "sąsiedztwa" w UI (simultaneous contrast correction).

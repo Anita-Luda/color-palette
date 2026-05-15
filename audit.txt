@@ -1,33 +1,25 @@
-# Audit Algorytmów Kolorystycznych V3
+# V4 Audit: Perceptual Color Engine (Hybrid OKLCH + CAM16)
 
-## 1. Zmiana Architektury (Refaktoryzacja)
-Algorytmy zostały odizolowane do dedykowanych modułów, co pozwoliło na "wyzerowanie" błędnej logiki i zbudowanie rozwiązań zorientowanych na cel:
-- `algo.standard.js`: Najprostszy, rygorystyczny algorytm tonalny.
-- `algo.adaptive.js`: Algorytm "Brand Glow" (maksymalizacja gamutu).
-- `algo.boosts.js`: Precyzyjne nakładki percepcyjne.
+## 1. Mathematical Accuracy & Models
+- [OKLCH] Core model for workflow. Correct D65 LMS-to-Lab transforms verified.
+- [CAM16-UCS] Implemented hybrid "Perceptual Polish". System nudges OKLCH J toward CAM16 J to improve lightness uniformity across different hues.
+- [OKLUV] Added normalization mode. Ensures consistent saturation relative to the gamut boundary, preventing premature desaturation in high/low keys.
+- [Gamut Constancy Guard] Binary search now validates Hue (ΔH < 0.5°). Prevents the "Blue-to-Purple" shift at technical sRGB/P3 limits.
 
-## 2. Analiza Algorytmów
+## 2. Scaling Algorithms (V4)
+- [Standard Algorithm] Refactored to use Cubic Easing (easeInCubic/easeOutCubic). Tones remain saturated longer ("puchnięcie" krzywej chromy).
+- [Adaptive Algorithm] Implemented "Hue Path". Warm colors rotate toward red in shades; cool colors toward deep blue/cyan. Natural shadow modeling.
+- [Chroma Shaping] New parameter (0.5 - 1.5) allows manual control over the chroma falloff curve intensity.
 
-### Algorytm Standard
-- **Poprawka**: Wyeliminowano "wybijanie się" kolorów bazowych. Obecnie nasycenie (Chroma) jest liniowo i gładko wygaszane w stronę bieli (L=1) i czerni (L=0), z punktem szczytowym dokładnie w jasności koloru bazowego.
-- **Dark Mode**: Wprowadzono nieliniowe tłumienie chromy dla jasnych tonów (L > 0.5), co eliminuje męczący efekt "świecenia" na czarnym tle.
+## 3. Technical Constraints & HDR
+- [P3/Rec.2020 Support] Engine now accepts gamut profile boundaries. Clamping is dynamic based on target display capability.
+- [Clipping Visualization] Swatches now indicate % of chroma reduction needed to fit gamut (yellow indicator dot).
 
-### Algorytm Adaptive
-- **Poprawka**: Przywrócono barwę w cieniach i światłach. Zamiast polegać na surowych bezpiecznych limitach, algorytm utrzymuje stałą "intensywność brandową" (stosunek C do limitu gamutu) wzdłuż całej skali. Dzięki temu paleta jest niezwykle żywa, ale spójna.
+## 4. Accessibility & UI
+- [Glassmorphism] Implemented transparency contrast simulation (alpha-blend over backdrop).
+- [APCA V3] Full integration with target Lc values for professional accessibility audits.
+- [Grayscale UI] Sidebar themes (Light/Dark) isolated from preview colors to prevent simultaneous contrast errors.
 
-## 3. Analiza Nakładek (Boosts)
-
-### Pastel Boost
-- **Poprawka**: Przywrócono przekrój tonalny. Nakładka nie forsuje już stałej jasności, lecz mapuje całą skalę 0-1000 na wysoki rejestr (0.55 - 0.98 L). Kolory są "świeże" (zoptymalizowana chroma), ale zachowują hierarchię od jasnego do ciemnego.
-
-### Neon Boost
-- **Poprawka**: Naprawiono utratę tonacji. Neon używa teraz hybrydowego wzmocnienia (mnożnik chromy + udział w headroomie gamutu), co pozwala zachować zróżnicowanie jasności przy ekstremalnym nasyceniu.
-
-### Dark Mode Boost
-- **Kompensacja Hue**: Ulepszono precyzję przesunięć barwnych (np. blues -> cyan), aby barwy na czarnym tle nie wydawały się wizualnie cieplejsze niż w oryginale.
-
-## 4. Wnioski i Sugestie
-System V3 jest znacznie bardziej przewidywalny.
-- **Sugestia**: W przyszłości można dodać `OLED-Save mode`, który agresywniej tnie jasność w ciemnych tonach, by jeszcze bardziej oszczędzać energię ekranów.
-
-## Status: 100% Zgodny z wytycznymi rewizji.
+## 5. Verification
+- All runtime tests pass.
+- Figma SVG export includes V4 metadata (clipping, APCA ratios).

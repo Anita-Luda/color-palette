@@ -12,12 +12,16 @@ export const EngineState = {
     palette: 'light',        // light | dark
     scale: 'absolute',       // absolute | asymmetric
     algorithm: 'standard',   // standard | adaptive
+    interpolation: 'oklch',  // oklch | okluv
+    gamutProfile: 'srgb',    // srgb | p3 | rec2020
+    chromaShapingFactor: 1.0,
     darkModeBoost: false,    // post-processing boost
     neonBoost: false,        // post-processing neon effect
     pastelBoost: false,      // post-processing pastel effect
     glassmorphismBoost: false, // glassmorphism optimization
     inkSaveMode: false,      // print optimization
     spectralBalance: false,  // perceived brightness correction (H-K effect)
+    perceptualPolish: false, // CAM16-UCS correction
     view: 'palettes',        // palettes | contrast
     granularity: 100,        // 10 | 50 | 100
     background: 'light',     // light | dark
@@ -90,6 +94,19 @@ export function setAlgorithmMode(mode) {
   EngineState.mode.algorithm = mode;
 }
 
+export function setInterpolationMode(mode) {
+    if (mode !== 'oklch' && mode !== 'okluv') return;
+    EngineState.mode.interpolation = mode;
+}
+
+export function setGamutProfile(profile) {
+    EngineState.mode.gamutProfile = profile;
+}
+
+export function setChromaShapingFactor(value) {
+    EngineState.mode.chromaShapingFactor = Number(value);
+}
+
 export function setDarkModeBoost(enabled) {
   EngineState.mode.darkModeBoost = Boolean(enabled);
 }
@@ -112,6 +129,10 @@ export function setInkSaveMode(enabled) {
 
 export function setSpectralBalance(enabled) {
   EngineState.mode.spectralBalance = Boolean(enabled);
+}
+
+export function setPerceptualPolish(enabled) {
+  EngineState.mode.perceptualPolish = Boolean(enabled);
 }
 
 export function setView(view) {

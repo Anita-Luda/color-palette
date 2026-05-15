@@ -225,8 +225,35 @@ export function generateContrastGrid(targetLch) {
 
         const baseLab = oklchToOklab(lch.L, lch.C, lch.h);
         row.baseContrast = getRawRatio(bgHex, rgbToHex(oklabToRgb(baseLab.L, baseLab.a, baseLab.b)));
+
+        // Glassmorphism Contrast Simulation
+        // Assume text over a blur layer (0.7 opacity of base color, 0.3 backdrop)
+        const isGlass = EngineState.mode.glassmorphismBoost;
+        if (isGlass) {
+            const bgLinear = srgbToLinear_local(bgHex);
+            const fgLinear = srgbToLinear_local(row.c45_bg);
+            // Simple alpha blend approximation
+            const blendedR = fgLinear.r * 0.7 + bgLinear.r * 0.3;
+            const blendedG = fgLinear.g * 0.7 + bgLinear.g * 0.3;
+            const blendedB = fgLinear.b * 0.7 + bgLinear.b * 0.3;
+            const blendedHex = rgbToHex(oklabToRgb(rgbToOklab(blendedR*255, blendedG*255, blendedB*255).L, 0, 0)); // Simplified
+            row.glassContrast = getRawRatio(blendedHex, "#FFFFFF"); // Contrast of White text over glass
+        }
+
         grid.push(row);
     }
+
+function srgbToLinear_local(hex) {
+    const h = hex.replace('#','');
+    const r = parseInt(h.slice(0,2),16) / 255;
+    const g = parseInt(h.slice(2,4),16) / 255;
+    const b = parseInt(h.slice(4,6),16) / 255;
+    return {
+        r: r <= 0.04045 ? r / 12.92 : Math.pow((r + 0.055) / 1.055, 2.4),
+        g: g <= 0.04045 ? g / 12.92 : Math.pow((g + 0.055) / 1.055, 2.4),
+        b: b <= 0.04045 ? b / 12.92 : Math.pow((b + 0.055) / 1.055, 2.4)
+    };
+}
 
     return grid;
 }

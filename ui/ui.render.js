@@ -117,6 +117,21 @@ function renderSwatch(swatch, opts = {}){
 
   d.append(step, hex, contrastEl, whiteBlackContrast);
 
+  // Gamut Clipping Point Indicator
+  if (swatch.clipping > 0) {
+      const dot = el('div', 'clipping-dot');
+      dot.title = `Gamut Clipping: -${swatch.clipping}% Chroma`;
+      dot.style.position = 'absolute';
+      dot.style.top = '8px';
+      dot.style.right = '8px';
+      dot.style.width = '8px';
+      dot.style.height = '8px';
+      dot.style.borderRadius = '50%';
+      dot.style.background = '#ffca28';
+      dot.style.boxShadow = '0 0 4px rgba(0,0,0,0.5)';
+      d.appendChild(dot);
+  }
+
   // Click to copy
   d.addEventListener('click', () => {
     navigator.clipboard.writeText(swatch.hex.toUpperCase()).then(() => {
@@ -261,6 +276,17 @@ function renderContrastGridForLCH(lch, title) {
             createContrastSwatch('Base', null, lch, row.baseContrast, isApca),
             createContrastSwatch('Base', null, lch, baseVsL1, isApca)
         );
+
+        // Glassmorphism Simulation Info
+        if (row.glassContrast !== undefined) {
+            const glassInfo = el('div', 'glass-info');
+            glassInfo.textContent = `Glass Cntr: ${row.glassContrast.toFixed(1)}${isApca ? '' : ':1'}`;
+            glassInfo.style.fontSize = '0.6rem';
+            glassInfo.style.padding = '4px';
+            glassInfo.style.textAlign = 'center';
+            glassInfo.style.background = 'rgba(255,255,255,0.1)';
+            r.appendChild(glassInfo);
+        }
         container.appendChild(r);
     });
 
