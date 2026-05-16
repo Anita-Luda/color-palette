@@ -1,10 +1,11 @@
 // engine/engine.scales.js
-// Orchestrator for scaling algorithms and boosts.
+// Orchestrator V7: Design Quality over Pure Math.
 
 import { EngineState } from './engine.core.js';
 import {
   srgbToLinear, linearToSrgb, rgbToOklab, oklabToRgb,
-  oklabToOklch, oklchToOklab, rgbToHex, maxChromaForL
+  oklabToOklch, oklchToOklab, rgbToHex, maxChromaForL,
+  oklabToXyz, xyzToCam16
 } from './engine.math.js';
 import { generateStandardScale } from './algo.standard.js';
 import { generateAdaptiveScale } from './algo.adaptive.js';
@@ -29,6 +30,7 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
   const isDarkMode = mode.palette === 'dark';
   const scaleMode = mode.scale;
   const anchorStep = LToStep(lch.L);
+  const profile = mode.gamutProfile || 'srgb';
 
   let actualSteps = steps;
 
@@ -49,35 +51,53 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
       }
   }
 
-  // Generate Base Scale
-  let scale = (mode.algorithm === 'adaptive')
+  // Choose Base Algorithm
+  let rawScale = (mode.algorithm === 'adaptive')
       ? generateAdaptiveScale(lch, actualSteps, isDarkMode)
       : generateStandardScale(lch, actualSteps, isDarkMode);
 
-  const profile = mode.gamutProfile || 'srgb';
   const isAnyBoost = mode.darkModeBoost || mode.neonBoost || mode.pastelBoost ||
                      mode.glassmorphismBoost || mode.inkSaveMode || mode.spectralBalance;
 
-  return scale.map(swatch => {
+  return rawScale.map(swatch => {
       const isBaseStep = Math.abs(swatch.step - anchorStep) < 0.1;
 
-      // 1. Apply overlays (un-clamped)
-      let boosted = applyBoosts(swatch, lch, mode);
+      // 1. APPLY DESIGN BOOSTS (on un-clamped LCH)
+      let p = applyBoosts(swatch, lch, mode);
 
-      // 2. Detection of clipping
-      const maxC = maxChromaForL(boosted.l, boosted.h, profile);
-      boosted.clipping = (boosted.c > maxC + 0.005) ? Math.round((1 - (maxC / boosted.c)) * 100) : 0;
+      // 2. HYBRID CAM16 POLISH
+      if (mode.perceptualPolish) {
+          const lab = oklchToOklab(p.l, p.c, p.h);
+          const xyz = oklabToXyz(lab.L, lab.a, lab.b);
+          const cam = xyzToCam16(xyz.X, xyz.Y, xyz.Z);
+          const targetL = cam.J / 100;
+          // Weighted nudge towards CAM16 J (perceptual brightness consistency)
+          p.l = p.l * 0.65 + targetL * 0.35;
+      }
 
-      // 3. Final Clamp for stability
-      boosted.c = Math.min(boosted.c, maxC);
+      // 3. DARK MODE COMFORT DAMPING
+      if (isDarkMode) {
+          p.c *= (0.7 + 0.3 * (1 - p.l));
+      }
 
-      const lab = oklchToOklab(boosted.l, boosted.c, boosted.h);
-      boosted.hex = rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
+      // 4. CLIPPING DETECTION
+      const maxC = maxChromaForL(p.l, p.h, profile);
+      p.clipping = (p.c > maxC + 0.005) ? Math.round((1 - (maxC / p.c)) * 100) : 0;
 
-      if (isBaseStep && !isDarkMode && !isAnyBoost && sourceHex) boosted.hex = sourceHex;
-      boosted.isBase = isBaseStep;
+      // 5. FINAL GAMUT CLAMP
+      p.c = Math.min(p.c, maxC);
 
-      return boosted;
+      // Final Color
+      const finalLab = oklchToOklab(p.l, p.c, p.h);
+      p.hex = rgbToHex(oklabToRgb(finalLab.L, finalLab.a, finalLab.b));
+
+      // Preservation
+      if (isBaseStep && !isDarkMode && !isAnyBoost && sourceHex) {
+          p.hex = sourceHex;
+      }
+
+      p.isBase = isBaseStep;
+      return p;
   });
 }
 

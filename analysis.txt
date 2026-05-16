@@ -1,15 +1,16 @@
-# Analiza Rozwojowa: Stabilność Designerska (V6)
+# Analiza Rozwojowa: Doskonałość Tonalna V7
 
-## Kierunek: Stabilność ponad Ekstremalność
-Wersja V6 stanowi ostateczny szlif stabilności systemu. Zrezygnowaliśmy z ryzykownych optymalizacji matematycznych, które powodowały artefakty wizualne (np. efekt szachownicy), na rzecz przewidywalnych, liniowych rozkładów w punktach węzłowych.
+## Filozofia: Od Matematyki do Percepcji
+Wersja V7 rozwiązuje najtrudniejszy problem systemów OKLCH: "skoki" barwy przy barwach o wysokiej nasyconości przy krawędzi gamutu (Yellow, Cyan). Rozwiązaniem okazało się odrzucenie złożonych krzywych na rzecz liniowych segmentów jasności, które gwarantują przewidywalność designerską.
 
-### Kluczowe Ulepszenia
+### Kluczowe Innowacje
 
-1. **Precision First**: Użycie surowych wartości float (`oklabToRgbRaw`) przed etapem zaokrąglania pozwoliło wyeliminować skokowe zmiany barwy wynikające z 8-bitowej granulacji sRGB.
-2. **Orchestrated Clamping**: Przeniesienie limitowania kolorów do orchestratora umożliwiło jednoczesne zachowanie wysokiej jakości wizualnej nakładek (Boosts) i precyzyjne informowanie użytkownika o clippingu.
-3. **Design-Ready Boosts**: Nakładki Pastel i Glassmorphism zostały zoptymalizowane pod kątem współczesnych trendów UI, oferując czyste, wysokiej jasności barwy.
+1. **Nodal Linear Interpolation**: Stabilizuje skalę dla barw, których "boundary" drastycznie zmienia się przy małych wahaniach jasności.
+2. **Design-First Clamping**: Przesunięcie limitowania gamutu na sam koniec łańcucha operacji pozwala nakładkom (Boosts) realizować ich cel estetyczny, a orchestratorowi jedynie dbać o techniczną poprawność.
+3. **True Pastel Range**: Zdefiniowanie "Pastelu" jako cechy nasycenia, a nie jasności, pozwoliło na stworzenie palety, która ma pełną głębię (od czerni do bieli), ale zachowuje miękki charakter barwy.
 
-## Przyszłość: Kontekstualna Inteligencja
+## Dalszy Rozwój
 
-- **Perceptual Uniformity Score**: Wskaźnik "płynności" palety oparty o CAM16-UCS, informujący o jakości gradientów.
-- **Adaptive Contrast Steps**: Rozwinięcie algorytmu o automatyczne przesuwanie kroków skali tak, aby każdy z nich domyślnie spełniał wymóg WCAG AA względem wybranego tła.
+- **Variable Alpha Export**: Automatyczne generowanie zmiennych CSS z kanałem alfa dla warstwy Glass UI.
+- **Dynamic Gamut Visualization**: Widok 3D (CIE Lab volume) pokazujący, w którym miejscu barwa opuszcza profil sRGB.
+- **Perceptual Step Balancing**: Użycie CAM16-UCS do automatycznego przesuwania kroków tak, aby dystans wizualny między nimi był identyczny.

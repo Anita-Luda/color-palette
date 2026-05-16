@@ -37,17 +37,20 @@ function showCopyToast(text) {
 
 function renderSwatch(swatch, opts = {}){
   const d = el('div', 'swatch');
-  if (swatch.step % 50 === 0) d.classList.add('major');
-  if (swatch.step === 500) d.classList.add('ref');
+  const stepVal = Math.round(swatch.step);
+
+  if (stepVal % 50 === 0) d.classList.add('major');
+  if (stepVal === 500) d.classList.add('ref');
   if (swatch.isBase) d.classList.add('base-color');
   if (opts.compact) d.classList.add('compact');
 
   const state = getState();
   const gran = state.mode.granularity;
 
-  // Logic for filtering: robust check for grid steps
-  const offset = state.mode.scale === 'fixed' ? (Math.round(swatch.step) % 10) : 0;
-  const gridStep = Math.round(swatch.step - offset);
+  // Requirement: "Kolor bazowy ma mieć badge widzony zawsze"
+  // Logic: treat the shifted steps (fixed mode) as if they were clean steps for filtering.
+  const offset = state.mode.scale === 'fixed' ? (stepVal % 10) : 0;
+  const gridStep = stepVal - offset;
 
   if (gran === 50 && gridStep % 50 !== 0 && !swatch.isBase) return null;
   if (gran === 100 && gridStep % 100 !== 0 && !swatch.isBase) return null;
@@ -59,8 +62,7 @@ function renderSwatch(swatch, opts = {}){
   const onBlack = contrast.dark.ratio;
   d.style.color = onWhite > onBlack ? '#fff' : '#000';
 
-  const stepText = typeof swatch.step === 'number' ? Math.round(swatch.step) : swatch.step;
-  const stepEl = el('div', 'swatch-step', String(stepText));
+  const stepEl = el('div', 'swatch-step', String(stepVal));
   const hexEl  = el('div', 'swatch-hex', swatch.hex.toUpperCase());
 
   // Badges rules
@@ -70,18 +72,22 @@ function renderSwatch(swatch, opts = {}){
       d.appendChild(badge);
   }
 
+  // Use a small epsilon for grid matching
+  const is100 = gridStep % 100 === 0;
+  const is50  = gridStep % 50 === 0;
+
   if (gran === 10) {
-      if (gridStep % 100 === 0) {
+      if (is100) {
           const badge = el('div', 'swatch-badge step100 visible', '100');
           if (swatch.isBase) badge.style.display = 'none';
           d.appendChild(badge);
-      } else if (gridStep % 50 === 0) {
+      } else if (is50) {
           const badge = el('div', 'swatch-badge step50 visible', '50');
           if (swatch.isBase) badge.style.display = 'none';
           d.appendChild(badge);
       }
   } else if (gran === 50) {
-      if (gridStep % 100 === 0) {
+      if (is100) {
           const badge = el('div', 'swatch-badge step100 visible', '100');
           if (swatch.isBase) badge.style.display = 'none';
           d.appendChild(badge);
@@ -113,7 +119,7 @@ function renderSwatch(swatch, opts = {}){
       dot.style.width = '8px';
       dot.style.height = '8px';
       dot.style.borderRadius = '50%';
-      // Neutral grayscale contrast
+      // High contrast grayscale dot
       dot.style.background = (onWhite > onBlack) ? '#ffffff' : '#000000';
       dot.style.opacity = '0.5';
       dot.style.boxShadow = '0 0 2px rgba(0,0,0,0.3)';
@@ -282,7 +288,6 @@ function renderContrastGridForLCH(lch, title) {
 function renderContrastView() {
     const frag = document.createDocumentFragment();
 
-    // Legend
     const legend = el('div', 'contrast-legend');
     legend.innerHTML = `
         <div class="legend-item"><strong>Lvl 1</strong>: Powierzchnia / Element na tle (np. karta).</div>
@@ -298,24 +303,20 @@ function renderContrastView() {
     legend.style.lineHeight = '1.6';
     frag.appendChild(legend);
 
-    // Base
     const baseLch = getState().base.lch || getMainPalette().scale.find(s=>s.isBase);
     frag.appendChild(renderContrastGridForLCH(baseLch, 'Kontrast: Kolor Bazowy'));
 
-    // Additional
     getAdditionalPalettes().forEach(p => {
         const lch = p.scale.find(s=>s.isBase) || p.scale[Math.floor(p.scale.length/2)];
         frag.appendChild(renderContrastGridForLCH(lch, `Kontrast: Kolor ${p.index+1} (${p.role})`));
     });
 
-    // Functional
     const func = getFunctionalPalettes();
     Object.entries(func).forEach(([name, p]) => {
         const lch = p.scale[Math.floor(p.scale.length/2)];
         frag.appendChild(renderContrastGridForLCH(lch, `Kontrast: ${name}`));
     });
 
-    // Badges
     getBadgePalettes().forEach(p => {
         const lch = p.scale[Math.floor(p.scale.length/2)];
         frag.appendChild(renderContrastGridForLCH(lch, `Kontrast: Badge ${p.index+1}`));
@@ -323,7 +324,6 @@ function renderContrastView() {
 
     return frag;
 }
-
 
 function createContrastSwatch(label, hex, forceLch, actualRatio, isApca = false) {
     const d = el('div', 'contrast-swatch');
@@ -368,8 +368,9 @@ export function getAllVisibleHexes() {
     const hexes = [];
     const collect = (scale) => {
         scale.forEach(s => {
-            const offset = state.mode.scale === 'fixed' ? (Math.round(s.step) % 10) : 0;
-            const gridStep = Math.round(s.step - offset);
+            const stepVal = Math.round(s.step);
+            const offset = state.mode.scale === 'fixed' ? (stepVal % 10) : 0;
+            const gridStep = stepVal - offset;
 
             if (state.mode.granularity === 50 && gridStep % 50 !== 0 && !s.isBase) return;
             if (state.mode.granularity === 100 && gridStep % 100 !== 0 && !s.isBase) return;
@@ -398,8 +399,9 @@ function createSVGSwatch(swatch, x, y, width, height) {
                    <text x="${x+width/2}" y="${y+2}" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="#FFFFFF">BASE</text>`;
     } else {
         const gran = state.mode.granularity;
-        const offset = state.mode.scale === 'fixed' ? (Math.round(swatch.step) % 10) : 0;
-        const gridStep = Math.round(swatch.step - offset);
+        const stepVal = Math.round(swatch.step);
+        const offset = state.mode.scale === 'fixed' ? (stepVal % 10) : 0;
+        const gridStep = stepVal - offset;
 
         if (gran === 10) {
             if (gridStep % 100 === 0) {
@@ -514,8 +516,9 @@ export function generateExportSVG(type = 'main') {
         collections.forEach(p => {
             svgContent += `<text x="0" y="${currentY - 10}" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="${textFill}">${p.name}</text>`;
             const filteredScale = p.scale.filter(s => {
-                const offset = state.mode.scale === 'fixed' ? (Math.round(s.step) % 10) : 0;
-                const gridStep = Math.round(s.step - offset);
+                const stepVal = Math.round(s.step);
+                const offset = state.mode.scale === 'fixed' ? (stepVal % 10) : 0;
+                const gridStep = stepVal - offset;
 
                 if (gran === 50 && gridStep % 50 !== 0 && !s.isBase) return false;
                 if (gran === 100 && gridStep % 100 !== 0 && !s.isBase) return false;

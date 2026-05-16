@@ -1,5 +1,5 @@
 // engine/engine.math.js
-// OKLCH Math & Color Conversions - V6 Absolute Precision
+// OKLCH Math & Color Conversions - V7 High Precision
 
 export function srgbToLinearWCAG(c){
   c /= 255;
@@ -32,7 +32,7 @@ export function oklabToRgbRaw(L,a,b){
   const l_ = L + 0.3963377774*a + 0.2158037573*b;
   const m_ = L - 0.1055613458*a - 0.0638541728*b;
   const s_ = L - 0.0894841775*a - 1.2914855480*b;
-  const l = l_**3, m = m_**3, s = s_**3;
+  const l = Math.max(0, l_**3), m = Math.max(0, m_**3), s = Math.max(0, s_**3);
   let r =  4.0767416621*l - 3.3077115913*m + 0.2309699292*s;
   let g = -1.2684380046*l + 2.6097574011*m - 0.3413193965*s;
   let b2= -0.0041960863*l - 0.7034186147*m + 1.7076147010*s;
@@ -62,7 +62,7 @@ export function oklchToOklab(L,C,h){
 
 export function oklchToOkluv(L, C, h) {
     const maxC = maxChromaForL(L, h, 'srgb');
-    const saturation = maxC > 0 ? C / maxC : 0;
+    const saturation = maxC > 0.001 ? C / maxC : 0;
     return { L, saturation, h };
 }
 
@@ -75,12 +75,12 @@ export function rgbToHex({r,g,b}){
   return `#${((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}`;
 }
 
-// --- CAM16-UCS (Simplified for UI) ---
+// --- CAM16-UCS ---
 
 const CAM_VC = {
     whitePoint: [95.047, 100.0, 108.883], // D65
     adaptingLuminance: 40,
-    surround: 1.0, // Average
+    surround: 1.0,
     discounting: false
 };
 
@@ -91,7 +91,7 @@ function getCAMParameters(vc) {
     const k = 1 / (5 * La + 1);
     const F = surround;
     const fL = 0.2 * Math.pow(k, 4) * (5 * La) + 0.1 * Math.pow(1 - Math.pow(k, 4), 2) * Math.pow(5 * La, 1/3);
-    const n = Yw / Yw;
+    const n = 1.0;
     const z = 1.48 + Math.sqrt(n);
     const D = Math.max(0, Math.min(1, F * (1 - (1/3.6) * Math.exp((-La - 42)/92))));
     return { F, fL, n, z, D, Xw, Yw, Zw };
@@ -136,7 +136,7 @@ export function oklabToXyz(L, a, b) {
     const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
     const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
     const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
-    const l = l_ ** 3, m = m_ ** 3, s = s_ ** 3;
+    const l = Math.max(0, l_ ** 3), m = Math.max(0, m_ ** 3), s = Math.max(0, s_ ** 3);
     const r =  4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
     const g = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
     const b_ = -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s;
@@ -148,20 +148,24 @@ export function oklabToXyz(L, a, b) {
 }
 
 /**
- * High-precision gamut boundary check. NO HUE GUARD (causes checkerboard).
+ * GAMUT BOUNDARY V7: Ultra precision.
+ * Profile 'p3' adds approx 25% more chroma capacity.
  */
 export function maxChromaForL(L, H, profile = 'srgb') {
-    if (L <= 0.001 || L >= 0.999) return 0;
-
+    if (L <= 0.0001 || L >= 0.9999) return 0;
     let low = 0;
-    let high = (profile === 'p3') ? 0.45 : 0.4;
-
-    for (let i = 0; i < 18; i++) {
+    let high = (profile === 'p3') ? 0.5 : 0.4;
+    for (let i = 0; i < 20; i++) {
         const mid = (low + high) / 2;
         const lab = oklchToOklab(L, mid, H);
         const { r, g, b } = oklabToRgbRaw(lab.L, lab.a, lab.b);
-
-        let inGamut = (r >= -0.001 && r <= 1.001 && g >= -0.001 && g <= 1.001 && b >= -0.001 && b <= 1.001);
+        let inGamut;
+        if (profile === 'p3') {
+            // Approx Display-P3 volume in sRGB-normalized space
+            inGamut = (r >= -0.12 && r <= 1.12 && g >= -0.12 && g <= 1.12 && b >= -0.12 && b <= 1.12);
+        } else {
+            inGamut = (r >= -0.0001 && r <= 1.0001 && g >= -0.0001 && g <= 1.0001 && b >= -0.0001 && b <= 1.0001);
+        }
         if (inGamut) low = mid; else high = mid;
     }
     return low;

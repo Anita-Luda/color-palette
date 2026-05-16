@@ -1,5 +1,5 @@
 // engine/algo.adaptive.js
-// Adaptive Perceptual algorithm - V6 Absolute Stability
+// V7 Adaptive Scale - Linear Stability
 
 import { maxChromaForL } from './engine.math.js';
 import { getPerceptualCompensation, getHuePathShift } from './engine.curves.js';
@@ -8,6 +8,7 @@ import { EngineState } from './engine.core.js';
 function adaptiveLightness(t, t_base, L_base) {
     const L_max = 0.98;
     const L_min = 0.04;
+    // Linear segments are necessary to avoid "steps" in high-boundary colors like Yellow/Cyan
     if (t <= t_base) {
         if (t_base < 0.001) return L_base;
         return L_max + (L_base - L_max) * (t / t_base);
@@ -22,8 +23,9 @@ export function generateAdaptiveScale(baseLch, steps, isDarkMode) {
     const t_base = anchorStep / 1000;
     const profile = EngineState.mode.gamutProfile || 'srgb';
 
+    // Technical max for base
     const baseMaxC = maxChromaForL(baseLch.L, baseLch.h, profile);
-    const intensity = baseMaxC > 0.01 ? (baseLch.C / baseMaxC) : 0;
+    const intensity = baseMaxC > 0.001 ? (baseLch.C / baseMaxC) : 0;
 
     return steps.map(step => {
         const t = step / 1000;
@@ -31,18 +33,17 @@ export function generateAdaptiveScale(baseLch, steps, isDarkMode) {
 
         const { chromaScale, lBias } = getPerceptualCompensation({ L, C: baseLch.C, h: baseLch.h });
         const edgeDamping = Math.sin(t * Math.PI);
-        L = Math.max(0.001, Math.min(0.999, L + lBias * edgeDamping * 0.5));
+        L = Math.max(0.001, Math.min(0.999, L + lBias * edgeDamping * 0.4));
 
         const hShift = getHuePathShift({ L, h: baseLch.h }, baseLch.L);
         const H = (baseLch.h + hShift + 360) % 360;
 
+        // Adaptive target chroma: find max capacity for this specific tone
         const stepMaxC = maxChromaForL(L, H, profile);
+
+        // Bell falloff to ensure smooth convergence to 0 at extremes
         const falloff = 1 - Math.pow(2 * t - 1, 4);
         let C = stepMaxC * intensity * Math.max(0, falloff) * chromaScale;
-
-        if (isDarkMode) {
-            C *= (0.7 + 0.3 * (1 - L));
-        }
 
         return { step, l: L, c: C, h: H };
     });

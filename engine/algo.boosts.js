@@ -1,46 +1,57 @@
 // engine/algo.boosts.js
-// V6 Design-Focused Boosts - REFACTORED FOR FRESHNESS & RELIABILITY
+// V7 Design-First Boosts: Fully operational in Light & Dark modes.
 
 export function applyBoosts(swatch, baseLch, mode) {
     let { l, c, h } = swatch;
 
-    // 1. Dark Mode Boost: Readability on dark
-    if (mode.darkModeBoost) {
-        // Shift warm colors toward red, cool toward cyan
-        if (h > 40 && h < 120) h += 10;
-        if (h > 200 && h < 280) h -= 10;
-        // Boost vibrancy of light tones to pop against black
-        if (l > 0.4) c *= 1.35;
-    }
-
-    // 2. Neon Boost: High-vibrancy pop
-    if (mode.neonBoost) {
-        // High constant chroma target for "vibrancy", orchestrator will clamp to gamut.
-        c = 0.45;
-    }
-
-    // 3. Pastel Boost: Clean, fresh high-key
+    // --- 1. PASTEL: Fresh tones, full range (0-1000) ---
+    // User: "zachowana pełna skala tonalna od białego do czarnego."
     if (mode.pastelBoost) {
-        // Force high lightness and very clean, fresh low-chroma
-        l = 0.85 + (l * 0.13);
-        c = 0.05;
+        // Desaturate and slightly shift towards light, but keep shadows dark.
+        // We use a non-linear compression to keep the high-key feel in lights.
+        c = 0.05 + (c * 0.15); // Fresh target chroma
+        l = 0.1 * l + 0.9 * Math.pow(l, 0.7); // Lighten highlights more than shadows
     }
 
-    // 4. Glassmorphism Boost: Frosted glass effect
+    // --- 2. GLASSMORPHISM: Depth & Legibility ---
     if (mode.glassmorphismBoost) {
-        l = l * 0.15 + 0.85;
-        c = 0.04;
+        // Highlight Boost for lights (900-1000)
+        if (l > 0.85) {
+            l = 0.85 + (l - 0.85) * 1.5;
+        }
+        // Shadow Drop for darks (50-200)
+        else if (l < 0.25) {
+            l = l * 0.5;
+        }
+        // Saturation Pump for mids (400-700)
+        if (l > 0.35 && l < 0.75) {
+            c *= 1.35;
+        }
     }
 
-    // 5. Ink-Save Mode: Print optimization
+    // --- 3. NEON: Vibrancy pop ---
+    if (mode.neonBoost) {
+        c = 0.45; // Orchestrator will clamp this to technical max
+    }
+
+    // --- 4. INK-SAVE: Agresive print optimization ---
     if (mode.inkSaveMode) {
-        if (l > 0.4) c = 0.01;
+        // Save toner by desaturating all non-essential ink
+        if (l > 0.1) c *= 0.1;
+        if (l > 0.5) l = 0.5 + (l - 0.5) * 1.3; // Lighten paper-areas
     }
 
-    // 6. Spectral Balance (H-K effect)
+    // --- 5. SPECTRAL BALANCE (H-K effect) ---
     if (mode.spectralBalance) {
-        // Physical darkening to equalize perceived brightness
-        l = Math.max(0.04, l - c * 0.3);
+        l = Math.max(0.01, l - c * 0.22);
+    }
+
+    // --- 6. DARK MODE BOOST: Contrast on black ---
+    // This shift helps legibility specifically on OLED/Perfect blacks
+    if (mode.darkModeBoost) {
+        if (h > 200 && h < 280) h -= 12; // Cyan-ish blues
+        if (h > 40 && h < 120) h += 12;  // Orange-ish yellows
+        if (l > 0.4) c *= 1.4;
     }
 
     return { ...swatch, l, c, h };

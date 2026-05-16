@@ -1,21 +1,21 @@
-# Audit V6: Visual Stability & Reliability Overhaul
+# Audit V7: Professional Tonal Quality & Precision
 
-## 1. Core Logic Stability
-- [Checkerboard Issue] RESOLVED. Root cause was precision errors and unstable "Hue Guard" logic in gamut clamping. V6 uses stable linear transitions and robust `oklabToRgbRaw` calculations.
-- [Adaptive Mode] FIXED. Re-engineered to use linear interpolation for lightness, which is the most stable method for UI design systems.
+## 1. Core Stability (Yellow/Cyan/Magenta)
+- [Linear Nodal Points] FIXED. By using linear interpolation between nodal points (White -> Base -> Black), we eliminated the "steps" and "jumps" previously seen on high-boundary colors like Yellow (#ffff00), Cyan (#00ffff), and Magenta (#ff00ff).
+- [High-Precision Gamut] `maxChromaForL` now uses 20 iterations and `oklabToRgbRaw` (floats) to prevent 8-bit rounding artifacts during clipping detection.
 
-## 2. Restoration of UI Features
-- [Clipping Dots] RESTORED. Clipping is detected by the orchestrator before final clamping, ensuring dots show up whenever chroma reduction occurs.
-- [Badges] RESTORED. Step badges (BASE, 100, 50) are correctly calculated and visible in all granularity and scale modes.
+## 2. Redesigned Boosts (Design-First)
+- [Pastel] Corrected. Now maintains full tonal range (0-1000) while achieving the softness of a pastel crayon. High-key feel is preserved without losing black.
+- [Glassmorphism] Implemented multi-layered logic:
+    - Highlight Boost for surfaces (>850 L).
+    - Shadow Drop for depth (<250 L).
+    - Saturation Pump for mid-tone vibrancy behind blur (350-750 L).
+- [Ink-Save] Agresive desaturation and lightness shift for toner conservation.
 
-## 3. Design-Safe Boosts
-- [Boosts] REBUILT.
-    - Neon: High constant vibrancy target.
-    - Pastel: Proper high-key compression for fresh UI tones.
-    - Glassmorphism: Optimized for backdrop-filter legibility.
-    - Combinations: All boosts are now mutually compatible without creating muddy colors.
+## 3. Order of Operations
+- System now applies Design Boosts -> CAM16 Polish -> Dark Mode Damping -> Gamut Clamping. This ensures that technical constraints (gamut) don't destroy the intended design aesthetic (boost).
 
-## 4. Requirement Audit
-- Asymmetric Scale: Base color correctly centered in step count.
-- Gamut Clamping: Now centralized for precision.
-- Grayscale Sidebar: Maintains perceptual neutrality while working with color.
+## 4. Requirement Verification
+- [Asymmetric Scale] Centering verified.
+- [P3 Profile] Accuracy improved via expanded volume approximation.
+- [UI Badges] Fully restored and robust.
