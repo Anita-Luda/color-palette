@@ -1,21 +1,19 @@
-# Audit V7: Professional Tonal Quality & Precision
+# Audit V8: Final Professional Design Stability
 
-## 1. Core Stability (Yellow/Cyan/Magenta)
-- [Linear Nodal Points] FIXED. By using linear interpolation between nodal points (White -> Base -> Black), we eliminated the "steps" and "jumps" previously seen on high-boundary colors like Yellow (#ffff00), Cyan (#00ffff), and Magenta (#ff00ff).
-- [High-Precision Gamut] `maxChromaForL` now uses 20 iterations and `oklabToRgbRaw` (floats) to prevent 8-bit rounding artifacts during clipping detection.
+## 1. Core Engine Overhaul (Yellow/Cyan/Magenta Fix)
+- [Sigmoid Transition] RESOLVED. Replaced parabolic falloff with continuous sigmoid curves in `algo.standard.js`. This eliminates the "kinks" and "steps" seen in high-chroma colors near gamut boundaries (e.g., #ffff00).
+- [Character Preservation] Adaptive mode now uses relative saturation intensity. This prevents the "graying out" of highlights and preserves the base color's identity across the full scale.
 
-## 2. Redesigned Boosts (Design-First)
-- [Pastel] Corrected. Now maintains full tonal range (0-1000) while achieving the softness of a pastel crayon. High-key feel is preserved without losing black.
-- [Glassmorphism] Implemented multi-layered logic:
-    - Highlight Boost for surfaces (>850 L).
-    - Shadow Drop for depth (<250 L).
-    - Saturation Pump for mid-tone vibrancy behind blur (350-750 L).
-- [Ink-Save] Agresive desaturation and lightness shift for toner conservation.
+## 2. Layered Orchestration (Dark Mode & Boosts)
+- [Masking Logic] Fixed the interaction between Neon Boost and Dark Mode. Dark Mode is now applied as the final perceptual damping layer, ensuring Neon effects are appropriately toned down for dark backgrounds.
+- [Boost Polishing] Refined all boost parameters. Pastel now maintains full 0-1000 range. Light Mode Boost corrects yellow-shade shifts.
 
-## 3. Order of Operations
-- System now applies Design Boosts -> CAM16 Polish -> Dark Mode Damping -> Gamut Clamping. This ensures that technical constraints (gamut) don't destroy the intended design aesthetic (boost).
+## 3. New Pro-Designer Views
+- [Glass View] Implemented dedicated simulation with 4 states (Light/Dark BG vs Light/Dark Glass). Includes layer depth preview with background patterns.
+- [Gradients View] Perceptual tonal ramp visualization.
+- [Separated Backgrounds] Contrast and Glass views now have independent background source selection.
 
-## 4. Requirement Verification
-- [Asymmetric Scale] Centering verified.
-- [P3 Profile] Accuracy improved via expanded volume approximation.
-- [UI Badges] Fully restored and robust.
+## 4. Technical Precision
+- [V8 Math] 24-iteration binary search for gamut boundaries. Robust CAM16 power logic for low-light consistency.
+- [Ink-Save] Switched to quantized solid-tone simulation to avoid halftone stippling.
+- [Badges] Threshold logic now matches CSS variable expectations.

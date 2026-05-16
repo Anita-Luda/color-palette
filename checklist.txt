@@ -1,21 +1,23 @@
-# Checklist: Tonal Excellence & Design-Ready (V7)
+# Checklist: Professional OKLCH System (V8)
 
-## Core Engine
-- [x] Smooth Tonal Ramps for Yellow (#ffff00)
-- [x] Smooth Tonal Ramps for Cyan (#00ffff)
-- [x] Smooth Tonal Ramps for Magenta (#ff00ff)
-- [x] 20-Iteration Gamut Precision
-- [x] Robust Asymmetric Centering
+## Core Algorithms
+- [x] Smooth Tonal Ramps for #ffff00, #ff00ff, #00ffff
+- [x] Adaptive Mode character preservation (no graying out)
+- [x] CAM16-UCS low-light stability (0-190 steps fixed)
+- [x] Absolute mode includes exact base color
+- [x] Asymmetric mode centers base at 500
+- [x] Fixed mode shifted grid co 10
 
-## Specialized Boosts (V7)
-- [x] Pastel (Full range 0-1000, fresh tones)
-- [x] Glassmorphism (Highlights, shadows, mid-saturation pump)
-- [x] Ink-Save (Aggressive desaturation)
-- [x] Dark Mode Boost (Contrast on perfect blacks)
+## Perceptual Boosts
+- [x] Dark Mode as a final damping mask
+- [x] Light Mode Boost (Yellow shade correction)
+- [x] Pastel (Full range, soft tones)
+- [x] Neon (Orchestrated clamping)
+- [x] Ink-Save (Quantized solid channels)
 
-## UI & Accessibility
-- [x] Step Badges (100, 50, BASE) visible
-- [x] High-contrast Clipping Dots
-- [x] CAM16-UCS Perceptual Polish
-- [x] APCA V3 & WCAG 2.1 Contrast Grid
-- [x] Glassmorphism Contrast Simulation
+## UI & Design Views
+- [x] Glass View (4 combinations + Bubble preview)
+- [x] Gradients View (Tonal ramp visualization)
+- [x] Separated "Contrast BG" and "Glass BG" buttons
+- [x] Robust Badge Visibility (epsilon matching)
+- [x] Clipping indicators neutralized (grayscale)

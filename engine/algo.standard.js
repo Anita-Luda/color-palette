@@ -1,5 +1,5 @@
 // engine/algo.standard.js
-// V7 Standard Scale - Pure Ideal Logic
+// V8 Standard Tonal Scale - Smooth & Continuous
 
 import { oklchToOkluv, okluvToOklch } from './engine.math.js';
 import { getPerceptualCompensation } from './engine.curves.js';
@@ -9,23 +9,27 @@ export function generateStandardScale(baseLch, steps, isDarkMode) {
     return steps.map(step => {
         const L = 1 - (step / 1000);
 
+        // Use a continuous Sigmoid for smoother transitions near gamut boundaries
+        // This prevents the "step" effect in high-boundary colors like Yellow.
+        const k = 5.0; // sharpness
+        const sigmoid = (x) => 1 / (1 + Math.exp(-k * (x - 0.5)));
+
         const normalizedDist = (L > baseLch.L)
             ? (L - baseLch.L) / (1 - baseLch.L || 0.01)
             : (baseLch.L - L) / (baseLch.L || 0.01);
 
-        // Smooth parabolic falloff for ideal chroma
-        const falloff = Math.max(0, 1 - Math.pow(normalizedDist, 2.0));
+        // Sigmoid falloff ensures no sharp "kinks" at the anchor point
+        const falloff = 1 - sigmoid(normalizedDist * 2 - 0.5);
 
         const { chromaScale, lBias } = getPerceptualCompensation({ L, C: baseLch.C, h: baseLch.h });
 
-        // Ideal adjusted L and C
-        let adjustedL = Math.max(0.001, Math.min(0.999, L + lBias * falloff * 0.4));
-        let C = baseLch.C * falloff * chromaScale;
+        let adjustedL = Math.max(0.0001, Math.min(0.9999, L + lBias * falloff * 0.45));
+        let C = baseLch.C * Math.max(0, falloff) * chromaScale;
         const H = baseLch.h;
 
         if (EngineState.mode.interpolation === 'okluv') {
             const uv = oklchToOkluv(baseLch.L, baseLch.C, baseLch.h);
-            const luv = okluvToOklch(adjustedL, uv.saturation * falloff * chromaScale, H);
+            const luv = okluvToOklch(adjustedL, uv.saturation * Math.max(0, falloff) * chromaScale, H);
             C = luv.C;
         }
 

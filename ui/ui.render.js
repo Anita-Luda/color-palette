@@ -12,6 +12,8 @@ import { previewContrast, contrastRatio, apcaContrast } from '../engine/engine.a
 import { getState } from '../engine/engine.core.js';
 import { oklchToOklab, oklabToRgb, rgbToHex } from '../engine/engine.math.js';
 import { generateContrastGrid } from '../engine/engine.contrast.js';
+import { renderGlassView } from './ui.glass.js';
+import { renderGradientsView } from './ui.gradients.view.js';
 
 /* ---------- ROOT ---------- */
 const root = document.getElementById('output');
@@ -72,9 +74,10 @@ function renderSwatch(swatch, opts = {}){
       d.appendChild(badge);
   }
 
-  // Use a small epsilon for grid matching
-  const is100 = gridStep % 100 === 0;
-  const is50  = gridStep % 50 === 0;
+  // Badges rules (V8): treat as CSS variable thresholds
+  // 100/50 logic based on rounded 10s.
+  const is100 = Math.abs(gridStep % 100) < 0.1;
+  const is50  = Math.abs(gridStep % 50) < 0.1;
 
   if (gran === 10) {
       if (is100) {
@@ -548,6 +551,12 @@ export function renderAllPalettes(preserveFocus = false){
   root.innerHTML = '';
   if (state.mode.view === 'contrast') {
       root.appendChild(renderContrastView());
+  } else if (state.mode.view === 'glass') {
+      const baseLch = state.base.lch || getMainPalette().scale.find(s=>s.isBase);
+      root.appendChild(renderGlassView(baseLch));
+  } else if (state.mode.view === 'gradients') {
+      const baseLch = state.base.lch || getMainPalette().scale.find(s=>s.isBase);
+      root.appendChild(renderGradientsView(baseLch));
   } else {
       const frag = document.createDocumentFragment();
       frag.appendChild(renderMain());

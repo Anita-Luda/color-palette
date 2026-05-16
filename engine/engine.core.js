@@ -26,6 +26,7 @@ export const EngineState = {
     granularity: 100,        // 10 | 50 | 100
     background: 'light',     // light | dark
     backgroundSource: 'base', // 'base' or index (0, 1, 2...)
+    glassBackgroundSource: 'base',
     sidebarPosition: 'left',
     sidebarTheme: 'dark',
     sidebarVisible: true
@@ -166,6 +167,10 @@ export function setSidebarVisibility(visible) {
 
 export function setBackgroundSource(source) {
   EngineState.mode.backgroundSource = source;
+}
+
+export function setGlassBackgroundSource(source) {
+    EngineState.mode.glassBackgroundSource = source;
 }
 
 export function setContrastSettings(key, value) {

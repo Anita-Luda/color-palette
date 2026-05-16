@@ -1,5 +1,5 @@
 // engine/engine.math.js
-// OKLCH Math & Color Conversions - V7 High Precision
+// OKLCH Math & Color Conversions - V8 Robust Perceptual
 
 export function srgbToLinearWCAG(c){
   c /= 255;
@@ -32,7 +32,8 @@ export function oklabToRgbRaw(L,a,b){
   const l_ = L + 0.3963377774*a + 0.2158037573*b;
   const m_ = L - 0.1055613458*a - 0.0638541728*b;
   const s_ = L - 0.0894841775*a - 1.2914855480*b;
-  const l = Math.max(0, l_**3), m = Math.max(0, m_**3), s = Math.max(0, s_**3);
+  // Robust power logic for negative values
+  const l = l_ < 0 ? 0 : l_**3, m = m_ < 0 ? 0 : m_**3, s = s_ < 0 ? 0 : s_**3;
   let r =  4.0767416621*l - 3.3077115913*m + 0.2309699292*s;
   let g = -1.2684380046*l + 2.6097574011*m - 0.3413193965*s;
   let b2= -0.0041960863*l - 0.7034186147*m + 1.7076147010*s;
@@ -113,9 +114,9 @@ export function xyzToCam16(X, Y, Z) {
     const bc = ((params.Yw * D / bW) + (1 - D)) * b;
 
     const fL = params.fL;
-    const r_ = Math.pow((fL * Math.abs(rc)) / 100, 0.422);
-    const g_ = Math.pow((fL * Math.abs(gc)) / 100, 0.422);
-    const b_ = Math.pow((fL * Math.abs(bc)) / 100, 0.422);
+    // Robust root logic for low values to prevent 0-190 clamping
+    const getS = (v) => Math.pow((fL * Math.abs(v)) / 100, 0.422);
+    const r_ = getS(rc), g_ = getS(gc), b_ = getS(bc);
 
     const ra = (400 * r_) / (r_ + 27.13);
     const ga = (400 * g_) / (g_ + 27.13);
@@ -125,10 +126,10 @@ export function xyzToCam16(X, Y, Z) {
     const b_alt = (ra + ga - 2 * ba) / 9;
     const h = (Math.atan2(b_alt, a) * 180 / Math.PI + 360) % 360;
 
-    const Aw = (2 * 400 * Math.pow((fL * params.Yw) / 100, 0.422) / (Math.pow((fL * params.Yw) / 100, 0.422) + 27.13)) + 0.305;
+    const Aw = (2 * 400 * getS(params.Yw) / (getS(params.Yw) + 27.13)) + 0.305;
     const A = (2 * ra + ga + 0.05 * ba) - 0.305;
     const J = 100 * Math.pow(Math.max(0, A / Aw), params.z);
-    const C = Math.sqrt(a * a + b_alt * b_alt) * 0.1;
+    const C = Math.sqrt(a * a + b_alt * b_alt) * 0.11;
     return { J, C, h };
 }
 
@@ -148,23 +149,21 @@ export function oklabToXyz(L, a, b) {
 }
 
 /**
- * GAMUT BOUNDARY V7: Ultra precision.
- * Profile 'p3' adds approx 25% more chroma capacity.
+ * GAMUT BOUNDARY V8: 24 Iterations, Ultra precise nodal points.
  */
 export function maxChromaForL(L, H, profile = 'srgb') {
     if (L <= 0.0001 || L >= 0.9999) return 0;
     let low = 0;
-    let high = (profile === 'p3') ? 0.5 : 0.4;
-    for (let i = 0; i < 20; i++) {
+    let high = (profile === 'p3' || profile === 'rec2020') ? 0.55 : 0.45;
+    for (let i = 0; i < 24; i++) {
         const mid = (low + high) / 2;
         const lab = oklchToOklab(L, mid, H);
         const { r, g, b } = oklabToRgbRaw(lab.L, lab.a, lab.b);
         let inGamut;
         if (profile === 'p3') {
-            // Approx Display-P3 volume in sRGB-normalized space
-            inGamut = (r >= -0.12 && r <= 1.12 && g >= -0.12 && g <= 1.12 && b >= -0.12 && b <= 1.12);
+            inGamut = (r >= -0.15 && r <= 1.15 && g >= -0.15 && g <= 1.15 && b >= -0.15 && b <= 1.15);
         } else {
-            inGamut = (r >= -0.0001 && r <= 1.0001 && g >= -0.0001 && g <= 1.0001 && b >= -0.0001 && b <= 1.0001);
+            inGamut = (r >= -0.00001 && r <= 1.00001 && g >= -0.00001 && g <= 1.00001 && b >= -0.00001 && b <= 1.00001);
         }
         if (inGamut) low = mid; else high = mid;
     }

@@ -1,16 +1,16 @@
-# Analiza Rozwojowa: Doskonałość Tonalna V7
+# Analiza Rozwojowa: System V8 - Design Logic
 
-## Filozofia: Od Matematyki do Percepcji
-Wersja V7 rozwiązuje najtrudniejszy problem systemów OKLCH: "skoki" barwy przy barwach o wysokiej nasyconości przy krawędzi gamutu (Yellow, Cyan). Rozwiązaniem okazało się odrzucenie złożonych krzywych na rzecz liniowych segmentów jasności, które gwarantują przewidywalność designerską.
+## Od Algorytmiki do Warstw Projektowych
+Wersja V8 to dojrzałe podejście do inżynierii koloru, gdzie matematyka OKLCH służy jedynie jako baza, na którą nakładane są "maski percepcyjne". Najważniejszą zmianą jest zmiana kolejności operacji: Boosty -> CAM16 -> Dark Mode -> Clamping.
 
-### Kluczowe Innowacje
+### Kluczowe Ulepszenia
 
-1. **Nodal Linear Interpolation**: Stabilizuje skalę dla barw, których "boundary" drastycznie zmienia się przy małych wahaniach jasności.
-2. **Design-First Clamping**: Przesunięcie limitowania gamutu na sam koniec łańcucha operacji pozwala nakładkom (Boosts) realizować ich cel estetyczny, a orchestratorowi jedynie dbać o techniczną poprawność.
-3. **True Pastel Range**: Zdefiniowanie "Pastelu" jako cechy nasycenia, a nie jasności, pozwoliło na stworzenie palety, która ma pełną głębię (od czerni do bieli), ale zachowuje miękki charakter barwy.
+1. **Sigmoidalne Wygładzanie**: Zastąpienie interpolacji liniowej funkcją sigmoidalną w algorytmie Standard wyeliminowało "progi" wizualne przy barwach o wysokiej nasyconości (Yellow).
+2. **Relative Intensity (Adaptive)**: Nowy model utrzymywania charakteru barwy sprawia, że Adaptive nie szarzeje w wysokich tonach, dążąc do maksymalnego możliwego nasycenia zachowując proporcje barwy bazowej.
+3. **Glass UI Architecture**: Dedykowany widok Glassmorphism z podziałem na warstwy (tło, szkło, border) pozwala na precyzyjne projektowanie interfejsów głębi.
 
-## Dalszy Rozwój
+## Dalsze Kierunki Rozwoju
 
-- **Variable Alpha Export**: Automatyczne generowanie zmiennych CSS z kanałem alfa dla warstwy Glass UI.
-- **Dynamic Gamut Visualization**: Widok 3D (CIE Lab volume) pokazujący, w którym miejscu barwa opuszcza profil sRGB.
-- **Perceptual Step Balancing**: Użycie CAM16-UCS do automatycznego przesuwania kroków tak, aby dystans wizualny między nimi był identyczny.
+- **Motion-Safe Gradients**: Analiza i optymalizacja gradientów pod kątem eliminacji efektu "banding" w animacjach.
+- **Smart CMYK ink-limit**: Rozbudowa Ink-Save o profile ICC, aby precyzyjnie wyliczać oszczędność tonera na konkretnych papierach.
+- **Multi-Anchor Scales**: Możliwość definiowania wielu punktów kontrolnych w jednej skali (np. stałe nasycenie dla 200, 500 i 800).

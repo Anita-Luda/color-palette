@@ -1,5 +1,5 @@
 // engine/engine.scales.js
-// Orchestrator V7: Design Quality over Pure Math.
+// Orchestrator V8: Layered Design Logic.
 
 import { EngineState } from './engine.core.js';
 import {
@@ -34,6 +34,7 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
 
   let actualSteps = steps;
 
+  // --- LOGIKA ROZKŁADÓW (V8) ---
   if (scaleMode === 'fixed') {
       const offset = anchorStep % 10;
       actualSteps = steps.map(s => s + offset).filter(s => s >= 0 && s <= 1000);
@@ -51,7 +52,14 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
       }
   }
 
-  // Choose Base Algorithm
+  // Absolute mode logic: always include anchor if not in steps
+  if (scaleMode === 'absolute' && !forceExcludeAnchor) {
+      if (!actualSteps.find(s => Math.abs(s - anchorStep) < 0.1)) {
+          actualSteps = [...actualSteps, anchorStep].sort((a,b) => a-b);
+      }
+  }
+
+  // --- GENEROWANIE BAZY ---
   let rawScale = (mode.algorithm === 'adaptive')
       ? generateAdaptiveScale(lch, actualSteps, isDarkMode)
       : generateStandardScale(lch, actualSteps, isDarkMode);
@@ -62,36 +70,41 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
   return rawScale.map(swatch => {
       const isBaseStep = Math.abs(swatch.step - anchorStep) < 0.1;
 
-      // 1. APPLY DESIGN BOOSTS (on un-clamped LCH)
+      // 1. DESIGN BOOSTS (IDEAL LCH)
       let p = applyBoosts(swatch, lch, mode);
 
-      // 2. HYBRID CAM16 POLISH
+      // 2. PERCEPTUAL POLISH
       if (mode.perceptualPolish) {
           const lab = oklchToOklab(p.l, p.c, p.h);
           const xyz = oklabToXyz(lab.L, lab.a, lab.b);
           const cam = xyzToCam16(xyz.X, xyz.Y, xyz.Z);
           const targetL = cam.J / 100;
-          // Weighted nudge towards CAM16 J (perceptual brightness consistency)
-          p.l = p.l * 0.65 + targetL * 0.35;
+          p.l = p.l * 0.75 + targetL * 0.25;
       }
 
-      // 3. DARK MODE COMFORT DAMPING
+      // 3. DARK MODE ADJUST (LAST MASK LAYER)
+      // Goal: Correct ocieplenie perception and damp neon vibrancy specifically for DM.
       if (isDarkMode) {
-          p.c *= (0.7 + 0.3 * (1 - p.l));
+          // Subtle damping of saturation for comfort
+          p.c *= (0.65 + 0.3 * (1 - p.l));
+
+          // Perceptual boost for DM: correction of warmth shift
+          if (mode.darkModeBoost) {
+              if (p.h > 40 && p.h < 120) p.h += 12; // Yellow -> Orange-red
+              if (p.h > 200 && p.h < 280) p.h -= 12; // Blue -> Cool Cyan
+              if (p.l > 0.4) p.c *= 1.3; // Pop light tones
+          }
       }
 
-      // 4. CLIPPING DETECTION
+      // 4. CLIPPING & CLAMP
       const maxC = maxChromaForL(p.l, p.h, profile);
       p.clipping = (p.c > maxC + 0.005) ? Math.round((1 - (maxC / p.c)) * 100) : 0;
-
-      // 5. FINAL GAMUT CLAMP
       p.c = Math.min(p.c, maxC);
 
-      // Final Color
+      // 5. RENDER
       const finalLab = oklchToOklab(p.l, p.c, p.h);
       p.hex = rgbToHex(oklabToRgb(finalLab.L, finalLab.a, finalLab.b));
 
-      // Preservation
       if (isBaseStep && !isDarkMode && !isAnyBoost && sourceHex) {
           p.hex = sourceHex;
       }

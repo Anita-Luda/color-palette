@@ -1,57 +1,55 @@
 // engine/algo.boosts.js
-// V7 Design-First Boosts: Fully operational in Light & Dark modes.
+// V8 Boost Engine: Correct Masking & Multi-layer Logic
 
 export function applyBoosts(swatch, baseLch, mode) {
     let { l, c, h } = swatch;
 
-    // --- 1. PASTEL: Fresh tones, full range (0-1000) ---
-    // User: "zachowana pełna skala tonalna od białego do czarnego."
+    // --- 1. LIGHT MODE BOOST: Correcting "Olive Mud" in Yellow shades ---
+    if (mode.palette === 'light') {
+        // Shift yellows/greens towards warmer orange in shades to avoid green-shift
+        if (h > 60 && h < 140 && l < 0.5) {
+            const weight = (0.5 - l) * 2;
+            h -= 15 * weight;
+        }
+    }
+
+    // --- 2. PASTEL: Soft character, full range ---
     if (mode.pastelBoost) {
-        // Desaturate and slightly shift towards light, but keep shadows dark.
-        // We use a non-linear compression to keep the high-key feel in lights.
-        c = 0.05 + (c * 0.15); // Fresh target chroma
-        l = 0.1 * l + 0.9 * Math.pow(l, 0.7); // Lighten highlights more than shadows
+        // Compression towards 0.08 chroma
+        c = 0.04 + (c * 0.12);
+        // Soft curve that keeps blacks but lifts shadows slightly
+        l = l * 0.2 + 0.8 * Math.pow(l, 0.65);
     }
 
-    // --- 2. GLASSMORPHISM: Depth & Legibility ---
-    if (mode.glassmorphismBoost) {
-        // Highlight Boost for lights (900-1000)
-        if (l > 0.85) {
-            l = 0.85 + (l - 0.85) * 1.5;
-        }
-        // Shadow Drop for darks (50-200)
-        else if (l < 0.25) {
-            l = l * 0.5;
-        }
-        // Saturation Pump for mids (400-700)
-        if (l > 0.35 && l < 0.75) {
-            c *= 1.35;
-        }
-    }
-
-    // --- 3. NEON: Vibrancy pop ---
+    // --- 3. NEON: Maximum intensity ---
     if (mode.neonBoost) {
-        c = 0.45; // Orchestrator will clamp this to technical max
+        c = 0.5; // Will be clamped by orchestrator
     }
 
-    // --- 4. INK-SAVE: Agresive print optimization ---
+    // --- 4. GLASSMORPHISM: Legibility Logic (Handled in dedicated Glass View, but also here) ---
+    if (mode.glassmorphismBoost) {
+        if (l > 0.8) l = 0.8 + (l - 0.8) * 1.6; // Highlight
+        else if (l < 0.2) l = l * 0.4;         // Shadow
+        if (l > 0.3 && l < 0.75) c *= 1.4;    // Saturation Pump
+    }
+
+    // --- 5. INK-SAVE: Quantized CMYK Logic ---
     if (mode.inkSaveMode) {
-        // Save toner by desaturating all non-essential ink
-        if (l > 0.1) c *= 0.1;
-        if (l > 0.5) l = 0.5 + (l - 0.5) * 1.3; // Lighten paper-areas
-    }
-
-    // --- 5. SPECTRAL BALANCE (H-K effect) ---
-    if (mode.spectralBalance) {
-        l = Math.max(0.01, l - c * 0.22);
-    }
-
-    // --- 6. DARK MODE BOOST: Contrast on black ---
-    // This shift helps legibility specifically on OLED/Perfect blacks
-    if (mode.darkModeBoost) {
-        if (h > 200 && h < 280) h -= 12; // Cyan-ish blues
-        if (h > 40 && h < 120) h += 12;  // Orange-ish yellows
-        if (l > 0.4) c *= 1.4;
+        // Goal: Prevent 'stippling' by forcing channels to solid thresholds.
+        // We simulate CMYK quantization by snapping chroma and lightness.
+        const snapL = (val) => {
+            if (val > 0.85) return 0.98; // Paper white
+            if (val > 0.5) return 0.75;
+            if (val > 0.2) return 0.35;
+            return 0.1; // Dark ink
+        };
+        const snapC = (val) => {
+            if (val < 0.03) return 0;
+            if (val < 0.1) return 0.05;
+            return 0.1;
+        };
+        l = snapL(l);
+        c = snapC(c);
     }
 
     return { ...swatch, l, c, h };

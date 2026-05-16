@@ -32,6 +32,7 @@ import {
   setGranularity,
   setBackgroundMode,
   setBackgroundSource,
+  setGlassBackgroundSource,
   setSidebarPosition,
   setSidebarTheme,
   setSidebarVisibility,
@@ -113,6 +114,10 @@ function updateDegreeDisplay() {
 
 function updateSidebarLayout() {
     const state = getState();
+    const glassSec = $('sec-glass-settings');
+    if (glassSec) {
+        glassSec.style.display = state.mode.view === 'glass' ? 'block' : 'none';
+    }
     const body = document.body;
 
     // Update active pos button
@@ -181,11 +186,12 @@ function updateContrastSidebarLabels() {
   const topLabel = $('active-bg-source-top');
   if (topLabel) {
       const source = state.mode.backgroundSource;
-      if (source === 'base') {
-          topLabel.textContent = 'Tło z: Paleta Główna';
-      } else {
-          topLabel.textContent = `Tło z: Kolor ${source + 1}`;
-      }
+      topLabel.textContent = source === 'base' ? 'Tło z: Paleta Główna' : `Tło z: Kolor ${source + 1}`;
+  }
+  const glassLabel = $('active-glass-bg-source');
+  if (glassLabel) {
+      const source = state.mode.glassBackgroundSource;
+      glassLabel.textContent = source === 'base' ? 'Tło z: Paleta Główna' : `Tło z: Kolor ${source + 1}`;
   }
 }
 
@@ -241,6 +247,16 @@ function setupBasePicker() {
         refreshUI();
     };
     preview.parentNode.appendChild(bgBtn);
+
+    const glassBgBtn = document.createElement('button');
+    glassBgBtn.className = 'bg-source-btn secondary glass-bg-btn';
+    glassBgBtn.textContent = 'Tło Glass';
+    glassBgBtn.style.marginTop = '4px';
+    glassBgBtn.onclick = () => {
+        setGlassBackgroundSource('base');
+        refreshUI();
+    };
+    preview.parentNode.appendChild(glassBgBtn);
 
     const contrastInfo = document.createElement('div');
     contrastInfo.id = 'base-contrast-info';
@@ -403,10 +419,15 @@ function renderSliders(){
           roleSel.value = c.role;
       }
 
-      const bgBtn = card.querySelector('.bg-source-btn');
+      const bgBtn = card.querySelector('.contrast-bg-btn');
       if (bgBtn) {
           if (state.mode.backgroundSource === c.index) bgBtn.classList.add('active');
           else bgBtn.classList.remove('active');
+      }
+      const gBgBtn = card.querySelector('.glass-bg-btn');
+      if (gBgBtn) {
+          if (state.mode.glassBackgroundSource === c.index) gBgBtn.classList.add('active');
+          else gBgBtn.classList.remove('active');
       }
     });
   }
@@ -415,6 +436,11 @@ function renderSliders(){
   if (baseBgBtn) {
       if (state.mode.backgroundSource === 'base') baseBgBtn.classList.add('active');
       else baseBgBtn.classList.remove('active');
+  }
+  const baseGlassBtn = document.querySelector('#sec-base-color .glass-bg-btn');
+  if (baseGlassBtn) {
+      if (state.mode.glassBackgroundSource === 'base') baseGlassBtn.classList.add('active');
+      else baseGlassBtn.classList.remove('active');
   }
 }
 
@@ -490,13 +516,24 @@ function createSliderCard(c) {
   // Will be updated by renderer
 
   const bgBtn = document.createElement('button');
-  bgBtn.className = 'bg-source-btn primary';
-  bgBtn.textContent = 'Ustaw jako tło';
+  bgBtn.className = 'bg-source-btn primary contrast-bg-btn';
+  bgBtn.textContent = 'Tło Kontrast';
   bgBtn.style.width = '100%';
-  bgBtn.style.marginBottom = '8px';
+  bgBtn.style.marginBottom = '4px';
   if (state.mode.backgroundSource === c.index) bgBtn.classList.add('active');
   bgBtn.onclick = () => {
       setBackgroundSource(c.index);
+      refreshUI();
+  };
+
+  const gBgBtn = document.createElement('button');
+  gBgBtn.className = 'bg-source-btn secondary glass-bg-btn';
+  gBgBtn.textContent = 'Tło Glass';
+  gBgBtn.style.width = '100%';
+  gBgBtn.style.marginBottom = '8px';
+  if (state.mode.glassBackgroundSource === c.index) gBgBtn.classList.add('active');
+  gBgBtn.onclick = () => {
+      setGlassBackgroundSource(c.index);
       refreshUI();
   };
 
@@ -530,7 +567,7 @@ function createSliderCard(c) {
     refreshUI();
   });
 
-  card.append(header, roleSelect, preview, bgBtn, contrastInfo, slider, del);
+  card.append(header, roleSelect, preview, bgBtn, gBgBtn, contrastInfo, slider, del);
   return card;
 }
 
@@ -567,12 +604,13 @@ function setupModes(){
       r.addEventListener('change', e => {
           const view = e.target.value;
           setView(view);
+
           const contrastSec = $('sec-contrast');
-          if (view === 'contrast') {
-              if (contrastSec) contrastSec.style.display = 'block';
-          } else {
-              if (contrastSec) contrastSec.style.display = 'none';
-          }
+          if (contrastSec) contrastSec.style.display = view === 'contrast' ? 'block' : 'none';
+
+          const glassSec = $('sec-glass-settings');
+          if (glassSec) glassSec.style.display = view === 'glass' ? 'block' : 'none';
+
           refreshUI();
       });
   });
