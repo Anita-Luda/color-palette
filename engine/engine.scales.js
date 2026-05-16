@@ -28,14 +28,32 @@ function LToStep(L){
 export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnchor = false, sourceHex = null){
   const mode = EngineState.mode;
   const isDarkMode = mode.palette === 'dark';
-  const isFixed = mode.scale === 'fixed';
+  const scaleMode = mode.scale;
   const anchorStep = LToStep(lch.L);
 
   let actualSteps = steps;
-  if (isFixed) {
+
+  if (scaleMode === 'fixed') {
       const offset = anchorStep % 10;
       actualSteps = steps.map(s => s + offset).filter(s => s >= 0 && s <= 1000);
       actualSteps = [...new Set(actualSteps)].sort((a,b)=>a-b);
+  } else if (scaleMode === 'asymmetric') {
+      // Re-calculate steps to have equal count below and above anchor
+      // Total requested steps (usually 11 for coarse, 101 for default)
+      const targetCount = steps.length;
+      if (targetCount > 1) {
+          const half = Math.floor(targetCount / 2);
+          const below = [];
+          for (let i = 0; i < half; i++) {
+              below.push((anchorStep / half) * i);
+          }
+          const above = [];
+          for (let i = 1; i <= half; i++) {
+              above.push(anchorStep + ((1000 - anchorStep) / half) * i);
+          }
+          actualSteps = [...below, anchorStep, ...above];
+          actualSteps = [...new Set(actualSteps.map(Math.round))].sort((a,b)=>a-b);
+      }
   }
 
   // Choose Base Algorithm
@@ -52,6 +70,8 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
 
   // CAM16 Perceptual Polish
   const polish = mode.perceptualPolish || false;
+
+  const isFixed = scaleMode === 'fixed';
 
   scale = scale.map(swatch => {
       const isBaseStep = Math.abs(swatch.step - anchorStep) < 0.1;

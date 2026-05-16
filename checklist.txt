@@ -1,32 +1,19 @@
-# Checklist: OKLCH Perceptual Engine V4
+# Checklist: Design Utility (V5)
 
-## Core Algorithms
-- [x] Standard Algorithm (Cubic Easing + Chroma Shaping)
-- [x] Adaptive Algorithm (Gamut-Aware + Hue Path)
-- [x] OKLUV Interpolation Engine
-- [x] CAM16-UCS Perceptual Polish
-- [x] Hue Constancy Guard (ΔH < 0.5°)
-- [x] Dynamic Hue Path (Shade/Tint rotation)
+## Primary Goals
+- [x] Functional Asymmetric Scale (Base color centered in step count)
+- [x] Stable Adaptive Engine (Predictable ramps across all hues)
+- [x] Professional Boost Combinations (No muddy colors)
+- [x] Neutral Clipping Indicators (Grayscale dots)
+- [x] In-UI documentation for technical features (Info button)
 
-## Technical Features
-- [x] Multi-profile Gamut Clamping (sRGB, P3, Rec.2020)
-- [x] Gamut Clipping Visualization (% reduction)
-- [x] APCA Contrast Standard (V3)
-- [x] WCAG 2.1 Contrast Standard
-- [x] Glassmorphism Contrast Simulation
-- [x] Collision Avoidance for Functional/Badge palettes
+## Engine & Math
+- [x] OKLCH/OKLUV/CAM16 Hybrid Stability
+- [x] Gamut Constancy (ΔH < 0.5°)
+- [x] Hue Path (Natural temperature shifts)
+- [x] Piece-wise Lightness curves for Adaptive mode
 
-## Specialized Boosts
-- [x] Dark Mode Boost (Chroma + Hue Correction)
-- [x] Neon Boost (Technical Gamut Max)
-- [x] Pastel Boost (High-Key Freshness)
-- [x] Glassmorphism Boost (Transparency optimization)
-- [x] Ink-Save Mode (Print desaturation)
-- [x] Spectral Balance (Helmholtz–Kohlrausch)
-
-## UI & Handoff
-- [x] Grayscale Sidebar Themes
-- [x] Draggable/Floating Sidebar
-- [x] Multi-positional Layout (Top/Bottom/Left/Right)
-- [x] SVG Figma Export (Copy-to-Clipboard)
-- [x] Contrast Grid Audit Tool
+## Accessibility
+- [x] WCAG 2.1 & APCA V3 Support
+- [x] Glassmorphism Simulation accuracy
+- [x] Dark Mode perceptual comfort damping

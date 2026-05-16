@@ -898,6 +898,10 @@ export function initControls(){
   setupFloatingPanel();
   setupExport();
 
+  $('clipping-info-btn')?.addEventListener('click', () => {
+      alert("Kropki w rogu swatche sygnalizują Gamut Clipping.\n\nOznacza to, że algorytm wyliczył kolor bardziej nasycony, niż jest w stanie wyświetlić Twój monitor (lub wybrany profil, np. sRGB).\n\nSystem automatycznie zredukował nasycenie (Chroma), aby kolor był możliwy do wyświetlenia. Im ciemniejsza/większa kropka, tym silniejsza była redukcja. Najlepiej widoczne na profilu P3.");
+  });
+
   updateSidebarLayout();
   onBaseChange();
 }

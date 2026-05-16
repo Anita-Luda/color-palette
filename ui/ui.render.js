@@ -127,8 +127,9 @@ function renderSwatch(swatch, opts = {}){
       dot.style.width = '8px';
       dot.style.height = '8px';
       dot.style.borderRadius = '50%';
-      dot.style.background = '#ffca28';
-      dot.style.boxShadow = '0 0 4px rgba(0,0,0,0.5)';
+      dot.style.background = (contrast.light.ratio > contrast.dark.ratio) ? '#ffffff' : '#000000';
+      dot.style.opacity = '0.5';
+      dot.style.boxShadow = '0 0 2px rgba(0,0,0,0.3)';
       d.appendChild(dot);
   }
 

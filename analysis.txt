@@ -1,22 +1,16 @@
-# Analiza Rozwojowa: Hybrydowy System Percepcyjny V4
+# Analiza Rozwojowa: Design-First (V5)
 
-## Filozofia Systemu
-Wersja V4 odchodzi od czystej matematyki OKLCH na rzecz hybrydowego podejścia percepcyjnego. OKLCH pozostaje bazą roboczą ze względu na swoją intuicyjność, ale CAM16-UCS służy jako "szlif końcowy", korygując błędy percepcji jasności (J) wynikające ze specyfiki ludzkiego wzroku (których sam OKLCH nie adresuje w 100%).
+## Od Matematyki do Użyteczności
+Wersja V5 stanowi punkt zwrotny w rozwoju systemu. Odeszliśmy od rygorystycznej poprawności matematycznej (która często prowadziła do wizualnych "masakr" w ekstremalnych punktach gamutu) na rzecz użyteczności designerskiej.
 
-## Kluczowe Ulepszenia (V4)
+### Kluczowe Zmiany Filozoficzne
 
-### 1. Modelowanie Natury (Hue Path & Cubic Easing)
-Zastąpienie liniowej interpolacji chromy funkcjami sześciennymi pozwala na tworzenie palet, które "trzymają kolor" aż do skrajnych wartości jasności. "Hue Path" symuluje zachowanie światła w naturze – cienie nie tylko ciemnieją, ale zmieniają temperaturę (np. żółcie dążą do pomarańczu/czerwieni).
+1. **Stabilność ponad Maksymalizację**: Algorytm Adaptive nie stara się już wycisnąć "ostatniego procenta" nasycenia, jeśli miałoby to skutkować skokową zmianą barwy lub nienaturalnym gradientem. Wprowadzenie sine-falloff gwarantuje płynność przejść.
+2. **Asymetria Celowa**: Skala Asymmetric została naprawiona, aby służyć realnym potrzebom UI - równomiernemu rozkładowi kroków wokół koloru marki, niezależnie od tego, jak blisko bieli lub czerni się on znajduje.
+3. **Nakładki (Boosts) jako Warstwy Designu**: Boosty zostały zaprojektowane na nowo jako komplementarne warstwy. Można teraz łączyć Pastel z Glassmorphism, otrzymując przewidywalny efekt "mrożonego szkła w wysokim kluczu".
 
-### 2. Stabilność Cyfrowa (Constancy Guard)
-Największym problemem systemów OKLCH było "rozjeżdżanie się" barwy przy krawędzi gamutu sRGB (np. błękit stający się fioletem). Implementacja Hue Constancy Guard z rygorem ΔH < 0.5° gwarantuje, że brandowe kolory zachowają swoją tożsamość niezależnie od stopnia jasności.
+## Przyszłość: Kontekstualna Inteligencja
 
-### 3. Nowoczesne Interfejsy (Glassmorphism & APCA)
-Wprowadzenie symulacji kontrastu przez warstwę blur pozwala projektantom na bezpieczne stosowanie szkieł w UI. Standard APCA zapewnia precyzyjniejsze dane o czytelności tekstu niż klasyczne WCAG 2.1, co jest kluczowe dla dostępności cyfrowej nowej generacji.
-
-## Kierunki Dalszego Rozwoju
-
-1.  **AI Color Harmonizer**: Integracja modelu sugestii opartego o wektory estetyczne, który dopasowuje dystanse w CAM16-UCS do konkretnych "nastrojów" (np. "Professional", "Playful").
-2.  **Lottie Gradient Animation Export**: Bezpośredni eksport gradientów percepcyjnych do formatów animowanych.
-3.  **Variable Color Scales**: Implementacja zmiennych (variables) dla Figmy, które automatycznie przełączają profil sRGB/P3 w zależności od urządzenia docelowego.
-4.  **Spatial Contrast Analysis**: Analiza kontrastu nie tylko między dwoma kolorami, ale na poziomie "sąsiedztwa" w UI (simultaneous contrast correction).
+- **Contrast-Aware Scaling**: Automatyczne dostosowywanie krzywej nasycenia tak, aby każdy krok skali domyślnie spełniał minimum WCAG AA względem wybranego tła.
+- **Smart Hue Path**: Rozbudowa mapowania barw o dane z badań nad preferencjami estetycznymi (np. specyficzne zachowanie "ciepłych szarości").
+- **Gamut Mapping HDR**: Przygotowanie systemu pod standardy Ultra-HDR i dynamiczne mapowanie jasności powyżej 1.0 (L > 1.0) dla wyświetlaczy przyszłości.

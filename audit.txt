@@ -1,25 +1,18 @@
-# V4 Audit: Perceptual Color Engine (Hybrid OKLCH + CAM16)
+# Audit V5: Design-First Philosophy
 
-## 1. Mathematical Accuracy & Models
-- [OKLCH] Core model for workflow. Correct D65 LMS-to-Lab transforms verified.
-- [CAM16-UCS] Implemented hybrid "Perceptual Polish". System nudges OKLCH J toward CAM16 J to improve lightness uniformity across different hues.
-- [OKLUV] Added normalization mode. Ensures consistent saturation relative to the gamut boundary, preventing premature desaturation in high/low keys.
-- [Gamut Constancy Guard] Binary search now validates Hue (ΔH < 0.5°). Prevents the "Blue-to-Purple" shift at technical sRGB/P3 limits.
+## 1. Core Logic Overhaul
+- [Asymmetric Scale] FIXED. Correctly generates equal step counts above and below anchor, centering the base color in the distribution.
+- [Adaptive Engine] REBUILT. Switched to piece-wise power curves for lightness to guarantee anchor point intersection. Chroma now uses sine-based smooth falloff to ensure "velvet" transitions and stability at extremes.
+- [Stability] Eliminated math artifacts (NaNs, extreme spikes) by prioritizing perceptual smoothness over raw gamut maximization where they conflicted.
 
-## 2. Scaling Algorithms (V4)
-- [Standard Algorithm] Refactored to use Cubic Easing (easeInCubic/easeOutCubic). Tones remain saturated longer ("puchnięcie" krzywej chromy).
-- [Adaptive Algorithm] Implemented "Hue Path". Warm colors rotate toward red in shades; cool colors toward deep blue/cyan. Natural shadow modeling.
-- [Chroma Shaping] New parameter (0.5 - 1.5) allows manual control over the chroma falloff curve intensity.
+## 2. Visual Polish
+- [Boosts] ALL REWRITTEN.
+    - Neon: Pushes toward 90% gamut capacity with controlled headroom.
+    - Pastel: Proper high-key compression (top 30% L) and fresh low-chroma targets.
+    - Dark Mode: Subtler, more effective hue compensation for UI legibility.
+    - Spectral: Balanced perceived brightness without "gray-out" artifacts.
+- [Clipping Dots] REFINED. Switched from yellow to grayscale (adaptive contrast). Now purely informative and non-distracting.
 
-## 3. Technical Constraints & HDR
-- [P3/Rec.2020 Support] Engine now accepts gamut profile boundaries. Clamping is dynamic based on target display capability.
-- [Clipping Visualization] Swatches now indicate % of chroma reduction needed to fit gamut (yellow indicator dot).
-
-## 4. Accessibility & UI
-- [Glassmorphism] Implemented transparency contrast simulation (alpha-blend over backdrop).
-- [APCA V3] Full integration with target Lc values for professional accessibility audits.
-- [Grayscale UI] Sidebar themes (Light/Dark) isolated from preview colors to prevent simultaneous contrast errors.
-
-## 5. Verification
-- All runtime tests pass.
-- Figma SVG export includes V4 metadata (clipping, APCA ratios).
+## 3. Interaction
+- [Clipping Info] Added help button explaining Gamut Clipping logic.
+- [Harmony] Relations remain stable across all distribution modes.
