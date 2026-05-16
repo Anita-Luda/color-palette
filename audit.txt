@@ -1,20 +1,20 @@
-# Audit V9: Final Design Consistency & Orchestration
+# Audit V9: Orchestrated Stability & Multi-Layer Design
 
-## 1. Core Logic Stability
-- [Sigmoidal Continuity] FIXED. Yellow (#ffff00) and other high-chroma colors now have perfectly smooth ramps thanks to continuous sigmoid falloff in `algo.standard.js`.
-- [Gamut Precision] `maxChromaForL` now uses adaptive iterations (up to 32) for Yellow/Cyan boundary zones.
-- [CAM16 Stability] Improved post-adaptation power functions prevent low-light rounding errors (0-190 steps).
+## 1. Engine Precision (Yellow/Cyan/Magenta Fix)
+- [Sigmoidal continuity] FIXED. Standard algorithm now uses a continuous sigmoid curve. This eliminates "kinks" and "steps" in high-boundary colors like Yellow (#ffff00), ensuring a smooth tonal ramp across all 1000 steps.
+- [CAM16 Stability] FIXED. Improved power function precision for ultra-low luminance values, preventing the 0-190 rounding issue.
+- [Gamut Boundary] Precise 24-32 iteration binary search ensures no artifacts at gamut edges.
 
-## 2. Orchestrated Layering
-- [Absolute Dark Mode] Dark Mode damping is now the final operation in the pipeline. It correctly tones down Neon, Pastel, and other boosts for visual comfort.
-- [Light Mode Boost] New corrective layer for yellow shades, shifting hue away from "Olive Mud".
-- [Spectral Balance] Verified Helmholtz–Kohlrausch correction logic.
+## 2. Orchestrated Masking (Dark Mode & Boosts)
+- [Layered Architecture] Fixed the interaction between Neon/Vibrant boosts and Dark Mode. DM damping is now the absolute final operation, ensuring consistent comfort across all modes.
+- [Light Mode Boost] New corrective layer for yellow shades, shifting hue away from "Olive Mud" towards warmer orange-red.
+- [Chroma Shaping] The `chromaShapingFactor` slider is now fully functional, modulating the sigmoid falloff intensity.
 
 ## 3. UI Views & Experience
-- [New Views] Glassmorphism (4-state simulation) and Gradients are fully functional.
-- [Fixed Scale Granularity] FIXED. 50/100 granularity now works for Asymmetric and Fixed modes by using `displayStep` for threshold matching.
-- [Badges] Step badges (100, 50, BASE) are robust against floating point offsets and always show the closest logical threshold.
+- [Restored Views] Glassmorphism (4-state simulation) and Gradients are fully functional and visible.
+- [Threshold Badges] Robust visibility for BASE, 100, and 50 steps. Granularity filtering (50/100) works correctly for ALL distribution modes (Absolute, Asymmetric, Fixed).
+- [Display Mapping] Asymmetric mode perfectly centers the base color at Step 500 for display, providing a balanced visual distribution.
 
-## 4. Interaction
-- [Chroma Shaping] Suwak od Chroma Shaping jest teraz w pełni zintegrowany z algorytmem sigmoid.
-- [Figma Export] Verified SVG generation for new V9 logic.
+## 4. Requirement Verification
+- Verified #ff0000, #00ff00, #0000ff, #ffff00, #ff00ff, #00ffff.
+- All ramps are smooth, identifiable, and free of random color shifts.

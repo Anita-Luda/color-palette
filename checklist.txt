@@ -1,28 +1,27 @@
-# Checklist: OKLCH Final Design System (V9)
+# Checklist: OKLCH Design Orchestrator (V9)
 
-## UI & Visibility
-- [x] Glass View (4-state + bubble preview) visible
-- [x] Gradients View (tonal ramp) visible
-- [x] Step Badges (100, 50, BASE) visible in all modes
-- [x] Granularity 50/100 functional for Fixed/Asym
-- [x] Grayscale Sidebar Themes
+## UI & Scaling Logic
+- [x] Glass View (4-state + bubble preview) fully visible
+- [x] Gradients View (perceptual ramp) fully visible
+- [x] Step Badges (100, 50, BASE) robust in all modes
+- [x] Granularity 50/100 functional for ALL scales
+- [x] Asymmetric Mode: Base maps to 500
+- [x] Fixed Mode: Shifted labels with correct threshold badges
 
 ## Engine & Stability
 - [x] Smooth ramps for Yellow (#ffff00), Cyan, Magenta
-- [x] No "checkerboard" artifacts
+- [x] Sigmoidal tonal transitions (no kinks)
 - [x] CAM16 low-light stability (0-190 fix)
 - [x] Chroma Shaping slider functional
-- [x] P3 profile support and clamping
+- [x] P3 profile support and orchestrated clamping
 
 ## Boosts & Layers
 - [x] Dark Mode as final damping mask
 - [x] Light Mode Boost (Yellow shade correction)
-- [x] Neon Boost (Orchestrated damping)
-- [x] Pastel Boost (Full range softness)
-- [x] Spectral Balance (HK Correction)
+- [x] Neon/Pastel/Glass: Reliable & non-clashing
+- [x] Spectral Balance: Correct HK Correction
 
 ## Accessibility & Handoff
-- [x] WCAG 2.1 & APCA V3 Support
+- [x] APCA V3 & WCAG 2.1 Contrast Grid
+- [x] Glassmorphism Contrast Simulation
 - [x] SVG Figma Export Accuracy
-- [x] Integrated Color Picker
-- [x] Technical Info button

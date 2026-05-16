@@ -49,8 +49,7 @@ function renderSwatch(swatch, opts = {}){
   const state = getState();
   const gran = state.mode.granularity;
 
-  // Logic for filtering: robust check for grid steps.
-  // Requirement: "Now dla skali fixed nie działa gradacja 50 i 100."
+  // Logic for filtering (V9):
   // Badge logic (V9): We use the displayStep to determine if a swatch is "near" a threshold.
   const is100 = Math.abs(displayVal % 100) < 0.1;
   const is50  = Math.abs(displayVal % 50) < 0.1;

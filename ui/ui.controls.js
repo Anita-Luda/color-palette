@@ -275,7 +275,7 @@ function setupBatch(){
   const wrap = document.createElement('div');
   wrap.className = 'group';
   wrap.innerHTML = `
-    <label>Lzb kolorów</label>
+    <label>Liczba kolorów</label>
     <div style="display:flex; gap:8px;">
         <input id="colorCount" type="number" min="1" value="3">
         <button id="applyCount">Generuj</button>
