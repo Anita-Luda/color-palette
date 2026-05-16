@@ -11,9 +11,8 @@ export function generateStandardScale(baseLch, steps, isDarkMode) {
     return steps.map(step => {
         const L = 1 - (step / 1000);
 
-        // Use a continuous Sigmoid for smoother transitions near gamut boundaries.
-        // This eliminates the "step" effect in high-boundary colors like Yellow.
-        // chromaShapingFactor (0.5 - 1.5) modulates the steepness.
+        // V9 Sigmoidal Transition: Smooth entry into sRGB gamut.
+        // chromaShapingFactor (0.5 - 1.5) modulates the steepness of the curve.
         const k = 4.0 * shaping;
         const sigmoid = (x) => 1 / (1 + Math.exp(-k * (x - 0.5)));
 
@@ -21,7 +20,6 @@ export function generateStandardScale(baseLch, steps, isDarkMode) {
             ? (L - baseLch.L) / (1 - baseLch.L || 0.01)
             : (baseLch.L - L) / (baseLch.L || 0.01);
 
-        // Sigmoid falloff ensures no sharp "kinks" at the anchor point
         const falloff = 1 - sigmoid(normalizedDist * 2 - 0.5);
 
         const { chromaScale, lBias } = getPerceptualCompensation({ L, C: baseLch.C, h: baseLch.h });

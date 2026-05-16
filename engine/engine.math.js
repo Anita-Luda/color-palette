@@ -113,8 +113,7 @@ export function xyzToCam16(X, Y, Z) {
     const bc = ((params.Yw * D / bW) + (1 - D)) * b;
 
     const fL = params.fL;
-    // V9: Improved power logic for ultra-low luminance stability.
-    // Protect against Math.pow issues with ultra-small numbers in dark tones.
+    // Robust post-adaptation with protection against ultra-low values.
     const getS = (v) => {
         const absV = Math.abs(v);
         if (absV < 0.0001) return 0;
@@ -136,8 +135,7 @@ export function xyzToCam16(X, Y, Z) {
     const A = (2 * ra + ga + 0.05 * ba) - 0.305;
     const J = 100 * Math.pow(Math.max(0, A / Aw), params.z);
 
-    // Scale chroma for UCS compatibility
-    const C = Math.sqrt(a * a + b_alt * b_alt) * 0.12;
+    const C = Math.sqrt(a * a + b_alt * b_alt) * 0.11;
     return { J, C, h };
 }
 
@@ -156,28 +154,18 @@ export function oklabToXyz(L, a, b) {
     };
 }
 
-/**
- * GAMUT BOUNDARY V9: Adaptive Iteration & Edge-Smoothing
- */
 export function maxChromaForL(L, H, profile = 'srgb') {
     if (L <= 0.0001 || L >= 0.9999) return 0;
-
     let low = 0;
     let high = (profile === 'p3' || profile === 'rec2020') ? 0.6 : 0.45;
-
-    // Smooth the gamut surface by using higher iterations near boundary-critical hues (Yellow/Cyan)
     const iterations = (H > 60 && H < 130) || (H > 170 && H < 220) ? 32 : 20;
-
     for (let i = 0; i < iterations; i++) {
         const mid = (low + high) / 2;
         const lab = oklchToOklab(L, mid, H);
         const { r, g, b } = oklabToRgbRaw(lab.L, lab.a, lab.b);
         let inGamut;
-        if (profile === 'p3') {
-            inGamut = (r >= -0.15 && r <= 1.15 && g >= -0.15 && g <= 1.15 && b >= -0.15 && b <= 1.15);
-        } else {
-            inGamut = (r >= -0.00001 && r <= 1.00001 && g >= -0.00001 && g <= 1.00001 && b >= -0.00001 && b <= 1.00001);
-        }
+        if (profile === 'p3') inGamut = (r >= -0.15 && r <= 1.15 && g >= -0.15 && g <= 1.15 && b >= -0.15 && b <= 1.15);
+        else inGamut = (r >= -0.00001 && r <= 1.00001 && g >= -0.00001 && g <= 1.00001 && b >= -0.00001 && b <= 1.00001);
         if (inGamut) low = mid; else high = mid;
     }
     return low;

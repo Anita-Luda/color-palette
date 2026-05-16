@@ -34,7 +34,7 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
 
   let actualSteps = steps;
 
-  // --- LOGIKA ROZKŁADÓW (V9) ---
+  // --- LOGIKA ROZKŁADÓW ---
   if (scaleMode === 'fixed') {
       const offset = anchorStep % 10;
       actualSteps = steps.map(s => s + offset).filter(s => s >= 0 && s <= 1000);
@@ -52,7 +52,6 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
       }
   }
 
-  // Absolute mode logic: always include anchor
   if (scaleMode === 'absolute' && !forceExcludeAnchor) {
       if (!actualSteps.find(s => Math.abs(s - anchorStep) < 0.1)) {
           actualSteps = [...actualSteps, anchorStep].sort((a,b) => a-b);
@@ -73,7 +72,7 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
       // 1. DESIGN BOOSTS (IDEAL LCH)
       let p = applyBoosts(swatch, lch, mode);
 
-      // 2. SPECTRAL BALANCE
+      // 2. SPECTRAL BALANCE (Applied pre-damping)
       if (mode.spectralBalance) {
           p.l = Math.max(0.001, p.l - p.c * 0.18);
       }
@@ -87,16 +86,12 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
       }
 
       // 4. DARK MODE ADJUST (LAST MASK LAYER)
-      // Dark Mode damping is applied as the final correction to everything.
       if (isDarkMode) {
-          // General damping for comfort
           p.c *= (0.7 + 0.25 * (1 - p.l));
-
-          // Perceptual boost: correcting warmth perception shift
           if (mode.darkModeBoost) {
-              if (p.h > 40 && p.h < 120) p.h += 12; // Yellow -> Orange
-              if (p.h > 200 && p.h < 280) p.h -= 12; // Blue -> Cyan
-              if (p.l > 0.4) p.c *= 1.35; // Pop lights
+              if (p.h > 40 && p.h < 120) p.h += 12;
+              if (p.h > 200 && p.h < 280) p.h -= 12;
+              if (p.l > 0.4) p.c *= 1.35;
           }
       }
 
@@ -105,26 +100,20 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
       p.clipping = (p.c > maxC + 0.005) ? Math.round((1 - (maxC / p.c)) * 100) : 0;
       p.c = Math.min(p.c, maxC);
 
-      // 6. RENDER & MAPPING
+      // 6. RENDER
       const finalLab = oklchToOklab(p.l, p.c, p.h);
       p.hex = rgbToHex(oklabToRgb(finalLab.L, finalLab.a, finalLab.b));
 
-      if (isBaseStep && !isDarkMode && !isAnyBoost && sourceHex) {
-          p.hex = sourceHex;
-      }
-
+      if (isBaseStep && !isDarkMode && !isAnyBoost && sourceHex) p.hex = sourceHex;
       p.isBase = isBaseStep;
 
-      // Map anchor to 500 for Asymmetric display
       if (scaleMode === 'asymmetric') {
           if (isBaseStep) p.displayStep = 500;
           else {
               const idx = actualSteps.indexOf(swatch.step);
               p.displayStep = Math.round((idx / (actualSteps.length - 1)) * 1000);
           }
-      } else {
-          p.displayStep = swatch.step;
-      }
+      } else p.displayStep = swatch.step;
 
       return p;
   });
