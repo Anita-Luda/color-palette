@@ -114,11 +114,12 @@ function updateDegreeDisplay() {
 
 function updateSidebarLayout() {
     const state = getState();
+    const body = document.body;
+
     const glassSec = $('sec-glass-settings');
     if (glassSec) {
         glassSec.style.display = state.mode.view === 'glass' ? 'block' : 'none';
     }
-    const body = document.body;
 
     // Update active pos button
     document.querySelectorAll('.pos-btn').forEach(btn => {
@@ -239,8 +240,8 @@ function setupBasePicker() {
 
     const bgBtn = document.createElement('button');
     bgBtn.id = 'base-bg-btn';
-    bgBtn.className = 'bg-source-btn primary';
-    bgBtn.textContent = 'Ustaw jako tło';
+    bgBtn.className = 'bg-source-btn primary contrast-bg-btn';
+    bgBtn.textContent = 'Tło Kontrast';
     bgBtn.style.marginTop = '8px';
     bgBtn.onclick = () => {
         setBackgroundSource('base');
@@ -274,7 +275,7 @@ function setupBatch(){
   const wrap = document.createElement('div');
   wrap.className = 'group';
   wrap.innerHTML = `
-    <label>Liczba kolorów</label>
+    <label>Lzb kolorów</label>
     <div style="display:flex; gap:8px;">
         <input id="colorCount" type="number" min="1" value="3">
         <button id="applyCount">Generuj</button>
@@ -353,11 +354,6 @@ function setupAddColor(){
         }
 
         const lch = oklabToOklch(rgbToOklab(rgb.r, rgb.g, rgb.b));
-
-        // Suggestion logic: check if "fits"
-        // For now, any color is added, but we could check if hue is already taken.
-        // The user says: "jeżeli pasują ... jeżeli nie pasują, to powiadom ... i zaproponuj korektę na najbliższy pasujący"
-        // Let's implement a simple check: is it within 15 degrees of any existing?
         const state = getState();
         const baseLch = oklabToOklch(rgbToOklab(state.base.rgb.r, state.base.rgb.g, state.base.rgb.b));
 
@@ -372,7 +368,6 @@ function setupAddColor(){
 
         if (conflict) {
             if (confirm(`Kolor ${val} jest zbyt blisko istniejących barw. Czy skorygować go do najbliższej wolnej przestrzeni?`)) {
-                // simple shift
                 lch.h = (lch.h + 30) % 360;
                 addManualColor(null, lch, 0.5);
                 msgBox.textContent = 'Dodano skorygowany kolor.';
@@ -449,7 +444,6 @@ function updateContrastInfos() {
     const bgMode = state.mode.background;
     const bgHex = bgMode === 'dark' ? '#000000' : '#FFFFFF';
 
-    // Base
     const baseInfo = $('base-contrast-info');
     if (baseInfo) {
         const hex = rgbToHex(state.base.rgb);
@@ -457,7 +451,6 @@ function updateContrastInfos() {
         baseInfo.textContent = `Kontrast: ${ratio.toFixed(2)}:1`;
     }
 
-    // Additional
     import('../engine/engine.palettes.js').then(m => {
         const additional = m.getAdditionalPalettes();
         state.colors.forEach((c, i) => {
@@ -475,7 +468,6 @@ function updateContrastInfos() {
 }
 
 function createSliderCard(c) {
-  const state = getState();
   const card = document.createElement('div');
   card.className = 'color-card';
   card.dataset.index = c.index;
@@ -513,14 +505,12 @@ function createSliderCard(c) {
   const preview = document.createElement('div');
   preview.className = 'color-mini-preview';
   preview.id = `preview-${c.index}`;
-  // Will be updated by renderer
 
   const bgBtn = document.createElement('button');
   bgBtn.className = 'bg-source-btn primary contrast-bg-btn';
   bgBtn.textContent = 'Tło Kontrast';
   bgBtn.style.width = '100%';
   bgBtn.style.marginBottom = '4px';
-  if (state.mode.backgroundSource === c.index) bgBtn.classList.add('active');
   bgBtn.onclick = () => {
       setBackgroundSource(c.index);
       refreshUI();
@@ -531,7 +521,6 @@ function createSliderCard(c) {
   gBgBtn.textContent = 'Tło Glass';
   gBgBtn.style.width = '100%';
   gBgBtn.style.marginBottom = '8px';
-  if (state.mode.glassBackgroundSource === c.index) gBgBtn.classList.add('active');
   gBgBtn.onclick = () => {
       setGlassBackgroundSource(c.index);
       refreshUI();
@@ -554,7 +543,6 @@ function createSliderCard(c) {
   slider.addEventListener('input', e => {
     setColorSlider(c.index, Number(e.target.value));
     renderAllPalettes(true);
-    // Refresh sidebar previews immediately for feedback
     import('./ui.render.js').then(m => m.updateSidebarPreviews());
   });
 
@@ -819,10 +807,8 @@ function setupContrastSliders() {
 
     document.querySelectorAll('.ignore-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            // Find all buttons with same data-val to sync them
             const val = btn.dataset.val;
             const allOfSameVal = document.querySelectorAll(`.ignore-btn[data-val="${val}"]`);
-
             const isActivating = !btn.classList.contains('active');
 
             allOfSameVal.forEach(b => {

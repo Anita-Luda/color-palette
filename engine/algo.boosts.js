@@ -1,5 +1,5 @@
 // engine/algo.boosts.js
-// V8 Boost Engine: Correct Masking & Multi-layer Logic
+// V9 Boost Engine: Correct Masking & Multi-layer Logic
 
 export function applyBoosts(swatch, baseLch, mode) {
     let { l, c, h } = swatch;
@@ -18,7 +18,7 @@ export function applyBoosts(swatch, baseLch, mode) {
         // Compression towards 0.08 chroma
         c = 0.04 + (c * 0.12);
         // Soft curve that keeps blacks but lifts shadows slightly
-        l = l * 0.2 + 0.8 * Math.pow(l, 0.65);
+        l = l * 0.15 + 0.85 * Math.pow(l, 0.7);
     }
 
     // --- 3. NEON: Maximum intensity ---
@@ -26,30 +26,17 @@ export function applyBoosts(swatch, baseLch, mode) {
         c = 0.5; // Will be clamped by orchestrator
     }
 
-    // --- 4. GLASSMORPHISM: Legibility Logic (Handled in dedicated Glass View, but also here) ---
+    // --- 4. GLASSMORPHISM: Legibility Logic ---
     if (mode.glassmorphismBoost) {
-        if (l > 0.8) l = 0.8 + (l - 0.8) * 1.6; // Highlight
-        else if (l < 0.2) l = l * 0.4;         // Shadow
-        if (l > 0.3 && l < 0.75) c *= 1.4;    // Saturation Pump
+        if (l > 0.8) l = 0.8 + (l - 0.8) * 1.5; // Highlight Boost
+        else if (l < 0.25) l = l * 0.5;         // Shadow Drop
+        if (l > 0.35 && l < 0.75) c *= 1.4;    // Saturation Pump
     }
 
-    // --- 5. INK-SAVE: Quantized CMYK Logic ---
+    // --- 5. INK-SAVE: Toner conservation ---
     if (mode.inkSaveMode) {
-        // Goal: Prevent 'stippling' by forcing channels to solid thresholds.
-        // We simulate CMYK quantization by snapping chroma and lightness.
-        const snapL = (val) => {
-            if (val > 0.85) return 0.98; // Paper white
-            if (val > 0.5) return 0.75;
-            if (val > 0.2) return 0.35;
-            return 0.1; // Dark ink
-        };
-        const snapC = (val) => {
-            if (val < 0.03) return 0;
-            if (val < 0.1) return 0.05;
-            return 0.1;
-        };
-        l = snapL(l);
-        c = snapC(c);
+        if (l > 0.1) c *= 0.1;
+        if (l > 0.4) l = 0.4 + (l - 0.4) * 1.4;
     }
 
     return { ...swatch, l, c, h };

@@ -1,25 +1,28 @@
-# Checklist: OKLCH Orchestrated Engine (V9)
+# Checklist: OKLCH Final Design System (V9)
 
-## Core Stability
-- [x] Smooth tonal ramps for Yellow (#ffff00) & Cyan (#00ffff)
-- [x] No "checkerboard" or random shifts
-- [x] CAM16-UCS low-light stability (0-190 steps fixed)
-- [x] Precise Gamut Clamping (24-30 iterations)
+## UI & Visibility
+- [x] Glass View (4-state + bubble preview) visible
+- [x] Gradients View (tonal ramp) visible
+- [x] Step Badges (100, 50, BASE) visible in all modes
+- [x] Granularity 50/100 functional for Fixed/Asym
+- [x] Grayscale Sidebar Themes
 
-## UI & Scaling Logic
-- [x] Asymmetric Mode: Base maps to 500
-- [x] Granularity 50/100 works for ALL scales
-- [x] Step Badges (100, 50, BASE) visible
-- [x] Absolute mode includes exact base color
+## Engine & Stability
+- [x] Smooth ramps for Yellow (#ffff00), Cyan, Magenta
+- [x] No "checkerboard" artifacts
+- [x] CAM16 low-light stability (0-190 fix)
+- [x] Chroma Shaping slider functional
+- [x] P3 profile support and clamping
 
-## Pro-Designer Features
-- [x] Glass View: 4-state simulation + Layer depth
-- [x] Gradients View: Perceptual ramp visualization
-- [x] Spectral Balance: Helmholtz–Kohlrausch correction
-- [x] Light Mode Boost: Yellow shade correction
-- [x] Dark Mode: Final damping mask layer
+## Boosts & Layers
+- [x] Dark Mode as final damping mask
+- [x] Light Mode Boost (Yellow shade correction)
+- [x] Neon Boost (Orchestrated damping)
+- [x] Pastel Boost (Full range softness)
+- [x] Spectral Balance (HK Correction)
 
 ## Accessibility & Handoff
-- [x] APCA V3 & WCAG 2.1 Contrast Grid
-- [x] Glassmorphism Contrast Simulation
-- [x] SVG Figma Export (Copy-to-Clipboard)
+- [x] WCAG 2.1 & APCA V3 Support
+- [x] SVG Figma Export Accuracy
+- [x] Integrated Color Picker
+- [x] Technical Info button

@@ -113,7 +113,8 @@ export function xyzToCam16(X, Y, Z) {
     const bc = ((params.Yw * D / bW) + (1 - D)) * b;
 
     const fL = params.fL;
-    // V9: Improved power logic for ultra-low luminance stability
+    // V9: Improved power logic for ultra-low luminance stability.
+    // Protect against Math.pow issues with ultra-small numbers in dark tones.
     const getS = (v) => {
         const absV = Math.abs(v);
         if (absV < 0.0001) return 0;
@@ -164,8 +165,8 @@ export function maxChromaForL(L, H, profile = 'srgb') {
     let low = 0;
     let high = (profile === 'p3' || profile === 'rec2020') ? 0.6 : 0.45;
 
-    // Smooth the gamut surface by using higher iterations near boundary-critical hues
-    const iterations = (H > 60 && H < 130) ? 30 : 20;
+    // Smooth the gamut surface by using higher iterations near boundary-critical hues (Yellow/Cyan)
+    const iterations = (H > 60 && H < 130) || (H > 170 && H < 220) ? 32 : 20;
 
     for (let i = 0; i < iterations; i++) {
         const mid = (low + high) / 2;

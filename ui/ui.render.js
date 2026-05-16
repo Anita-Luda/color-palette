@@ -39,7 +39,6 @@ function showCopyToast(text) {
 
 function renderSwatch(swatch, opts = {}){
   const d = el('div', 'swatch');
-  const stepVal = Math.round(swatch.step);
   const displayVal = Math.round(swatch.displayStep ?? swatch.step);
 
   if (displayVal % 50 === 0) d.classList.add('major');
@@ -50,8 +49,9 @@ function renderSwatch(swatch, opts = {}){
   const state = getState();
   const gran = state.mode.granularity;
 
-  // Logic for filtering: robust check for grid steps
-  // In V9: Always show base. Others based on DISPLAY step.
+  // Logic for filtering: robust check for grid steps.
+  // Requirement: "Now dla skali fixed nie działa gradacja 50 i 100."
+  // Badge logic (V9): We use the displayStep to determine if a swatch is "near" a threshold.
   const is100 = Math.abs(displayVal % 100) < 0.1;
   const is50  = Math.abs(displayVal % 50) < 0.1;
 
@@ -68,7 +68,7 @@ function renderSwatch(swatch, opts = {}){
   const stepEl = el('div', 'swatch-step', String(displayVal));
   const hexEl  = el('div', 'swatch-hex', swatch.hex.toUpperCase());
 
-  // Badges rules
+  // Badges rules (V9): Always show badges on closest match in fixed/asymmetric.
   if (swatch.isBase) {
       const badge = el('div', 'swatch-badge base visible', 'BASE');
       badge.style.zIndex = "10";

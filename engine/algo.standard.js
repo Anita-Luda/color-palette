@@ -1,17 +1,20 @@
 // engine/algo.standard.js
-// V8 Standard Tonal Scale - Smooth & Continuous
+// V9 Standard Tonal Scale - Sigmoidal Continuity
 
 import { oklchToOkluv, okluvToOklch } from './engine.math.js';
 import { getPerceptualCompensation } from './engine.curves.js';
 import { EngineState } from './engine.core.js';
 
 export function generateStandardScale(baseLch, steps, isDarkMode) {
+    const shaping = EngineState.mode.chromaShapingFactor ?? 1.0;
+
     return steps.map(step => {
         const L = 1 - (step / 1000);
 
-        // Use a continuous Sigmoid for smoother transitions near gamut boundaries
-        // This prevents the "step" effect in high-boundary colors like Yellow.
-        const k = 5.0; // sharpness
+        // Use a continuous Sigmoid for smoother transitions near gamut boundaries.
+        // This eliminates the "step" effect in high-boundary colors like Yellow.
+        // chromaShapingFactor (0.5 - 1.5) modulates the steepness.
+        const k = 4.0 * shaping;
         const sigmoid = (x) => 1 / (1 + Math.exp(-k * (x - 0.5)));
 
         const normalizedDist = (L > baseLch.L)
@@ -23,7 +26,7 @@ export function generateStandardScale(baseLch, steps, isDarkMode) {
 
         const { chromaScale, lBias } = getPerceptualCompensation({ L, C: baseLch.C, h: baseLch.h });
 
-        let adjustedL = Math.max(0.0001, Math.min(0.9999, L + lBias * falloff * 0.45));
+        let adjustedL = Math.max(0.0001, Math.min(0.9999, L + lBias * Math.max(0, falloff) * 0.4));
         let C = baseLch.C * Math.max(0, falloff) * chromaScale;
         const H = baseLch.h;
 

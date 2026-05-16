@@ -1,16 +1,16 @@
-# Analiza Rozwojowa: V9 - Percepcyjna Hybryda
+# Analiza Rozwojowa: V9 - Orchestracja Percepcyjna
 
-## Filozofia V9: Stabilność i Warstwy
-Wersja V9 to kulminacja prac nad stabilnością percepcyjną. Odeszliśmy od prostego sumowania efektów na rzecz orchestracji warstw (Masking Logic). Dzięki temu system zachowuje się przewidywalnie nawet przy ekstremalnych kombinacjach ustawień (np. Neon + Dark Mode + Spectral Balance).
+## Fundamenty V9: Od Matematyki do Użyteczności
+Wersja V9 to dojrzałe rozwiązanie, w którym algorytmika służy projektantowi, a nie odwrotnie. Najważniejszym osiągnięciem jest stabilizacja barw o wysokim nasyceniu (Yellow, Cyan), które w poprzednich wersjach wykazywały skokowe zmiany barwy (checkerboard) przy wejściu w gamut sRGB.
 
-### Najważniejsze Innowacje
+### Kluczowe Innowacje
 
-1. **Sigmoidalne Przejścia Tonalne**: Zastosowanie funkcji sigmoidalnej zamiast parabolicznej dla Chromy pozwoliło na wyeliminowanie wizualnych "kinków" przy krawędzi gamutu sRGB, co było kluczowe dla barw takich jak Żółty czy Cyjan.
-2. **DisplayStep Architecture**: Rozdzielenie logiki obliczeniowej (step) od logiki prezentacyjnej (displayStep) pozwoliło na idealne centrowanie koloru bazowego w skali Asymmetric (zawsze krok 500) bez utraty precyzji matematycznej.
-3. **Advanced CAM16 Handling**: Poprawienie precyzji obliczeń dla niskich poziomów jasności wyeliminowało artefakt "szarzenia" ciemnych tonów przy włączonym CAM16 Polish.
+1. **Sigmoidalne Wygładzanie Tonalne**: Zastosowanie funkcji sigmoidalnej dla nasycenia wyeliminowało wizualne progi, tworząc aksamitnie gładkie palety dla każdej barwy bazowej.
+2. **DisplayStep Logic**: Rozdzielenie logiki obliczeniowej od prezentacyjnej pozwoliło na utrzymanie czytelnych progów (100, 50) nawet w skomplikowanych rozkładach typu Fixed czy Asymmetric.
+3. **Layered Damping**: Architektura, w której Dark Mode jest ostatnią warstwą (maską) dla całej palety, gwarantuje, że tryb neonowy czy pastelowy będzie zawsze bezpieczny i komfortowy na czarnym tle.
 
-## Przyszłość: Kontekstualna Inteligencja
+## Dalszy Rozwój
 
-- **Gamut Volumetric Audit**: Narzędzie pokazujące w 3D, jaka część palety wykracza poza sRGB i jak głęboko "clipping" wpływa na charakter barwy.
-- **Auto-Contrast Balancing**: Rozwinięcie algorytmu o dynamiczne przesuwanie jasności kroków tak, aby automatycznie osiągać zadane progi WCAG AA/AAA bez ingerencji projektanta.
-- **HDR Workflow Integration**: Przygotowanie orchestratora do obsługi wartości jasności powyżej 100 (L > 1.0) dla wyświetlaczy o wysokiej rozpiętości tonalnej.
+- **Variable CSS Export (with Alpha)**: Automatyczne generowanie kodu CSS, który wykorzystuje nową architekturę warstwową (osobne tła i szklane elementy).
+- **Gamut Volumetric Audit**: Narzędzie wizualizujące, jaka część nasycenia została utracona przez clipping na różnych monitorach.
+- **Auto-Contrast Adaptive Scale**: Automatyczne przesuwanie jasności kroków tak, aby każdy co 100 jednostek spełniał wymóg WCAG AA bez ingerencji projektanta.
