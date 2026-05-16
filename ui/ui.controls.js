@@ -13,6 +13,16 @@ import {
   setPaletteMode,
   setScaleMode,
   setAlgorithmMode,
+  setDarkModeBoost,
+  setNeonBoost,
+  setPastelBoost,
+  setGlassmorphismBoost,
+  setInkSaveMode,
+  setSpectralBalance,
+  setPerceptualPolish,
+  setInterpolationMode,
+  setGamutProfile,
+  setChromaShapingFactor,
   setLock,
   getState,
   getWarnings,
@@ -30,7 +40,7 @@ import {
   addGrayPalette
 } from '../engine/engine.core.js';
 
-import { rgbToOklab, oklabToOklch, rgbToHex } from '../engine/engine.scales.js';
+import { rgbToOklab, oklabToOklch, rgbToHex } from '../engine/engine.math.js';
 import { clearGradientCache } from '../engine/engine.gradients.js';
 import { renderAllPalettes } from './ui.render.js';
 import { contrastRatio } from '../engine/engine.accessibility.js';
@@ -123,6 +133,47 @@ function updateSidebarLayout() {
     } else {
         body.classList.add('sb-hidden');
     }
+
+    // Sync form elements
+    const boostToggle = $('boost-toggle');
+    if (boostToggle) boostToggle.checked = state.mode.darkModeBoost;
+
+    const neonToggle = $('neon-toggle');
+    if (neonToggle) neonToggle.checked = state.mode.neonBoost;
+
+    const pastelToggle = $('pastel-toggle');
+    if (pastelToggle) pastelToggle.checked = state.mode.pastelBoost;
+
+    const glassToggle = $('glass-toggle');
+    if (glassToggle) glassToggle.checked = state.mode.glassmorphismBoost;
+
+    const inkToggle = $('ink-toggle');
+    if (inkToggle) inkToggle.checked = state.mode.inkSaveMode;
+
+    const spectralToggle = $('spectral-toggle');
+    if (spectralToggle) spectralToggle.checked = state.mode.spectralBalance;
+
+    const polishToggle = $('polish-toggle');
+    if (polishToggle) polishToggle.checked = state.mode.perceptualPolish;
+
+    const labelShaping = $('label-shaping');
+    if (labelShaping) labelShaping.textContent = `Chroma Shaping: ${state.mode.chromaShapingFactor.toFixed(2)}`;
+
+    document.querySelectorAll('input[name="interpMode"]').forEach(r => {
+        r.checked = (r.value === state.mode.interpolation);
+    });
+
+    document.querySelectorAll('input[name="gamutMode"]').forEach(r => {
+        r.checked = (r.value === state.mode.gamutProfile);
+    });
+
+    document.querySelectorAll('input[name="contrastAlgo"]').forEach(r => {
+        r.checked = (r.value === state.contrastSettings.algorithm);
+    });
+
+    document.querySelectorAll('input[name="algoMode"]').forEach(r => {
+        r.checked = (r.value === state.mode.algorithm);
+    });
 }
 
 function updateContrastSidebarLabels() {
@@ -537,6 +588,72 @@ function setupModes(){
       clearGradientCache();
       refreshUI();
   }));
+
+  $('boost-toggle')?.addEventListener('change', e => {
+      setDarkModeBoost(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  $('neon-toggle')?.addEventListener('change', e => {
+      setNeonBoost(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  $('pastel-toggle')?.addEventListener('change', e => {
+      setPastelBoost(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  $('glass-toggle')?.addEventListener('change', e => {
+      setGlassmorphismBoost(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  $('ink-toggle')?.addEventListener('change', e => {
+      setInkSaveMode(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  $('spectral-toggle')?.addEventListener('change', e => {
+      setSpectralBalance(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  $('polish-toggle')?.addEventListener('change', e => {
+      setPerceptualPolish(e.target.checked);
+      clearGradientCache();
+      refreshUI();
+  });
+
+  document.querySelectorAll('input[name="interpMode"]').forEach(r => {
+      r.addEventListener('change', e => {
+          setInterpolationMode(e.target.value);
+          clearGradientCache();
+          refreshUI();
+      });
+  });
+
+  document.querySelectorAll('input[name="gamutMode"]').forEach(r => {
+      r.addEventListener('change', e => {
+          setGamutProfile(e.target.value);
+          clearGradientCache();
+          refreshUI();
+      });
+  });
+
+  $('shaping-slider')?.addEventListener('input', e => {
+      setChromaShapingFactor(e.target.value);
+      const label = $('label-shaping');
+      if (label) label.textContent = `Chroma Shaping: ${Number(e.target.value).toFixed(2)}`;
+      clearGradientCache();
+      renderAllPalettes(true);
+  });
 }
 
 function setupGranularity() {
@@ -645,6 +762,13 @@ function setupFloatingPanel() {
 function setupContrastSliders() {
     const bTop = $('contrast-brightness-top');
     const bBoostTop = $('contrast-boost-top');
+
+    document.querySelectorAll('input[name="contrastAlgo"]').forEach(r => {
+        r.addEventListener('change', e => {
+            setContrastSettings('algorithm', e.target.value);
+            renderAllPalettes();
+        });
+    });
 
     bTop?.addEventListener('input', e => {
         setContrastSettings('brightness', e.target.value);
@@ -773,6 +897,10 @@ export function initControls(){
   setupContrastSliders();
   setupFloatingPanel();
   setupExport();
+
+  $('clipping-info-btn')?.addEventListener('click', () => {
+      alert("Kropki w rogu swatche sygnalizują Gamut Clipping.\n\nOznacza to, że algorytm wyliczył kolor bardziej nasycony, niż jest w stanie wyświetlić Twój monitor (lub wybrany profil, np. sRGB).\n\nSystem automatycznie zredukował nasycenie (Chroma), aby kolor był możliwy do wyświetlenia. Im ciemniejsza/większa kropka, tym silniejsza była redukcja. Najlepiej widoczne na profilu P3.");
+  });
 
   updateSidebarLayout();
   onBaseChange();

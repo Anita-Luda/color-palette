@@ -1,7 +1,9 @@
-// engine/engine.accessibility.js// engine/engine// Accessibility utilities: contrast (AA/AAA), previews, suggestions. No DOM.
+// Accessibility utilities: contrast (AA/AAA), previews, suggestions. No DOM.
 
 import { EngineState } from './engine.core.js';
 import { generateScaleForLCH, getBaseLCH } from './engine.scales.js';
+
+import { srgbToLinearWCAG, rgbToOklab } from './engine.math.js';
 
 /* ---------- COLOR UTILS ---------- */
 function hexToRgb(hex){
@@ -12,15 +14,50 @@ function hexToRgb(hex){
     b: parseInt(h.slice(4,6),16)
   };
 }
-function srgbToLinear(c){
-  c /= 255;
-  return c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4);
-}
+
 function relativeLuminance({r,g,b}){
-  const R = srgbToLinear(r);
-  const G = srgbToLinear(g);
-  const B = srgbToLinear(b);
+  const R = srgbToLinearWCAG(r);
+  const G = srgbToLinearWCAG(g);
+  const B = srgbToLinearWCAG(b);
   return 0.2126*R + 0.7152*G + 0.0722*B;
+}
+
+/**
+ * APCA (Advanced Perceptual Contrast Algorithm) implementation.
+ * Simplified version of SAPC-8.
+ */
+export function apcaContrast(hexTxt, hexBg) {
+    const rgbTxt = hexToRgb(hexTxt);
+    const rgbBg = hexToRgb(hexBg);
+
+    // APCA specific luminance (Y)
+    const getY = (rgb) => {
+        const r = Math.pow(rgb.r / 255, 2.4);
+        const g = Math.pow(rgb.g / 255, 2.4);
+        const b = Math.pow(rgb.b / 255, 2.4);
+        return 0.2126729 * r + 0.7151522 * g + 0.0721750 * b;
+    };
+
+    let Ytxt = getY(rgbTxt);
+    let Ybg = getY(rgbBg);
+
+    // Clamping
+    const blkThrs = 0.022;
+    const blkClmp = 1.414;
+    if (Ytxt < blkThrs) Ytxt += Math.pow(blkThrs - Ytxt, blkClmp);
+    if (Ybg < blkThrs) Ybg += Math.pow(blkThrs - Ybg, blkClmp);
+
+    let Lc;
+    if (Ybg >= Ytxt) {
+        Lc = (Math.pow(Ybg, 0.56) - Math.pow(Ytxt, 0.57)) * 1.14;
+    } else {
+        Lc = (Math.pow(Ybg, 0.65) - Math.pow(Ytxt, 0.62)) * 1.14;
+    }
+
+    if (Math.abs(Lc) < 0.1) return 0;
+
+    // Scale and round
+    return Lc * 100;
 }
 
 /* ---------- CONTRAST ---------- */

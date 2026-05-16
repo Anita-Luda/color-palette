@@ -1,28 +1,21 @@
-# Checklist: Profesjonalny System Palet OKLCH V2
+# Checklist: OKLCH Design System (V6)
 
-## 1. Implementacja Wymagań (Zrealizowane)
-- [x] **System Kolorów OKLCH**: Pełna obsługa przestrzeni barwnej OKLCH (L, C, H).
-- [x] **Główna Paleta (Skalowanie)**: Dynamiczne generowanie 11 stopni jasności (0-1000).
-- [x] **Paleta Funkcjonalna**: Automatyczne generowanie kolorów Success, Warning, Error, Info na bazie koloru bazowego.
-- [x] **Paleta Badge**: Delikatne, pastelowe warianty dla etykiet UI.
-- [x] **Siatka Kontrastu**: Wizualizacja kontrastu dla wszystkich kolorów względem tła (White/Black).
-- [x] **Weryfikacja WCAG**: Wyświetlanie statusów FAIL, AA, AAA dla każdego koloru.
-- [x] **Eksport do Figma**: Cztery dedykowane przyciski eksportu (Main, Functional, Badge, Contrast) generujące kod SVG kompatybilny z Figmą.
+## UI & Accessibility
+- [x] Step Badges (100, 50, BASE) visible
+- [x] Clipping Dots (Neutral grayscale) visible
+- [x] Info Button for technical indicators
+- [x] WCAG 2.1 & APCA V3 Support
+- [x] Glassmorphism Contrast Simulation
 
-## 2. Funkcje Zaawansowane (Zrealizowane)
-- [x] **Tryby Rozkładu Jasności**:
-  - `Abs` (Absolute): Równomierny rozkład 0-100.
-  - `Asym` (Asymmetric): Zagęszczenie stopni wokół koloru bazowego.
-  - `Fixed`: Stałe progi jasności (np. co 10 jednostek) z zachowaniem koloru bazowego.
-- [x] **Adaptacja (Adaptive Mode)**: Inteligentne korygowanie nasycenia (Chroma) przy ekstremalnych jasnościach dla zachowania czystości koloru.
-- [x] **Personalizacja Kontrastu**: Możliwość ustawienia własnych targetów kontrastu (np. 4.5:1 dla AA).
+## Scaling & Tonal Quality
+- [x] Absolute Scale (Linear)
+- [x] Asymmetric Scale (Anchor-centered)
+- [x] Fixed Scale (Grid-aligned)
+- [x] Adaptive Engine (Smooth tonal ramps)
+- [x] No "checkerboard" or random shifts
 
-## 3. UI/UX i Debugowanie (Zrealizowane)
-- [x] **Sticky UI**: Przełącznik widoków (Palety/Kontrast) jest zawsze widoczny na górze paska bocznego.
-- [x] **Dynamiczne Motywy**: Pasek boczny obsługuje tryb Light i Dark, dostosowując kolory akcentów.
-- [x] **Responsywność**: Interfejs dostosowuje się do szerokości ekranu, zachowując czytelność siatek.
-- [x] **Wizualne Wskaźniki**: Badge "BASE" dla koloru źródłowego oraz "100/50" dla progów systemowych w trybie Fixed.
-- [x] **Poprawki Layoutu**: Naprawione odstępy w grupach przycisków (gap: 8px) oraz spójne stylowanie przycisków tła.
-
-## Status Końcowy: 100% Zrealizowane
-Wszystkie błędy zostały naprawione, a wymagania z pliku txt wdrożone z nadwyżką w postaci zaawansowanych algorytmów skalowania.
+## Boosts & Handoff
+- [x] Reliable Boosts (Neon, Pastel, Glass, Ink-Save, Spectral)
+- [x] SVG Figma Export Accuracy
+- [x] Integrated Color Picker (Base swatch click)
+- [x] Grayscale Sidebar Themes

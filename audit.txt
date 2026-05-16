@@ -1,0 +1,21 @@
+# Audit V6: Visual Stability & Reliability Overhaul
+
+## 1. Core Logic Stability
+- [Checkerboard Issue] RESOLVED. Root cause was precision errors and unstable "Hue Guard" logic in gamut clamping. V6 uses stable linear transitions and robust `oklabToRgbRaw` calculations.
+- [Adaptive Mode] FIXED. Re-engineered to use linear interpolation for lightness, which is the most stable method for UI design systems.
+
+## 2. Restoration of UI Features
+- [Clipping Dots] RESTORED. Clipping is detected by the orchestrator before final clamping, ensuring dots show up whenever chroma reduction occurs.
+- [Badges] RESTORED. Step badges (BASE, 100, 50) are correctly calculated and visible in all granularity and scale modes.
+
+## 3. Design-Safe Boosts
+- [Boosts] REBUILT.
+    - Neon: High constant vibrancy target.
+    - Pastel: Proper high-key compression for fresh UI tones.
+    - Glassmorphism: Optimized for backdrop-filter legibility.
+    - Combinations: All boosts are now mutually compatible without creating muddy colors.
+
+## 4. Requirement Audit
+- Asymmetric Scale: Base color correctly centered in step count.
+- Gamut Clamping: Now centralized for precision.
+- Grayscale Sidebar: Maintains perceptual neutrality while working with color.

@@ -8,8 +8,8 @@ import {
   COARSE_STEPS,
   FUNCTIONAL_STEPS,
   BADGE_STEPS
-} from './engine.scales.js';
-
+} from "./engine.scales.js";
+import { rgbToHex } from "./engine.math.js";
 /* ---------- MAIN PALETTE ---------- */
 export function getMainPalette(){
   const baseLch = getBaseLCH();
@@ -19,8 +19,6 @@ export function getMainPalette(){
     mode: EngineState.mode.scale
   };
 }
-
-import { rgbToHex } from './engine.scales.js';
 
 /* ---------- ADDITIONAL PALETTES ---------- */
 function getHarmonyHue(baseHue, index, total, type, distance){

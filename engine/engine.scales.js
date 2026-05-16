@@ -1,230 +1,84 @@
 // engine/engine.scales.js
-// Absolute & Asymmetric scales (anchor-aware). No DOM.
+// Orchestrator for scaling algorithms and boosts.
 
 import { EngineState } from './engine.core.js';
+import {
+  srgbToLinear, linearToSrgb, rgbToOklab, oklabToRgb,
+  oklabToOklch, oklchToOklab, rgbToHex, maxChromaForL
+} from './engine.math.js';
+import { generateStandardScale } from './algo.standard.js';
+import { generateAdaptiveScale } from './algo.adaptive.js';
+import { applyBoosts } from './algo.boosts.js';
 
-/* ---------- OKLCH MATH ---------- */
-export function srgbToLinear(c){
-  c /= 255;
-  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-}
-export function linearToSrgb(c){
-  return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
-}
-export function rgbToOklab(r,g,b){
-  r = srgbToLinear(r); g = srgbToLinear(g); b = srgbToLinear(b);
-  const l = 0.4122214708*r + 0.5363325363*g + 0.0514459929*b;
-  const m = 0.2119034982*r + 0.6806995451*g + 0.1073969566*b;
-  const s = 0.0883024619*r + 0.2817188376*g + 0.6299787005*b;
-  const l_ = Math.cbrt(l), m_ = Math.cbrt(m), s_ = Math.cbrt(s);
-  return {
-    L: 0.2104542553*l_ + 0.7936177850*m_ - 0.0040720468*s_,
-    a: 1.9779984951*l_ - 2.4285922050*m_ + 0.4505937099*s_,
-    b: 0.0259040371*l_ + 0.7827717662*m_ - 0.8086757660*s_
-  };
-}
-export function oklabToRgb(L,a,b){
-  const l_ = L + 0.3963377774*a + 0.2158037573*b;
-  const m_ = L - 0.1055613458*a - 0.0638541728*b;
-  const s_ = L - 0.0894841775*a - 1.2914855480*b;
-  const l = l_**3, m = m_**3, s = s_**3;
-  let r =  4.0767416621*l - 3.3077115913*m + 0.2309699292*s;
-  let g = -1.2684380046*l + 2.6097574011*m - 0.3413193965*s;
-  let b2= -0.0041960863*l - 0.7034186147*m + 1.7076147010*s;
+export {
+  srgbToLinear, linearToSrgb, rgbToOklab, oklabToRgb,
+  oklabToOklch, oklchToOklab, rgbToHex
+};
 
-  // Clamp linear RGB to [0, 1] before conversion to non-linear sRGB to avoid NaN
-  r = Math.max(0, r);
-  g = Math.max(0, g);
-  b2 = Math.max(0, b2);
-
-  r = linearToSrgb(r); g = linearToSrgb(g); b2 = linearToSrgb(b2);
-  return {
-    r: Math.round(Math.min(1, r) * 255),
-    g: Math.round(Math.min(1, g) * 255),
-    b: Math.round(Math.min(1, b2) * 255)
-  };
-}
-export function oklabToOklch({L,a,b}){
-  return { L, C: Math.sqrt(a*a+b*b), h: (Math.atan2(b,a)*180/Math.PI+360)%360 };
-}
-export function oklchToOklab(L,C,h){
-  const hr = h*Math.PI/180;
-  return { L, a: Math.cos(hr)*C, b: Math.sin(hr)*C };
-}
-export function rgbToHex({r,g,b}){
-  return `#${((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}`;
-}
-
-/* ---------- HELPERS ---------- */
 const DEFAULT_STEPS = Array.from({length:101},(_,i)=>i*10);
 export const COARSE_STEPS = Array.from({length:11}, (_,i)=>i*100);
 export const FUNCTIONAL_STEPS = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 export const BADGE_STEPS = [0, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
 
-function stepToL(step){
-  // 0 = White (L=1), 1000 = Black (L=0)
-  return 1 - (step / 1000);
-}
-
 function LToStep(L){
   return Math.round((1 - L) * 1000);
 }
 
-// Guardrail chromy
-function clampChroma(L, C){
-  // Paleta kolorów dark mode miała mieć skorygowaną chromę, żeby dobrze wyglądać na dark mode.
-  // In dark mode, we usually want slightly lower chroma to avoid "glowing" or "vibrating" against dark backgrounds.
-  let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
-
-  const max =
-    L > 0.85 ? 0.10 :
-    L > 0.65 ? 0.16 :
-    L > 0.45 ? 0.24 : 0.32;
-  return Math.min(C * multiplier, max);
-}
-
-/* ---------- CORE GENERATORS ---------- */
-/* ---------- CORE GENERATORS ---------- */
-
-function maxChromaForL(L, H, C_start) {
-  let multiplier = EngineState.mode.palette === 'dark' ? 0.8 : 1.0;
-  let low = 0;
-  let high = Math.max(C_start * multiplier, 0.4);
-  for (let i = 0; i < 20; i++) {
-    const mid = (low + high) / 2;
-    const lab = oklchToOklab(L, mid, H);
-    const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-    if (rgb.r >= 0 && rgb.r <= 255 && rgb.g >= 0 && rgb.g <= 255 && rgb.b >= 0 && rgb.b <= 255) {
-      low = mid;
-    } else {
-      high = mid;
-    }
-  }
-  return low;
-}
-
-function chromaFalloff(L, baseL) {
-  const max_range = 0.6;
-  const alpha = 1.3;
-  const d = Math.abs(L - baseL);
-  return Math.max(0, 1 - Math.pow(d / max_range, alpha));
-}
-
-function hueShift(L, baseL, baseH) {
-  const shift_strength = 5;
-  const d = L - baseL;
-  return (baseH + d * shift_strength + 360) % 360;
-}
-
-function getAdaptiveGamma(baseL, baseT) {
-  const L_max = 0.97;
-  const L_min = 0.12;
-  if (baseT <= 0.001) return 1.3;
-  if (baseT >= 0.999) return 1.3;
-  const ratio = (L_max - baseL) / (L_max - L_min);
-  const safeRatio = Math.max(0.01, Math.min(0.99, ratio));
-  return Math.log(safeRatio) / Math.log(baseT);
-}
-
-function lightnessCurve(t, gamma = 1.3) {
-  const L_max = 0.97;
-  const L_min = 0.12;
-  return L_max - (L_max - L_min) * Math.pow(t, gamma);
-}
-
 export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnchor = false, sourceHex = null){
+  const mode = EngineState.mode;
+  const isDarkMode = mode.palette === 'dark';
+  const scaleMode = mode.scale;
   const anchorStep = LToStep(lch.L);
-  const isAsymmetric = EngineState.mode.scale === 'asymmetric';
-  const isFixed = EngineState.mode.scale === 'fixed';
-  const isAdaptive = EngineState.mode.algorithm === 'adaptive';
-  const isDarkMode = EngineState.mode.palette === 'dark';
-  const granularity = EngineState.mode.granularity || 100;
-
-  const adaptiveGamma = isAdaptive ? getAdaptiveGamma(lch.L, anchorStep / 1000) : 1.3;
 
   let actualSteps = steps;
-  if (isFixed) {
+
+  if (scaleMode === 'fixed') {
       const offset = anchorStep % 10;
       actualSteps = steps.map(s => s + offset).filter(s => s >= 0 && s <= 1000);
       actualSteps = [...new Set(actualSteps)].sort((a,b)=>a-b);
+  } else if (scaleMode === 'asymmetric') {
+      const targetCount = steps.length;
+      if (targetCount > 1) {
+          const half = Math.floor(targetCount / 2);
+          const below = [];
+          for (let i = 0; i < half; i++) below.push((anchorStep / half) * i);
+          const above = [];
+          for (let i = 1; i <= half; i++) above.push(anchorStep + ((1000 - anchorStep) / half) * i);
+          actualSteps = [...below, anchorStep, ...above];
+          actualSteps = [...new Set(actualSteps.map(Math.round))].sort((a,b)=>a-b);
+      }
   }
 
-  const scale = actualSteps.map(step => {
-      let L;
-      if (isAsymmetric) {
-          if (step === 500) L = lch.L;
-          else if (step < 500) {
-              const t = step / 500;
-              const p = lch.L < 0.5 ? 1 / (2 * lch.L + 0.1) : 1;
-              L = 1 - (1 - lch.L) * Math.pow(t, p);
-          } else {
-              const t = (step - 500) / 500;
-              const p = lch.L < 0.5 ? 2 * lch.L + 0.1 : 1;
-              L = lch.L * (1 - Math.pow(t, p));
-          }
-      } else {
-          L = isAdaptive ? lightnessCurve(step/1000, adaptiveGamma) : stepToL(step);
-      }
+  // Generate Base Scale
+  let scale = (mode.algorithm === 'adaptive')
+      ? generateAdaptiveScale(lch, actualSteps, isDarkMode)
+      : generateStandardScale(lch, actualSteps, isDarkMode);
 
-      let C, H;
-      const isBaseStep = isAsymmetric ? (step === 500) : (Math.abs(step - anchorStep) < 0.1);
+  const profile = mode.gamutProfile || 'srgb';
+  const isAnyBoost = mode.darkModeBoost || mode.neonBoost || mode.pastelBoost ||
+                     mode.glassmorphismBoost || mode.inkSaveMode || mode.spectralBalance;
 
-      if (isAdaptive) {
-          let multiplier = isDarkMode ? 0.8 : 1.0;
-          H = hueShift(L, lch.L, lch.h);
-          const maxC = maxChromaForL(L, H, lch.C);
-          const falloff = chromaFalloff(L, lch.L);
-          C = Math.min(maxC, lch.C * multiplier * (isBaseStep ? 1 : falloff));
-      } else {
-          C = clampChroma(L, lch.C);
-          H = lch.h;
-      }
+  return scale.map(swatch => {
+      const isBaseStep = Math.abs(swatch.step - anchorStep) < 0.1;
 
-      const lab = oklchToOklab(L, C, H);
-      const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-      let hex = rgbToHex(rgb);
+      // 1. Apply overlays (un-clamped)
+      let boosted = applyBoosts(swatch, lch, mode);
 
-      if (isBaseStep && !isDarkMode && sourceHex) {
-          hex = sourceHex;
-      }
+      // 2. Detection of clipping
+      const maxC = maxChromaForL(boosted.l, boosted.h, profile);
+      boosted.clipping = (boosted.c > maxC + 0.005) ? Math.round((1 - (maxC / boosted.c)) * 100) : 0;
 
-      return {
-          step,
-          hex,
-          h: H, c: C, l: L,
-          isBase: isBaseStep
-      };
+      // 3. Final Clamp for stability
+      boosted.c = Math.min(boosted.c, maxC);
+
+      const lab = oklchToOklab(boosted.l, boosted.c, boosted.h);
+      boosted.hex = rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
+
+      if (isBaseStep && !isDarkMode && !isAnyBoost && sourceHex) boosted.hex = sourceHex;
+      boosted.isBase = isBaseStep;
+
+      return boosted;
   });
-
-  if (!isAsymmetric && !isFixed && !forceExcludeAnchor) {
-      if (!scale.find(s => Math.abs(s.step - anchorStep) < 0.1)) {
-          let L = lch.L;
-          let C, H;
-          if (isAdaptive) {
-              let multiplier = isDarkMode ? 0.8 : 1.0;
-              H = hueShift(L, lch.L, lch.h);
-              const maxC = maxChromaForL(L, H, lch.C);
-              C = Math.min(maxC, lch.C * multiplier);
-          } else {
-              C = clampChroma(L, lch.C);
-              H = lch.h;
-          }
-          const lab = oklchToOklab(L, C, H);
-          const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-          let hex = rgbToHex(rgb);
-          if (!isDarkMode && sourceHex) hex = sourceHex;
-
-          scale.push({
-              step: anchorStep,
-              hex,
-              h: H, c: C, l: L,
-              isBase: true,
-              isInserted: true
-          });
-      }
-  }
-
-  return scale.sort((a,b)=>a.step-b.step);
 }
 
 export function getBaseLCH(){

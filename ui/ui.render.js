@@ -8,8 +8,9 @@ import {
   getBadgePalettes
 } from '../engine/engine.palettes.js';
 
-import { previewContrast, contrastRatio } from '../engine/engine.accessibility.js';
+import { previewContrast, contrastRatio, apcaContrast } from '../engine/engine.accessibility.js';
 import { getState } from '../engine/engine.core.js';
+import { oklchToOklab, oklabToRgb, rgbToHex } from '../engine/engine.math.js';
 import { generateContrastGrid } from '../engine/engine.contrast.js';
 
 /* ---------- ROOT ---------- */
@@ -44,37 +45,25 @@ function renderSwatch(swatch, opts = {}){
   const state = getState();
   const gran = state.mode.granularity;
 
-  // Account for Fixed scale offset in granularity filtering
-  // Requirement: "Na paletach w rozkładzie 'fixed' brakuje badgy z progami. Logika badgy powinna być taka sama jak przy rozkłądzie absolute."
-  // We use the gridStep to snap to the nearest "clean" threshold even if slightly offset
-  const gridStep = Math.round(swatch.step / 10) * 10;
+  // Logic for filtering: robust check for grid steps
+  const offset = state.mode.scale === 'fixed' ? (Math.round(swatch.step) % 10) : 0;
+  const gridStep = Math.round(swatch.step - offset);
 
-  // Requirement: "Kolor bazowy ma mieć badge widzony zawsze w każdej palecie i granulacji"
   if (gran === 50 && gridStep % 50 !== 0 && !swatch.isBase) return null;
   if (gran === 100 && gridStep % 100 !== 0 && !swatch.isBase) return null;
 
   d.style.background = swatch.hex;
 
-  // Dynamic contrast for text on swatch
   const contrast = previewContrast(swatch.hex);
   const onWhite = contrast.light.ratio;
   const onBlack = contrast.dark.ratio;
   d.style.color = onWhite > onBlack ? '#fff' : '#000';
 
   const stepText = typeof swatch.step === 'number' ? Math.round(swatch.step) : swatch.step;
-  const step = el('div', 'swatch-step', String(stepText));
-  const hex  = el('div', 'swatch-hex', swatch.hex.toUpperCase());
+  const stepEl = el('div', 'swatch-step', String(stepText));
+  const hexEl  = el('div', 'swatch-hex', swatch.hex.toUpperCase());
 
-  // Badges logic:
-  // co 10: show 50 and 100 (100 priority)
-  // co 50: show 100
-  // co 100: handled by renderer not showing non-100s
-
-  // Badges rules:
-  // - BASE always visible.
-  // - Granularity 10: 100 and 50 visible (100 priority if same).
-  // - Granularity 50: 100 visible.
-
+  // Badges rules
   if (swatch.isBase) {
       const badge = el('div', 'swatch-badge base visible', 'BASE');
       badge.style.zIndex = "10";
@@ -99,7 +88,6 @@ function renderSwatch(swatch, opts = {}){
       }
   }
 
-  // Contrast info for current background
   const bgMode = state.mode.background;
   const info = contrast[bgMode];
   const contrastEl = el('div', 'swatch-contrast', `${info.ratio} ${info.level}`);
@@ -113,9 +101,25 @@ function renderSwatch(swatch, opts = {}){
   whiteBlackContrast.style.opacity = '0.8';
   whiteBlackContrast.style.marginTop = '2px';
 
-  d.append(step, hex, contrastEl, whiteBlackContrast);
+  d.append(stepEl, hexEl, contrastEl, whiteBlackContrast);
 
-  // Click to copy
+  // Gamut Clipping Point Indicator
+  if (swatch.clipping > 0) {
+      const dot = el('div', 'clipping-dot');
+      dot.title = `Gamut Clipping: -${swatch.clipping}% Chroma`;
+      dot.style.position = 'absolute';
+      dot.style.top = '8px';
+      dot.style.right = '8px';
+      dot.style.width = '8px';
+      dot.style.height = '8px';
+      dot.style.borderRadius = '50%';
+      // Neutral grayscale contrast
+      dot.style.background = (onWhite > onBlack) ? '#ffffff' : '#000000';
+      dot.style.opacity = '0.5';
+      dot.style.boxShadow = '0 0 2px rgba(0,0,0,0.3)';
+      d.appendChild(dot);
+  }
+
   d.addEventListener('click', () => {
     navigator.clipboard.writeText(swatch.hex.toUpperCase()).then(() => {
       showCopyToast(swatch.hex.toUpperCase());
@@ -238,24 +242,36 @@ function renderContrastGridForLCH(lch, title) {
     );
     container.appendChild(header);
 
+    const state = getState();
+    const isApca = state.contrastSettings.algorithm === "apca";
+
     grid.forEach(row => {
         const r = el('div', 'contrast-row');
         r.style.gridTemplateColumns = '100px repeat(8, 1fr)';
 
-        // Calculate Base vs L1 ratio
         const baseHex = rgbToHex(oklabToRgb(...Object.values(oklchToOklab(lch.L || lch.l, lch.C || lch.c, lch.h))));
-        const baseVsL1 = contrastRatio(row.l1, baseHex);
+        const baseVsL1 = isApca ? Math.abs(apcaContrast(row.l1, baseHex)) : contrastRatio(row.l1, baseHex);
 
         r.append(
             createContrastSwatch('Tło', row.bg),
-            createContrastSwatch(`Min: ${row.l1_target.toFixed(1)}`, row.l1, null, row.l1_actual),
-            createContrastSwatch(`Min: ${row.c45_bg_target.toFixed(1)}`, row.c45_bg, null, row.c45_bg_actual),
-            createContrastSwatch(`Min: ${row.c7_bg_target.toFixed(1)}`, row.c7_bg, null, row.c7_bg_actual),
-            createContrastSwatch(`Min: ${row.l2_target.toFixed(1)}`, row.l2, null, row.l2_actual),
-            createContrastSwatch(`Min: ${row.c45_l1_target.toFixed(1)}`, row.c45_l1, null, row.c45_l1_actual),
-            createContrastSwatch('Base', null, lch, row.baseContrast),
-            createContrastSwatch('Base', null, lch, baseVsL1)
+            createContrastSwatch(`${isApca ? 'Lc' : 'Min'}: ${row.l1_target.toFixed(isApca ? 0 : 1)}`, row.l1, null, row.l1_actual, isApca),
+            createContrastSwatch(`${isApca ? 'Lc' : 'Min'}: ${row.c45_bg_target.toFixed(isApca ? 0 : 1)}`, row.c45_bg, null, row.c45_bg_actual, isApca),
+            createContrastSwatch(`${isApca ? 'Lc' : 'Min'}: ${row.c7_bg_target.toFixed(isApca ? 0 : 1)}`, row.c7_bg, null, row.c7_bg_actual, isApca),
+            createContrastSwatch(`${isApca ? 'Lc' : 'Min'}: ${row.l2_target.toFixed(isApca ? 0 : 1)}`, row.l2, null, row.l2_actual, isApca),
+            createContrastSwatch(`${isApca ? 'Lc' : 'Min'}: ${row.c45_l1_target.toFixed(isApca ? 0 : 1)}`, row.c45_l1, null, row.c45_l1_actual, isApca),
+            createContrastSwatch('Base', null, lch, row.baseContrast, isApca),
+            createContrastSwatch('Base', null, lch, baseVsL1, isApca)
         );
+
+        if (row.glassContrast !== undefined) {
+            const glassInfo = el('div', 'glass-info');
+            glassInfo.textContent = `Glass Cntr: ${row.glassContrast.toFixed(1)}${isApca ? '' : ':1'}`;
+            glassInfo.style.fontSize = '0.6rem';
+            glassInfo.style.padding = '4px';
+            glassInfo.style.textAlign = 'center';
+            glassInfo.style.background = 'rgba(255,255,255,0.1)';
+            r.appendChild(glassInfo);
+        }
         container.appendChild(r);
     });
 
@@ -308,9 +324,8 @@ function renderContrastView() {
     return frag;
 }
 
-import { oklchToOklab, oklabToRgb, rgbToHex } from '../engine/engine.scales.js';
 
-function createContrastSwatch(label, hex, forceLch, actualRatio) {
+function createContrastSwatch(label, hex, forceLch, actualRatio, isApca = false) {
     const d = el('div', 'contrast-swatch');
     let c = hex;
     if (!c && forceLch) {
@@ -339,7 +354,9 @@ function createContrastSwatch(label, hex, forceLch, actualRatio) {
     d.append(l, h, wb);
 
     if (actualRatio !== undefined) {
-        const r = el('div', 'contrast-ratio', `Real: ${actualRatio.toFixed(2)}:1`);
+        const val = isApca ? Math.abs(actualRatio).toFixed(0) : actualRatio.toFixed(2);
+        const suffix = isApca ? '' : ':1';
+        const r = el('div', 'contrast-ratio', `Real: ${val}${suffix}`);
         d.appendChild(r);
     }
 
@@ -351,7 +368,9 @@ export function getAllVisibleHexes() {
     const hexes = [];
     const collect = (scale) => {
         scale.forEach(s => {
-            const gridStep = s.step - (s.step % 10);
+            const offset = state.mode.scale === 'fixed' ? (Math.round(s.step) % 10) : 0;
+            const gridStep = Math.round(s.step - offset);
+
             if (state.mode.granularity === 50 && gridStep % 50 !== 0 && !s.isBase) return;
             if (state.mode.granularity === 100 && gridStep % 100 !== 0 && !s.isBase) return;
             hexes.push(s.hex.toUpperCase());
@@ -360,7 +379,6 @@ export function getAllVisibleHexes() {
 
     collect(getMainPalette().scale);
     getAdditionalPalettes().forEach(p => collect(p.scale));
-    // Functional and badges usually fixed granularity, but we follow same logic
     Object.values(getFunctionalPalettes()).forEach(p => collect(p.scale));
     getBadgePalettes().forEach(p => collect(p.scale));
 
@@ -380,15 +398,18 @@ function createSVGSwatch(swatch, x, y, width, height) {
                    <text x="${x+width/2}" y="${y+2}" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="#FFFFFF">BASE</text>`;
     } else {
         const gran = state.mode.granularity;
+        const offset = state.mode.scale === 'fixed' ? (Math.round(swatch.step) % 10) : 0;
+        const gridStep = Math.round(swatch.step - offset);
+
         if (gran === 10) {
-            if (swatch.step % 100 === 0) {
+            if (gridStep % 100 === 0) {
                 badges += `<rect x="${x+width/2-15}" y="${y-10}" width="30" height="18" rx="9" fill="#334155" />
                            <text x="${x+width/2}" y="${y+2}" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="#FFFFFF">100</text>`;
-            } else if (swatch.step % 50 === 0) {
+            } else if (gridStep % 50 === 0) {
                 badges += `<rect x="${x+width/2-15}" y="${y-10}" width="30" height="18" rx="9" fill="#94a3b8" />
                            <text x="${x+width/2}" y="${y+2}" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="#000000">50</text>`;
             }
-        } else if (gran === 50 && swatch.step % 100 === 0) {
+        } else if (gran === 50 && gridStep % 100 === 0) {
             badges += `<rect x="${x+width/2-15}" y="${y-10}" width="30" height="18" rx="9" fill="#334155" />
                        <text x="${x+width/2}" y="${y+2}" font-family="Inter, sans-serif" font-size="9" font-weight="900" text-anchor="middle" fill="#FFFFFF">100</text>`;
         }
@@ -404,7 +425,7 @@ function createSVGSwatch(swatch, x, y, width, height) {
     </g>`;
 }
 
-function createSVGContrastSwatch(x, y, width, height, label, hex, forceLch, actualRatio, bgIsDark) {
+function createSVGContrastSwatch(x, y, width, height, label, hex, forceLch, actualRatio, bgIsDark, isApca = false) {
     let c = hex;
     if (!c && forceLch) {
         const L = forceLch.L !== undefined ? forceLch.L : forceLch.l;
@@ -423,7 +444,7 @@ function createSVGContrastSwatch(x, y, width, height, label, hex, forceLch, actu
         <rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${c}" rx="12" />
         <text x="${x+12}" y="${y+22}" font-family="Inter, sans-serif" font-size="10" font-weight="800" fill="${textColor}" opacity="0.7">${label}</text>
         <text x="${x+12}" y="${y+height-12}" font-family="Inter, sans-serif" font-size="11" font-weight="700" fill="${textColor}">${c.toUpperCase()}</text>
-        ${actualRatio !== undefined ? `<text x="${x+12}" y="${y+height-28}" font-family="Inter, sans-serif" font-size="10" font-weight="700" fill="${textColor}">Real: ${actualRatio.toFixed(2)}:1</text>` : ''}
+        ${actualRatio !== undefined ? `<text x="${x+12}" y="${y+height-28}" font-family="Inter, sans-serif" font-size="10" font-weight="700" fill="${textColor}">Real: ${isApca ? Math.abs(actualRatio).toFixed(0) : actualRatio.toFixed(2)}${isApca ? '' : ':1'}</text>` : ''}
     </g>`;
 }
 
@@ -447,9 +468,10 @@ export function generateExportSVG(type = 'main') {
             const grid = generateContrastGrid(lch);
             svgContent += `<text x="0" y="${currentY - 10}" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="${textFill}">${title}</text>`;
 
+            const isApca = state.contrastSettings.algorithm === "apca";
             grid.forEach((row, rowIndex) => {
                 const baseHex = rgbToHex(oklabToRgb(...Object.values(oklchToOklab(lch.L || lch.l, lch.C || lch.c, lch.h))));
-                const baseVsL1 = contrastRatio(row.l1, baseHex);
+                const baseVsL1 = isApca ? Math.abs(apcaContrast(row.l1, baseHex)) : contrastRatio(row.l1, baseHex);
 
                 const swatches = [
                     { label: 'Tło', hex: row.bg },
@@ -463,7 +485,7 @@ export function generateExportSVG(type = 'main') {
                 ];
 
                 swatches.forEach((s, i) => {
-                    svgContent += createSVGContrastSwatch(i * (swatchWidth + gap), currentY + rowIndex * (swatchHeight + gap), swatchWidth, swatchHeight, s.label, s.hex, s.lch, s.ratio, isDark);
+                    svgContent += createSVGContrastSwatch(i * (swatchWidth + gap), currentY + rowIndex * (swatchHeight + gap), swatchWidth, swatchHeight, s.label, s.hex, s.lch, s.ratio, isDark, isApca);
                 });
                 maxW = Math.max(maxW, swatches.length * (swatchWidth + gap));
             });
@@ -492,7 +514,9 @@ export function generateExportSVG(type = 'main') {
         collections.forEach(p => {
             svgContent += `<text x="0" y="${currentY - 10}" font-family="Inter, sans-serif" font-size="18" font-weight="900" fill="${textFill}">${p.name}</text>`;
             const filteredScale = p.scale.filter(s => {
-                const gridStep = Math.round(s.step / 10) * 10;
+                const offset = state.mode.scale === 'fixed' ? (Math.round(s.step) % 10) : 0;
+                const gridStep = Math.round(s.step - offset);
+
                 if (gran === 50 && gridStep % 50 !== 0 && !s.isBase) return false;
                 if (gran === 100 && gridStep % 100 !== 0 && !s.isBase) return false;
                 return true;
@@ -512,10 +536,6 @@ export function generateExportSVG(type = 'main') {
 }
 
 /* ---------- PUBLIC API ---------- */
-/**
- * Renders all components of the output view.
- * @param {boolean} preserveFocus - If true, indicates we should attempt to keep current UI state (e.g. scroll)
- */
 export function renderAllPalettes(preserveFocus = false){
   if (!root) return;
   const state = getState();
@@ -534,14 +554,12 @@ export function renderAllPalettes(preserveFocus = false){
       root.appendChild(frag);
   }
 
-  // Update contrast grid background for Dark UI Preview requirement
   const isDarkPreview = state.mode.background === 'dark';
   document.querySelectorAll('.contrast-grid').forEach(g => {
       if (isDarkPreview) g.style.backgroundColor = '#000000';
       else g.style.backgroundColor = '#ffffff';
   });
 
-  // Ensure headers are visible
   const textColor = isDarkPreview ? '#ffffff' : '#000000';
   document.querySelectorAll('.palette-title strong, .contrast-title, .role-tag').forEach(el => {
       el.style.color = textColor;

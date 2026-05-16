@@ -1,29 +1,15 @@
-# Analiza Rozwojowa: Profesjonalny System Palet OKLCH
+# Analiza Rozwojowa: Stabilność Designerska (V6)
 
-## Stan Obecny (V2)
-System osiągnął dojrzałość produkcyjną. Kluczowe przewagi techniczne:
-- **Precyzja Percepcyjna**: Dzięki OKLCH kolory zachowują stałą jasność wizualną przy zmianie barwy.
-- **Algorytmiczne Skalowanie**: Tryby `Asym` i `Fixed` pozwalają na budowę systemów projektowych o różnej dynamice.
-- **Zorientowanie na Kontrast**: System nie tylko generuje kolory, ale weryfikuje ich użyteczność w czasie rzeczywistym (WCAG).
+## Kierunek: Stabilność ponad Ekstremalność
+Wersja V6 stanowi ostateczny szlif stabilności systemu. Zrezygnowaliśmy z ryzykownych optymalizacji matematycznych, które powodowały artefakty wizualne (np. efekt szachownicy), na rzecz przewidywalnych, liniowych rozkładów w punktach węzłowych.
 
-## Propozycje Dalszego Rozwoju
+### Kluczowe Ulepszenia
 
-### 1. Rozszerzony Eksport i Integracja (Handoff)
-- **Design Tokens (JSON)**: Eksport w formacie zgodnym ze standardem W3C Design Tokens, ułatwiający integrację z narzędziami takimi jak Style Dictionary.
-- **CSS Variables Generator**: Automatyczne generowanie arkusza stylów z zmiennymi CSS, obsługującego Dark Mode (prefers-color-scheme).
-- **Tailwind Plugin**: Generowanie konfiguracji `tailwind.config.js` na podstawie stworzonych palet.
+1. **Precision First**: Użycie surowych wartości float (`oklabToRgbRaw`) przed etapem zaokrąglania pozwoliło wyeliminować skokowe zmiany barwy wynikające z 8-bitowej granulacji sRGB.
+2. **Orchestrated Clamping**: Przeniesienie limitowania kolorów do orchestratora umożliwiło jednoczesne zachowanie wysokiej jakości wizualnej nakładek (Boosts) i precyzyjne informowanie użytkownika o clippingu.
+3. **Design-Ready Boosts**: Nakładki Pastel i Glassmorphism zostały zoptymalizowane pod kątem współczesnych trendów UI, oferując czyste, wysokiej jasności barwy.
 
-### 2. Zaawansowana Edycja Krzywych
-- **Edytor Krzywych Beziera**: Wizualny edytor dla parametrów L, C, H, pozwalający na ręczne dociąganie gradacji kolorów zamiast polegania wyłącznie na algorytmie.
-- **Interpolacja Przestrzeni**: Możliwość wyboru między OKLCH, OKLUV lub HSL dla porównania wyników.
+## Przyszłość: Kontekstualna Inteligencja
 
-### 3. Dostępność (Accessibility 2.0)
-- **Symulator Ślepoty Barw**: Nakładka na interfejs symulująca Protanopię, Deuteranopię i Tritanopię dla całej palety.
-- **APCA (Advanced Perceptual Contrast Algorithm)**: Implementacja nadchodzącego standardu kontrastu z WCAG 3.0.
-
-### 4. Funkcje Kolaboracyjne i Zarządzanie
-- **Zapis w Chmurze/LocalStorage**: Możliwość zapisywania wielu projektów palet i ich późniejszej edycji.
-- **Porównywarka Palet**: Tryb side-by-side do porównywania dwóch różnych zestawów kolorów.
-
-## Wnioski
-Obecna architektura jest modularna i pozwala na łatwe dodawanie nowych algorytmów (folder `core/`) oraz widoków (folder `ui/`). System stanowi solidny fundament pod zaawansowane narzędzie typu "Color Design System" dla dużych organizacji.
+- **Perceptual Uniformity Score**: Wskaźnik "płynności" palety oparty o CAM16-UCS, informujący o jakości gradientów.
+- **Adaptive Contrast Steps**: Rozwinięcie algorytmu o automatyczne przesuwanie kroków skali tak, aby każdy z nich domyślnie spełniał wymóg WCAG AA względem wybranego tła.
