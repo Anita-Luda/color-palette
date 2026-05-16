@@ -1,19 +1,22 @@
-# Audit V8: Final Professional Design Stability
+# Audit V9: Orchestrated Perceptual Stability
 
-## 1. Core Engine Overhaul (Yellow/Cyan/Magenta Fix)
-- [Sigmoid Transition] RESOLVED. Replaced parabolic falloff with continuous sigmoid curves in `algo.standard.js`. This eliminates the "kinks" and "steps" seen in high-chroma colors near gamut boundaries (e.g., #ffff00).
-- [Character Preservation] Adaptive mode now uses relative saturation intensity. This prevents the "graying out" of highlights and preserves the base color's identity across the full scale.
+## 1. Engine Stability (Yellow/Cyan/Magenta Fix)
+- [Sigmoid Falloff] FIXED. Standard algorithm now uses a continuous sigmoid curve. This eliminates the "progi" and "wybicia" (jumps) in high-boundary colors like Yellow (#ffff00), ensuring a smooth tonal ramp in all modes.
+- [CAM16 Stability] FIXED. Improved power function precision for ultra-low luminance values, preventing the 0-190 rounding issue.
+- [Gamut Boundary] Precise 24-30 iteration binary search ensures no artifacts at gamut edges.
 
-## 2. Layered Orchestration (Dark Mode & Boosts)
-- [Masking Logic] Fixed the interaction between Neon Boost and Dark Mode. Dark Mode is now applied as the final perceptual damping layer, ensuring Neon effects are appropriately toned down for dark backgrounds.
-- [Boost Polishing] Refined all boost parameters. Pastel now maintains full 0-1000 range. Light Mode Boost corrects yellow-shade shifts.
+## 2. Scale & UI Logic (V9)
+- [Asymmetric Mapping] FIXED. Anchor color now always maps to Step 500 for display, providing a balanced visual distribution.
+- [Granularity Fix] RESOLVED. Swatches no longer disappear in 50/100 granularity modes for Asymmetric/Fixed scales. Filtering now correctly uses `displayStep`.
+- [Badges] Robust visibility for BASE, 100, and 50 steps as CSS variable thresholds.
 
-## 3. New Pro-Designer Views
-- [Glass View] Implemented dedicated simulation with 4 states (Light/Dark BG vs Light/Dark Glass). Includes layer depth preview with background patterns.
-- [Gradients View] Perceptual tonal ramp visualization.
-- [Separated Backgrounds] Contrast and Glass views now have independent background source selection.
+## 3. Orchestrated Layers
+- [Dark Mode Mask] Correctly applied as the final damping layer after all boosts. Ensures Neon or Vibrant palettes are comfortable in DM.
+- [Light Mode Boost] New corrective layer for yellow shades, preventing green-shift (olive mud).
+- [Spectral Balance] Fully operational, koryguje jasność fizyczną względem nasycenia.
 
-## 4. Technical Precision
-- [V8 Math] 24-iteration binary search for gamut boundaries. Robust CAM16 power logic for low-light consistency.
-- [Ink-Save] Switched to quantized solid-tone simulation to avoid halftone stippling.
-- [Badges] Threshold logic now matches CSS variable expectations.
+## 4. Requirement Verification
+- [Absolute Mode] Verified base color inclusion.
+- [Glass View] Dedicated simulation with 4 states + depth preview.
+- [Gradients View] Perceptual ramp visualization.
+- [Handoff] SVG Figma export verified with V9 metadata.

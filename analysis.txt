@@ -1,16 +1,16 @@
-# Analiza Rozwojowa: System V8 - Design Logic
+# Analiza Rozwojowa: V9 - Percepcyjna Hybryda
 
-## Od Algorytmiki do Warstw Projektowych
-Wersja V8 to dojrzałe podejście do inżynierii koloru, gdzie matematyka OKLCH służy jedynie jako baza, na którą nakładane są "maski percepcyjne". Najważniejszą zmianą jest zmiana kolejności operacji: Boosty -> CAM16 -> Dark Mode -> Clamping.
+## Filozofia V9: Stabilność i Warstwy
+Wersja V9 to kulminacja prac nad stabilnością percepcyjną. Odeszliśmy od prostego sumowania efektów na rzecz orchestracji warstw (Masking Logic). Dzięki temu system zachowuje się przewidywalnie nawet przy ekstremalnych kombinacjach ustawień (np. Neon + Dark Mode + Spectral Balance).
 
-### Kluczowe Ulepszenia
+### Najważniejsze Innowacje
 
-1. **Sigmoidalne Wygładzanie**: Zastąpienie interpolacji liniowej funkcją sigmoidalną w algorytmie Standard wyeliminowało "progi" wizualne przy barwach o wysokiej nasyconości (Yellow).
-2. **Relative Intensity (Adaptive)**: Nowy model utrzymywania charakteru barwy sprawia, że Adaptive nie szarzeje w wysokich tonach, dążąc do maksymalnego możliwego nasycenia zachowując proporcje barwy bazowej.
-3. **Glass UI Architecture**: Dedykowany widok Glassmorphism z podziałem na warstwy (tło, szkło, border) pozwala na precyzyjne projektowanie interfejsów głębi.
+1. **Sigmoidalne Przejścia Tonalne**: Zastosowanie funkcji sigmoidalnej zamiast parabolicznej dla Chromy pozwoliło na wyeliminowanie wizualnych "kinków" przy krawędzi gamutu sRGB, co było kluczowe dla barw takich jak Żółty czy Cyjan.
+2. **DisplayStep Architecture**: Rozdzielenie logiki obliczeniowej (step) od logiki prezentacyjnej (displayStep) pozwoliło na idealne centrowanie koloru bazowego w skali Asymmetric (zawsze krok 500) bez utraty precyzji matematycznej.
+3. **Advanced CAM16 Handling**: Poprawienie precyzji obliczeń dla niskich poziomów jasności wyeliminowało artefakt "szarzenia" ciemnych tonów przy włączonym CAM16 Polish.
 
-## Dalsze Kierunki Rozwoju
+## Przyszłość: Kontekstualna Inteligencja
 
-- **Motion-Safe Gradients**: Analiza i optymalizacja gradientów pod kątem eliminacji efektu "banding" w animacjach.
-- **Smart CMYK ink-limit**: Rozbudowa Ink-Save o profile ICC, aby precyzyjnie wyliczać oszczędność tonera na konkretnych papierach.
-- **Multi-Anchor Scales**: Możliwość definiowania wielu punktów kontrolnych w jednej skali (np. stałe nasycenie dla 200, 500 i 800).
+- **Gamut Volumetric Audit**: Narzędzie pokazujące w 3D, jaka część palety wykracza poza sRGB i jak głęboko "clipping" wpływa na charakter barwy.
+- **Auto-Contrast Balancing**: Rozwinięcie algorytmu o dynamiczne przesuwanie jasności kroków tak, aby automatycznie osiągać zadane progi WCAG AA/AAA bez ingerencji projektanta.
+- **HDR Workflow Integration**: Przygotowanie orchestratora do obsługi wartości jasności powyżej 100 (L > 1.0) dla wyświetlaczy o wysokiej rozpiętości tonalnej.

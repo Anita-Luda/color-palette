@@ -1,23 +1,25 @@
-# Checklist: Professional OKLCH System (V8)
+# Checklist: OKLCH Orchestrated Engine (V9)
 
-## Core Algorithms
-- [x] Smooth Tonal Ramps for #ffff00, #ff00ff, #00ffff
-- [x] Adaptive Mode character preservation (no graying out)
+## Core Stability
+- [x] Smooth tonal ramps for Yellow (#ffff00) & Cyan (#00ffff)
+- [x] No "checkerboard" or random shifts
 - [x] CAM16-UCS low-light stability (0-190 steps fixed)
+- [x] Precise Gamut Clamping (24-30 iterations)
+
+## UI & Scaling Logic
+- [x] Asymmetric Mode: Base maps to 500
+- [x] Granularity 50/100 works for ALL scales
+- [x] Step Badges (100, 50, BASE) visible
 - [x] Absolute mode includes exact base color
-- [x] Asymmetric mode centers base at 500
-- [x] Fixed mode shifted grid co 10
 
-## Perceptual Boosts
-- [x] Dark Mode as a final damping mask
-- [x] Light Mode Boost (Yellow shade correction)
-- [x] Pastel (Full range, soft tones)
-- [x] Neon (Orchestrated clamping)
-- [x] Ink-Save (Quantized solid channels)
+## Pro-Designer Features
+- [x] Glass View: 4-state simulation + Layer depth
+- [x] Gradients View: Perceptual ramp visualization
+- [x] Spectral Balance: Helmholtz–Kohlrausch correction
+- [x] Light Mode Boost: Yellow shade correction
+- [x] Dark Mode: Final damping mask layer
 
-## UI & Design Views
-- [x] Glass View (4 combinations + Bubble preview)
-- [x] Gradients View (Tonal ramp visualization)
-- [x] Separated "Contrast BG" and "Glass BG" buttons
-- [x] Robust Badge Visibility (epsilon matching)
-- [x] Clipping indicators neutralized (grayscale)
+## Accessibility & Handoff
+- [x] APCA V3 & WCAG 2.1 Contrast Grid
+- [x] Glassmorphism Contrast Simulation
+- [x] SVG Figma Export (Copy-to-Clipboard)

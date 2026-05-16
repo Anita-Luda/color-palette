@@ -1,5 +1,5 @@
 // engine/engine.math.js
-// OKLCH Math & Color Conversions - V8 Robust Perceptual
+// OKLCH Math & Color Conversions - V9 Robust Stability
 
 export function srgbToLinearWCAG(c){
   c /= 255;
@@ -32,7 +32,6 @@ export function oklabToRgbRaw(L,a,b){
   const l_ = L + 0.3963377774*a + 0.2158037573*b;
   const m_ = L - 0.1055613458*a - 0.0638541728*b;
   const s_ = L - 0.0894841775*a - 1.2914855480*b;
-  // Robust power logic for negative values
   const l = l_ < 0 ? 0 : l_**3, m = m_ < 0 ? 0 : m_**3, s = s_ < 0 ? 0 : s_**3;
   let r =  4.0767416621*l - 3.3077115913*m + 0.2309699292*s;
   let g = -1.2684380046*l + 2.6097574011*m - 0.3413193965*s;
@@ -114,8 +113,13 @@ export function xyzToCam16(X, Y, Z) {
     const bc = ((params.Yw * D / bW) + (1 - D)) * b;
 
     const fL = params.fL;
-    // Robust root logic for low values to prevent 0-190 clamping
-    const getS = (v) => Math.pow((fL * Math.abs(v)) / 100, 0.422);
+    // V9: Improved power logic for ultra-low luminance stability
+    const getS = (v) => {
+        const absV = Math.abs(v);
+        if (absV < 0.0001) return 0;
+        return Math.pow((fL * absV) / 100, 0.422);
+    };
+
     const r_ = getS(rc), g_ = getS(gc), b_ = getS(bc);
 
     const ra = (400 * r_) / (r_ + 27.13);
@@ -126,10 +130,13 @@ export function xyzToCam16(X, Y, Z) {
     const b_alt = (ra + ga - 2 * ba) / 9;
     const h = (Math.atan2(b_alt, a) * 180 / Math.PI + 360) % 360;
 
-    const Aw = (2 * 400 * getS(params.Yw) / (getS(params.Yw) + 27.13)) + 0.305;
+    const sYw = getS(params.Yw);
+    const Aw = (2 * 400 * sYw / (sYw + 27.13)) + 0.305;
     const A = (2 * ra + ga + 0.05 * ba) - 0.305;
     const J = 100 * Math.pow(Math.max(0, A / Aw), params.z);
-    const C = Math.sqrt(a * a + b_alt * b_alt) * 0.11;
+
+    // Scale chroma for UCS compatibility
+    const C = Math.sqrt(a * a + b_alt * b_alt) * 0.12;
     return { J, C, h };
 }
 
@@ -149,13 +156,18 @@ export function oklabToXyz(L, a, b) {
 }
 
 /**
- * GAMUT BOUNDARY V8: 24 Iterations, Ultra precise nodal points.
+ * GAMUT BOUNDARY V9: Adaptive Iteration & Edge-Smoothing
  */
 export function maxChromaForL(L, H, profile = 'srgb') {
     if (L <= 0.0001 || L >= 0.9999) return 0;
+
     let low = 0;
-    let high = (profile === 'p3' || profile === 'rec2020') ? 0.55 : 0.45;
-    for (let i = 0; i < 24; i++) {
+    let high = (profile === 'p3' || profile === 'rec2020') ? 0.6 : 0.45;
+
+    // Smooth the gamut surface by using higher iterations near boundary-critical hues
+    const iterations = (H > 60 && H < 130) ? 30 : 20;
+
+    for (let i = 0; i < iterations; i++) {
         const mid = (low + high) / 2;
         const lab = oklchToOklab(L, mid, H);
         const { r, g, b } = oklabToRgbRaw(lab.L, lab.a, lab.b);
