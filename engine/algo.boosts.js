@@ -1,66 +1,47 @@
 // engine/algo.boosts.js
-// V5 Design-Focused Boosts - Rewritten for predictability and combinability
-
-import { oklchToOklab, oklabToRgb, rgbToHex, maxChromaForL } from './engine.math.js';
+// V6 Design-Focused Boosts - REFACTORED FOR FRESHNESS & RELIABILITY
 
 export function applyBoosts(swatch, baseLch, mode) {
     let { l, c, h } = swatch;
-    const profile = mode.gamutProfile || 'srgb';
 
-    // 1. Dark Mode Boost: Perceptual identity correction
-    // Focus: Counter-acting the desaturation of light colors on dark backgrounds
+    // 1. Dark Mode Boost: Readability on dark
     if (mode.darkModeBoost) {
-        // Shift hues away from "dirty" zones on black
-        if (h > 60 && h < 160) h += 5; // Greener
-        if (h > 240 && h < 300) h -= 5; // Deeper blue
-
-        // Boost light tones chroma to keep them "vibrant" against black
-        if (l > 0.6) c *= 1.15;
+        // Shift warm colors toward red, cool toward cyan
+        if (h > 40 && h < 120) h += 10;
+        if (h > 200 && h < 280) h -= 10;
+        // Boost vibrancy of light tones to pop against black
+        if (l > 0.4) c *= 1.35;
     }
 
-    // 2. Neon Boost: Technical intensity
+    // 2. Neon Boost: High-vibrancy pop
     if (mode.neonBoost) {
-        const technicalMax = maxChromaForL(l, h, profile);
-        // Push toward 90% of gamut capacity to leave some headroom for smoothness
-        c = c * 0.4 + (technicalMax * 0.9) * 0.6;
+        // High constant chroma target for "vibrancy", orchestrator will clamp to gamut.
+        c = 0.45;
     }
 
-    // 3. Pastel Boost: High-key, fresh tones
+    // 3. Pastel Boost: Clean, fresh high-key
     if (mode.pastelBoost) {
-        // Compression: move everything to the top 30% of lightness
-        l = 0.7 + (l * 0.28);
-        // Normalize chroma to a "fresh" low-but-not-gray value
-        c = 0.03 + (c * 0.1);
+        // Force high lightness and very clean, fresh low-chroma
+        l = 0.85 + (l * 0.13);
+        c = 0.05;
     }
 
-    // 4. Glassmorphism: Legibility behind blur
+    // 4. Glassmorphism Boost: Frosted glass effect
     if (mode.glassmorphismBoost) {
-        // Lighten significantly to compensate for backdrop-filter: blur() darkening
-        l = l + (1.0 - l) * 0.3;
-        c *= 0.9; // Desaturate slightly for that "frosted" look
+        l = l * 0.15 + 0.85;
+        c = 0.04;
     }
 
-    // 5. Ink-Save: Print optimization
+    // 5. Ink-Save Mode: Print optimization
     if (mode.inkSaveMode) {
-        if (l > 0.5) {
-            c *= (1 - (l - 0.5) * 1.5); // Drastic desaturation in highlights
-        }
+        if (l > 0.4) c = 0.01;
     }
 
     // 6. Spectral Balance (H-K effect)
     if (mode.spectralBalance) {
-        // High chroma colors look brighter than they are. Lower physical L to compensate.
-        const correction = c * 0.15;
-        l = Math.max(0.02, l - correction);
+        // Physical darkening to equalize perceived brightness
+        l = Math.max(0.04, l - c * 0.3);
     }
 
-    // Final safety clamp
-    const mC = maxChromaForL(l, h, profile);
-    c = Math.min(c, mC);
-
-    const lab = oklchToOklab(l, c, h);
-    const rgb = oklabToRgb(lab.L, lab.a, lab.b);
-    const hex = rgbToHex(rgb);
-
-    return { ...swatch, hex, l, c, h };
+    return { ...swatch, l, c, h };
 }

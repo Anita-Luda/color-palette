@@ -45,38 +45,25 @@ function renderSwatch(swatch, opts = {}){
   const state = getState();
   const gran = state.mode.granularity;
 
-  // Account for Fixed scale offset in granularity filtering
-  // Requirement: "Na paletach w rozkładzie 'fixed' brakuje badgy z progami. Logika badgy powinna być taka sama jak przy rozkłądzie absolute."
-  // Logic: treat the shifted steps as if they were clean steps for the purpose of badges and filtering.
+  // Logic for filtering: robust check for grid steps
   const offset = state.mode.scale === 'fixed' ? (Math.round(swatch.step) % 10) : 0;
   const gridStep = Math.round(swatch.step - offset);
 
-  // Requirement: "Kolor bazowy ma mieć badge widzony zawsze w każdej palecie i granulacji"
   if (gran === 50 && gridStep % 50 !== 0 && !swatch.isBase) return null;
   if (gran === 100 && gridStep % 100 !== 0 && !swatch.isBase) return null;
 
   d.style.background = swatch.hex;
 
-  // Dynamic contrast for text on swatch
   const contrast = previewContrast(swatch.hex);
   const onWhite = contrast.light.ratio;
   const onBlack = contrast.dark.ratio;
   d.style.color = onWhite > onBlack ? '#fff' : '#000';
 
   const stepText = typeof swatch.step === 'number' ? Math.round(swatch.step) : swatch.step;
-  const step = el('div', 'swatch-step', String(stepText));
-  const hex  = el('div', 'swatch-hex', swatch.hex.toUpperCase());
+  const stepEl = el('div', 'swatch-step', String(stepText));
+  const hexEl  = el('div', 'swatch-hex', swatch.hex.toUpperCase());
 
-  // Badges logic:
-  // co 10: show 50 and 100 (100 priority)
-  // co 50: show 100
-  // co 100: handled by renderer not showing non-100s
-
-  // Badges rules:
-  // - BASE always visible.
-  // - Granularity 10: 100 and 50 visible (100 priority if same).
-  // - Granularity 50: 100 visible.
-
+  // Badges rules
   if (swatch.isBase) {
       const badge = el('div', 'swatch-badge base visible', 'BASE');
       badge.style.zIndex = "10";
@@ -101,7 +88,6 @@ function renderSwatch(swatch, opts = {}){
       }
   }
 
-  // Contrast info for current background
   const bgMode = state.mode.background;
   const info = contrast[bgMode];
   const contrastEl = el('div', 'swatch-contrast', `${info.ratio} ${info.level}`);
@@ -115,7 +101,7 @@ function renderSwatch(swatch, opts = {}){
   whiteBlackContrast.style.opacity = '0.8';
   whiteBlackContrast.style.marginTop = '2px';
 
-  d.append(step, hex, contrastEl, whiteBlackContrast);
+  d.append(stepEl, hexEl, contrastEl, whiteBlackContrast);
 
   // Gamut Clipping Point Indicator
   if (swatch.clipping > 0) {
@@ -127,13 +113,13 @@ function renderSwatch(swatch, opts = {}){
       dot.style.width = '8px';
       dot.style.height = '8px';
       dot.style.borderRadius = '50%';
-      dot.style.background = (contrast.light.ratio > contrast.dark.ratio) ? '#ffffff' : '#000000';
+      // Neutral grayscale contrast
+      dot.style.background = (onWhite > onBlack) ? '#ffffff' : '#000000';
       dot.style.opacity = '0.5';
       dot.style.boxShadow = '0 0 2px rgba(0,0,0,0.3)';
       d.appendChild(dot);
   }
 
-  // Click to copy
   d.addEventListener('click', () => {
     navigator.clipboard.writeText(swatch.hex.toUpperCase()).then(() => {
       showCopyToast(swatch.hex.toUpperCase());
@@ -263,7 +249,6 @@ function renderContrastGridForLCH(lch, title) {
         const r = el('div', 'contrast-row');
         r.style.gridTemplateColumns = '100px repeat(8, 1fr)';
 
-        // Calculate Base vs L1 ratio
         const baseHex = rgbToHex(oklabToRgb(...Object.values(oklchToOklab(lch.L || lch.l, lch.C || lch.c, lch.h))));
         const baseVsL1 = isApca ? Math.abs(apcaContrast(row.l1, baseHex)) : contrastRatio(row.l1, baseHex);
 
@@ -278,7 +263,6 @@ function renderContrastGridForLCH(lch, title) {
             createContrastSwatch('Base', null, lch, baseVsL1, isApca)
         );
 
-        // Glassmorphism Simulation Info
         if (row.glassContrast !== undefined) {
             const glassInfo = el('div', 'glass-info');
             glassInfo.textContent = `Glass Cntr: ${row.glassContrast.toFixed(1)}${isApca ? '' : ':1'}`;
@@ -395,7 +379,6 @@ export function getAllVisibleHexes() {
 
     collect(getMainPalette().scale);
     getAdditionalPalettes().forEach(p => collect(p.scale));
-    // Functional and badges usually fixed granularity, but we follow same logic
     Object.values(getFunctionalPalettes()).forEach(p => collect(p.scale));
     getBadgePalettes().forEach(p => collect(p.scale));
 
@@ -553,10 +536,6 @@ export function generateExportSVG(type = 'main') {
 }
 
 /* ---------- PUBLIC API ---------- */
-/**
- * Renders all components of the output view.
- * @param {boolean} preserveFocus - If true, indicates we should attempt to keep current UI state (e.g. scroll)
- */
 export function renderAllPalettes(preserveFocus = false){
   if (!root) return;
   const state = getState();
@@ -575,14 +554,12 @@ export function renderAllPalettes(preserveFocus = false){
       root.appendChild(frag);
   }
 
-  // Update contrast grid background for Dark UI Preview requirement
   const isDarkPreview = state.mode.background === 'dark';
   document.querySelectorAll('.contrast-grid').forEach(g => {
       if (isDarkPreview) g.style.backgroundColor = '#000000';
       else g.style.backgroundColor = '#ffffff';
   });
 
-  // Ensure headers are visible
   const textColor = isDarkPreview ? '#ffffff' : '#000000';
   document.querySelectorAll('.palette-title strong, .contrast-title, .role-tag').forEach(el => {
       el.style.color = textColor;

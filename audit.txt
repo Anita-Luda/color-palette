@@ -1,18 +1,21 @@
-# Audit V5: Design-First Philosophy
+# Audit V6: Visual Stability & Reliability Overhaul
 
-## 1. Core Logic Overhaul
-- [Asymmetric Scale] FIXED. Correctly generates equal step counts above and below anchor, centering the base color in the distribution.
-- [Adaptive Engine] REBUILT. Switched to piece-wise power curves for lightness to guarantee anchor point intersection. Chroma now uses sine-based smooth falloff to ensure "velvet" transitions and stability at extremes.
-- [Stability] Eliminated math artifacts (NaNs, extreme spikes) by prioritizing perceptual smoothness over raw gamut maximization where they conflicted.
+## 1. Core Logic Stability
+- [Checkerboard Issue] RESOLVED. Root cause was precision errors and unstable "Hue Guard" logic in gamut clamping. V6 uses stable linear transitions and robust `oklabToRgbRaw` calculations.
+- [Adaptive Mode] FIXED. Re-engineered to use linear interpolation for lightness, which is the most stable method for UI design systems.
 
-## 2. Visual Polish
-- [Boosts] ALL REWRITTEN.
-    - Neon: Pushes toward 90% gamut capacity with controlled headroom.
-    - Pastel: Proper high-key compression (top 30% L) and fresh low-chroma targets.
-    - Dark Mode: Subtler, more effective hue compensation for UI legibility.
-    - Spectral: Balanced perceived brightness without "gray-out" artifacts.
-- [Clipping Dots] REFINED. Switched from yellow to grayscale (adaptive contrast). Now purely informative and non-distracting.
+## 2. Restoration of UI Features
+- [Clipping Dots] RESTORED. Clipping is detected by the orchestrator before final clamping, ensuring dots show up whenever chroma reduction occurs.
+- [Badges] RESTORED. Step badges (BASE, 100, 50) are correctly calculated and visible in all granularity and scale modes.
 
-## 3. Interaction
-- [Clipping Info] Added help button explaining Gamut Clipping logic.
-- [Harmony] Relations remain stable across all distribution modes.
+## 3. Design-Safe Boosts
+- [Boosts] REBUILT.
+    - Neon: High constant vibrancy target.
+    - Pastel: Proper high-key compression for fresh UI tones.
+    - Glassmorphism: Optimized for backdrop-filter legibility.
+    - Combinations: All boosts are now mutually compatible without creating muddy colors.
+
+## 4. Requirement Audit
+- Asymmetric Scale: Base color correctly centered in step count.
+- Gamut Clamping: Now centralized for precision.
+- Grayscale Sidebar: Maintains perceptual neutrality while working with color.

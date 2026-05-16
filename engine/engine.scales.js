@@ -4,8 +4,7 @@
 import { EngineState } from './engine.core.js';
 import {
   srgbToLinear, linearToSrgb, rgbToOklab, oklabToRgb,
-  oklabToOklch, oklchToOklab, rgbToHex,
-  oklabToXyz, xyzToCam16, maxChromaForL
+  oklabToOklch, oklchToOklab, rgbToHex, maxChromaForL
 } from './engine.math.js';
 import { generateStandardScale } from './algo.standard.js';
 import { generateAdaptiveScale } from './algo.adaptive.js';
@@ -38,97 +37,48 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
       actualSteps = steps.map(s => s + offset).filter(s => s >= 0 && s <= 1000);
       actualSteps = [...new Set(actualSteps)].sort((a,b)=>a-b);
   } else if (scaleMode === 'asymmetric') {
-      // Re-calculate steps to have equal count below and above anchor
-      // Total requested steps (usually 11 for coarse, 101 for default)
       const targetCount = steps.length;
       if (targetCount > 1) {
           const half = Math.floor(targetCount / 2);
           const below = [];
-          for (let i = 0; i < half; i++) {
-              below.push((anchorStep / half) * i);
-          }
+          for (let i = 0; i < half; i++) below.push((anchorStep / half) * i);
           const above = [];
-          for (let i = 1; i <= half; i++) {
-              above.push(anchorStep + ((1000 - anchorStep) / half) * i);
-          }
+          for (let i = 1; i <= half; i++) above.push(anchorStep + ((1000 - anchorStep) / half) * i);
           actualSteps = [...below, anchorStep, ...above];
           actualSteps = [...new Set(actualSteps.map(Math.round))].sort((a,b)=>a-b);
       }
   }
 
-  // Choose Base Algorithm
-  let scale;
-  if (mode.algorithm === 'adaptive') {
-      scale = generateAdaptiveScale(lch, actualSteps, isDarkMode);
-  } else {
-      scale = generateStandardScale(lch, actualSteps, isDarkMode);
-  }
+  // Generate Base Scale
+  let scale = (mode.algorithm === 'adaptive')
+      ? generateAdaptiveScale(lch, actualSteps, isDarkMode)
+      : generateStandardScale(lch, actualSteps, isDarkMode);
 
-  // Apply Post-processing Boosts
+  const profile = mode.gamutProfile || 'srgb';
   const isAnyBoost = mode.darkModeBoost || mode.neonBoost || mode.pastelBoost ||
                      mode.glassmorphismBoost || mode.inkSaveMode || mode.spectralBalance;
 
-  // CAM16 Perceptual Polish
-  const polish = mode.perceptualPolish || false;
-
-  const isFixed = scaleMode === 'fixed';
-
-  scale = scale.map(swatch => {
+  return scale.map(swatch => {
       const isBaseStep = Math.abs(swatch.step - anchorStep) < 0.1;
 
-      // Apply boosts
-      let processed = applyBoosts(swatch, lch, mode);
+      // 1. Apply overlays (un-clamped)
+      let boosted = applyBoosts(swatch, lch, mode);
 
-      // CAM16-UCS Perceptual Polish (Hybrid)
-      // Corrects lightness based on CAM16 J/C correlates to improve uniformity
-      if (polish) {
-          const lab = oklchToOklab(processed.l, processed.c, processed.h);
-          const xyz = oklabToXyz(lab.L, lab.a, lab.b);
-          const cam = xyzToCam16(xyz.X, xyz.Y, xyz.Z);
+      // 2. Detection of clipping
+      const maxC = maxChromaForL(boosted.l, boosted.h, profile);
+      boosted.clipping = (boosted.c > maxC + 0.005) ? Math.round((1 - (maxC / boosted.c)) * 100) : 0;
 
-          // Hybrid adjustment: nudge OKLCH lightness towards CAM16 J (normalized)
-          const targetL = cam.J / 100;
-          processed.l = processed.l * 0.7 + targetL * 0.3; // Gentle nudge
+      // 3. Final Clamp for stability
+      boosted.c = Math.min(boosted.c, maxC);
 
-          // Re-derive LCH after polish
-          const lab2 = oklchToOklab(processed.l, processed.c, processed.h);
-          const rgb = oklabToRgb(lab2.L, lab2.a, lab2.b);
-          processed.hex = rgbToHex(rgb);
-      }
+      const lab = oklchToOklab(boosted.l, boosted.c, boosted.h);
+      boosted.hex = rgbToHex(oklabToRgb(lab.L, lab.a, lab.b));
 
-      // Light Mode Base preservation: ONLY if NOT in Dark Mode and NO boosts active
-      if (isBaseStep && !isDarkMode && !isAnyBoost && sourceHex) {
-          processed.hex = sourceHex;
-      }
+      if (isBaseStep && !isDarkMode && !isAnyBoost && sourceHex) boosted.hex = sourceHex;
+      boosted.isBase = isBaseStep;
 
-      processed.isBase = isBaseStep;
-
-      // Calculate Gamut Clipping Point
-      const profile = mode.gamutProfile || 'srgb';
-      const idealC = processed.c;
-      const actualMaxC = maxChromaForL(processed.l, processed.h, profile);
-      processed.clipping = (idealC > actualMaxC + 0.001)
-          ? Math.round((1 - (actualMaxC / idealC)) * 100)
-          : 0;
-
-      return processed;
+      return boosted;
   });
-
-  // Ensure anchor is included if not already there
-  if (!isFixed && !forceExcludeAnchor && !scale.find(s => Math.abs(s.step - anchorStep) < 0.1)) {
-      const anchorSwatch = (mode.algorithm === 'adaptive')
-          ? generateAdaptiveScale(lch, [anchorStep], isDarkMode)[0]
-          : generateStandardScale(lch, [anchorStep], isDarkMode)[0];
-
-      let processedAnchor = applyBoosts(anchorSwatch, lch, mode);
-      if (!isDarkMode && !isAnyBoost && sourceHex) processedAnchor.hex = sourceHex;
-      processedAnchor.isBase = true;
-
-      scale.push(processedAnchor);
-      scale.sort((a,b) => a.step - b.step);
-  }
-
-  return scale;
 }
 
 export function getBaseLCH(){

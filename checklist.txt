@@ -1,19 +1,21 @@
-# Checklist: Design Utility (V5)
+# Checklist: OKLCH Design System (V6)
 
-## Primary Goals
-- [x] Functional Asymmetric Scale (Base color centered in step count)
-- [x] Stable Adaptive Engine (Predictable ramps across all hues)
-- [x] Professional Boost Combinations (No muddy colors)
-- [x] Neutral Clipping Indicators (Grayscale dots)
-- [x] In-UI documentation for technical features (Info button)
-
-## Engine & Math
-- [x] OKLCH/OKLUV/CAM16 Hybrid Stability
-- [x] Gamut Constancy (ΔH < 0.5°)
-- [x] Hue Path (Natural temperature shifts)
-- [x] Piece-wise Lightness curves for Adaptive mode
-
-## Accessibility
+## UI & Accessibility
+- [x] Step Badges (100, 50, BASE) visible
+- [x] Clipping Dots (Neutral grayscale) visible
+- [x] Info Button for technical indicators
 - [x] WCAG 2.1 & APCA V3 Support
-- [x] Glassmorphism Simulation accuracy
-- [x] Dark Mode perceptual comfort damping
+- [x] Glassmorphism Contrast Simulation
+
+## Scaling & Tonal Quality
+- [x] Absolute Scale (Linear)
+- [x] Asymmetric Scale (Anchor-centered)
+- [x] Fixed Scale (Grid-aligned)
+- [x] Adaptive Engine (Smooth tonal ramps)
+- [x] No "checkerboard" or random shifts
+
+## Boosts & Handoff
+- [x] Reliable Boosts (Neon, Pastel, Glass, Ink-Save, Spectral)
+- [x] SVG Figma Export Accuracy
+- [x] Integrated Color Picker (Base swatch click)
+- [x] Grayscale Sidebar Themes

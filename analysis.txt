@@ -1,16 +1,15 @@
-# Analiza Rozwojowa: Design-First (V5)
+# Analiza Rozwojowa: Stabilność Designerska (V6)
 
-## Od Matematyki do Użyteczności
-Wersja V5 stanowi punkt zwrotny w rozwoju systemu. Odeszliśmy od rygorystycznej poprawności matematycznej (która często prowadziła do wizualnych "masakr" w ekstremalnych punktach gamutu) na rzecz użyteczności designerskiej.
+## Kierunek: Stabilność ponad Ekstremalność
+Wersja V6 stanowi ostateczny szlif stabilności systemu. Zrezygnowaliśmy z ryzykownych optymalizacji matematycznych, które powodowały artefakty wizualne (np. efekt szachownicy), na rzecz przewidywalnych, liniowych rozkładów w punktach węzłowych.
 
-### Kluczowe Zmiany Filozoficzne
+### Kluczowe Ulepszenia
 
-1. **Stabilność ponad Maksymalizację**: Algorytm Adaptive nie stara się już wycisnąć "ostatniego procenta" nasycenia, jeśli miałoby to skutkować skokową zmianą barwy lub nienaturalnym gradientem. Wprowadzenie sine-falloff gwarantuje płynność przejść.
-2. **Asymetria Celowa**: Skala Asymmetric została naprawiona, aby służyć realnym potrzebom UI - równomiernemu rozkładowi kroków wokół koloru marki, niezależnie od tego, jak blisko bieli lub czerni się on znajduje.
-3. **Nakładki (Boosts) jako Warstwy Designu**: Boosty zostały zaprojektowane na nowo jako komplementarne warstwy. Można teraz łączyć Pastel z Glassmorphism, otrzymując przewidywalny efekt "mrożonego szkła w wysokim kluczu".
+1. **Precision First**: Użycie surowych wartości float (`oklabToRgbRaw`) przed etapem zaokrąglania pozwoliło wyeliminować skokowe zmiany barwy wynikające z 8-bitowej granulacji sRGB.
+2. **Orchestrated Clamping**: Przeniesienie limitowania kolorów do orchestratora umożliwiło jednoczesne zachowanie wysokiej jakości wizualnej nakładek (Boosts) i precyzyjne informowanie użytkownika o clippingu.
+3. **Design-Ready Boosts**: Nakładki Pastel i Glassmorphism zostały zoptymalizowane pod kątem współczesnych trendów UI, oferując czyste, wysokiej jasności barwy.
 
 ## Przyszłość: Kontekstualna Inteligencja
 
-- **Contrast-Aware Scaling**: Automatyczne dostosowywanie krzywej nasycenia tak, aby każdy krok skali domyślnie spełniał minimum WCAG AA względem wybranego tła.
-- **Smart Hue Path**: Rozbudowa mapowania barw o dane z badań nad preferencjami estetycznymi (np. specyficzne zachowanie "ciepłych szarości").
-- **Gamut Mapping HDR**: Przygotowanie systemu pod standardy Ultra-HDR i dynamiczne mapowanie jasności powyżej 1.0 (L > 1.0) dla wyświetlaczy przyszłości.
+- **Perceptual Uniformity Score**: Wskaźnik "płynności" palety oparty o CAM16-UCS, informujący o jakości gradientów.
+- **Adaptive Contrast Steps**: Rozwinięcie algorytmu o automatyczne przesuwanie kroków skali tak, aby każdy z nich domyślnie spełniał wymóg WCAG AA względem wybranego tła.
