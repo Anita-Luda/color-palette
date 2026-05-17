@@ -28,6 +28,8 @@ export const EngineState = {
     background: 'light',     // light | dark
     backgroundSource: 'base', // 'base' or index (0, 1, 2...)
     glassBackgroundSource: 'base',
+    glassBubbleSource: 'base',
+    gradientBgBrightness: { light: 0.95, dark: 0.1 },
     sidebarPosition: 'left',
     sidebarTheme: 'dark',
     sidebarVisible: true
@@ -178,6 +180,20 @@ export function setGlassBackgroundSource(source) {
     EngineState.mode.glassBackgroundSource = source;
 }
 
+export function setGlassBubbleSource(source) {
+    EngineState.mode.glassBubbleSource = source;
+}
+
+export function setGradientBgBrightness(mode, value) {
+    if (mode !== 'light' && mode !== 'dark') return;
+    EngineState.mode.gradientBgBrightness[mode] = Number(value);
+}
+
+export function toggleColorInGradient(index, enabled) {
+    if (!EngineState.colors[index]) return;
+    EngineState.colors[index].inGradient = Boolean(enabled);
+}
+
 export function setContrastSettings(key, value) {
   if (EngineState.contrastSettings.hasOwnProperty(key)) {
     if (key === 'ignoredThresholds') {
@@ -264,7 +280,8 @@ function createColor(index, manualData = null) {
         ? 'secondary'
         : 'accent',
     manualLCH: manualData ? manualData.lch : null,
-    manualHex: manualData ? manualData.hex : null
+    manualHex: manualData ? manualData.hex : null,
+    inGradient: true
   };
 }
 

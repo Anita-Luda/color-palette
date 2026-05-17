@@ -8,6 +8,8 @@ Niniejszy raport podsumowuje zmiany wprowadzone w Systemie Color V9, mające na 
 - **UI Rendering:** Naprawiono błędy w renderowaniu widoków Glass i Gradients. Problem wynikał z braku tych widoków na białej liście stanów oraz błędnych referencji do kontekstu renderowania. Naprawiono również błąd `ReferenceError: setLightModeBoost is not defined` w `ui/controls/ui.controls.palettes.js` poprzez dodanie brakującego importu.
 - **Refaktoryzacja Math:** Usunięto zduplikowane funkcje konwersji kolorów z `engine/engine.glass.js` i `engine/engine.gradients.js`. Całość matematyki została przeniesiona do centralnego modułu `engine/engine.math.js`.
 - **Sigmoidalne Przejścia:** Dostosowano parametry funkcji sigmoidalnej w `engine/algo.standard.js` dla uzyskania płynniejszych przejść przy zachowaniu odpowiedniej separacji barw.
+- **Ink-Save Boost:** Zmodyfikowano logikę na progowanie CMYK (kwantyzacja jasności do 5 poziomów, snapowanie nasycenia i odcienia do barw podstawowych), aby wyeliminować kropkowanie tonerów przy wydruku.
+- **Dark Mode Correction:** Zmiana kolejności nakładania masek. Damping dla Dark Mode jest teraz ostatnim krokiem, co pozwala na poprawne "stonowanie" nawet bardzo nasyconych palet z Neon Boost.
 
 ## 2. Nowe Funkcjonalności
 - **Light Mode Boost (Korekta "Olive Mud"):** Nowy mechanizm w `engine/algo.boosts.js`, który dynamicznie przesuwa Hue dla żółtych i żółto-zielonych barw w jasnych zakresach skali.

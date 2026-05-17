@@ -33,10 +33,20 @@ export function applyBoosts(swatch, baseLch, mode) {
         if (l > 0.35 && l < 0.75) c *= 1.4;    // Saturation Pump
     }
 
-    // --- 5. INK-SAVE: Toner conservation ---
+    // --- 5. INK-SAVE: Toner conservation (CMYK-like thresholding) ---
     if (mode.inkSaveMode) {
-        if (l > 0.1) c *= 0.1;
-        if (l > 0.4) l = 0.4 + (l - 0.4) * 1.4;
+        // Quantize lightness to 5 levels to reduce screen tinting (0, 0.25, 0.5, 0.75, 1)
+        l = Math.round(l * 4) / 4;
+
+        // Threshold chroma: if saturation is low, kill it (Pure K).
+        // If high, snap to a solid color to avoid "toner dots" (100% C/M/Y mix)
+        if (c < 0.04) {
+            c = 0;
+        } else {
+            c = Math.max(c, 0.15); // Solid fill
+            // Snap Hue to primary/secondary CMY anchors (0, 60, 120, 180, 240, 300)
+            h = Math.round(h / 60) * 60;
+        }
     }
 
     return { ...swatch, l, c, h };

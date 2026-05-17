@@ -6,7 +6,8 @@ import {
     setInkSaveMode, setSpectralBalance, setPerceptualPolish, setInterpolationMode,
     setGamutProfile, setChromaShapingFactor, setGranularity, setView,
     updateColorRole, removeColor, setBackgroundSource, setGlassBackgroundSource,
-    getState, setRelation, setRelationDistance, setLock
+    getState, setRelation, setRelationDistance, setLock,
+    setGlassBubbleSource, toggleColorInGradient
 } from '../../engine/engine.core.js';
 import { clearGradientCache } from '../../engine/engine.gradients.js';
 import { rgbToOklab, oklabToOklch, rgbToHex } from '../../engine/engine.math.js';
@@ -202,6 +203,24 @@ export function createSliderCard(c) {
   gBgBtn.className = 'bg-source-btn secondary glass-bg-btn'; gBgBtn.textContent = 'Tło Glass';
   gBgBtn.onclick = () => { setGlassBackgroundSource(c.index); if (window.refreshUI) window.refreshUI(); };
 
+  const bubbleBtn = document.createElement('button');
+  bubbleBtn.className = 'bg-source-btn primary'; bubbleBtn.textContent = 'Ustaw jako bubble';
+  bubbleBtn.onclick = () => { setGlassBubbleSource(c.index); if (window.refreshUI) window.refreshUI(); };
+
+  const gradCheckWrap = document.createElement('div');
+  gradCheckWrap.style.display = 'flex'; gradCheckWrap.style.alignItems = 'center'; gradCheckWrap.style.gap = '8px'; gradCheckWrap.style.marginTop = '8px';
+  const gradCheck = document.createElement('input');
+  gradCheck.type = 'checkbox'; gradCheck.id = `grad-check-${c.index}`; gradCheck.style.width = 'auto';
+  gradCheck.checked = c.inGradient;
+  gradCheck.addEventListener('change', e => {
+      toggleColorInGradient(c.index, e.target.checked);
+      clearGradientCache();
+      if (window.refreshUI) window.refreshUI();
+  });
+  const gradLabel = document.createElement('label');
+  gradLabel.htmlFor = `grad-check-${c.index}`; gradLabel.textContent = 'Dodaj do gradientu'; gradLabel.style.marginBottom = '0';
+  gradCheckWrap.append(gradCheck, gradLabel);
+
   const contrastInfo = document.createElement('div');
   contrastInfo.className = 'card-contrast-info'; contrastInfo.id = `contrast-info-${c.index}`;
 
@@ -217,6 +236,6 @@ export function createSliderCard(c) {
   del.textContent = 'Usuń'; del.classList.add('btn-danger');
   del.addEventListener('click', () => { removeColor(c.index); clearGradientCache(); if (window.refreshUI) window.refreshUI(); });
 
-  card.append(header, roleSelect, preview, bgBtn, gBgBtn, contrastInfo, slider, del);
+  card.append(header, roleSelect, preview, bgBtn, gBgBtn, bubbleBtn, gradCheckWrap, contrastInfo, slider, del);
   return card;
 }

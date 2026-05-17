@@ -22,20 +22,21 @@ export function renderAllPalettes(differential = false) {
   const state = getState();
   updateSidebarPreviews();
 
-  // Basic differential rendering: if only sliders changed, we can update colors without full DOM rebuild
+  // Sidebar previews update (always)
+  state.colors.forEach(c => {
+      const hexLabel = document.getElementById(`hex-val-${c.index}`);
+      const preview = document.getElementById(`preview-${c.index}`);
+      const addPals = getAdditionalPalettes();
+      const p = addPals.find(x => x.index === c.index);
+      if (p) {
+          const anchor = p.scale.find(s => s.isBase) || p.scale[Math.floor(p.scale.length/2)];
+          if (hexLabel) hexLabel.textContent = anchor.hex.toUpperCase();
+          if (preview) preview.style.background = anchor.hex;
+      }
+  });
+
   if (differential && state.mode.view === 'palettes') {
-      // Update sidebar previews
-      state.colors.forEach(c => {
-          const hexLabel = document.getElementById(`hex-val-${c.index}`);
-          const preview = document.getElementById(`preview-${c.index}`);
-          if (hexLabel || preview) {
-              const pal = getMainPalette(); // Cheap enough
-              // This is a bit simplified, but for slider performance it helps
-          }
-      });
-      // In a real system we'd use a virtual DOM or direct ref updates.
-      // For now, let's keep it simple as DocumentFragment is fast,
-      // but only clear if not differential or if explicitly requested.
+      // For now we still do full render but keep sidebar logic separate
   }
 
   root.innerHTML = '';
@@ -64,7 +65,7 @@ export function renderAllPalettes(differential = false) {
       g.style.backgroundColor = isDarkPreview ? '#000000' : '#ffffff';
   });
   const textColor = isDarkPreview ? '#ffffff' : '#000000';
-  document.querySelectorAll('.palette-title strong, .contrast-title, .role-tag').forEach(el => {
+  document.querySelectorAll('.palette-title strong, .contrast-title, .role-tag, .palette-subtitle').forEach(el => {
       el.style.color = textColor;
   });
 }

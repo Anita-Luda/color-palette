@@ -31,7 +31,7 @@ export function renderAdditional(){
   const list = getAdditionalPalettes();
   const frag = document.createDocumentFragment();
   list.forEach(p => {
-    const sec = section(`Kolor ${p.index + 1}`, p.role);
+    const sec = section(`Kolor ${p.index + 1}`, `${p.role.toUpperCase()} • ${p.inGradient ? 'W GRADIE' : 'POZA GRADEM'}`);
     sec.appendChild(renderScale(p.scale));
     frag.appendChild(sec);
   });

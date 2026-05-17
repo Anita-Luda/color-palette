@@ -7,7 +7,22 @@ import { getAdditionalPalettes } from './engine.palettes.js';
 import { oklchToOklab, oklabToRgb, rgbToHex } from './engine.math.js';
 
 export function generateGlassData(targetLch) {
-    const lch = targetLch || getBaseLCH();
+    const bubbleSource = EngineState.mode.glassBubbleSource;
+    let lch;
+
+    if (bubbleSource === 'base') {
+        lch = targetLch || getBaseLCH();
+    } else {
+        const additional = getAdditionalPalettes();
+        const p = additional.find(p => p.index === bubbleSource);
+        if (p) {
+            const anchor = p.scale.find(s => s.isBase) || p.scale[Math.floor(p.scale.length/2)];
+            lch = { L: anchor.l, C: anchor.c, h: anchor.h };
+        } else {
+            lch = targetLch || getBaseLCH();
+        }
+    }
+
     const bgSource = EngineState.mode.glassBackgroundSource;
 
     let bgLch;

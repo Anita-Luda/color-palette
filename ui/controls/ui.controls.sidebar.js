@@ -1,5 +1,8 @@
 // ui/controls/ui.controls.sidebar.js
-import { setSidebarPosition, setSidebarTheme, setSidebarVisibility, setBackgroundMode, getState } from '../../engine/engine.core.js';
+import {
+    setSidebarPosition, setSidebarTheme, setSidebarVisibility,
+    setBackgroundMode, getState, setGradientBgBrightness
+} from '../../engine/engine.core.js';
 
 const $ = id => document.getElementById(id);
 
@@ -10,6 +13,11 @@ export function updateSidebarLayout() {
     const glassSec = $('sec-glass-settings');
     if (glassSec) {
         glassSec.style.display = state.mode.view === 'glass' ? 'block' : 'none';
+    }
+
+    const gradSec = $('sec-gradient-settings');
+    if (gradSec) {
+        gradSec.style.display = state.mode.view === 'gradients' ? 'block' : 'none';
     }
 
     document.querySelectorAll('.pos-btn').forEach(btn => {
@@ -92,23 +100,35 @@ export function setupSidebarControls() {
 
     themeRadios.forEach(r => {
         r.addEventListener('change', e => {
-            const theme = e.target.value;
-            setSidebarTheme(theme);
-            const pbgDark = $('pbg-dark');
-            const pbgLight = $('pbg-light');
-            if (theme === 'dark') {
-                setBackgroundMode('dark');
-                if (pbgDark) pbgDark.checked = true;
-                $('output').classList.add('preview-dark');
-                $('output').classList.remove('preview-light');
+            setSidebarTheme(e.target.value);
+            if (window.refreshUI) window.refreshUI();
+        });
+    });
+
+    document.querySelectorAll('input[name="previewBg"]').forEach(r => {
+        r.addEventListener('change', e => {
+            const mode = e.target.value;
+            setBackgroundMode(mode);
+            const out = $('output');
+            if (mode === 'dark') {
+                out.classList.add('preview-dark');
+                out.classList.remove('preview-light');
             } else {
-                setBackgroundMode('light');
-                if (pbgLight) pbgLight.checked = true;
-                $('output').classList.add('preview-light');
-                $('output').classList.remove('preview-dark');
+                out.classList.add('preview-light');
+                out.classList.remove('preview-dark');
             }
             if (window.refreshUI) window.refreshUI();
         });
+    });
+
+    $('grad-bg-brightness-light')?.addEventListener('input', e => {
+        setGradientBgBrightness('light', e.target.value);
+        if (window.refreshUI) window.refreshUI(true);
+    });
+
+    $('grad-bg-brightness-dark')?.addEventListener('input', e => {
+        setGradientBgBrightness('dark', e.target.value);
+        if (window.refreshUI) window.refreshUI(true);
     });
 }
 

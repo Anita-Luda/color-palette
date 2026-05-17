@@ -67,6 +67,60 @@ export function computeHueRange(baseLCH, role){
   };
 }
 
+export function getColorsForGradient() {
+    const state = EngineState;
+    const colors = [];
+
+    // Add base color
+    const baseLch = getBaseLCH();
+    colors.push({
+        lch: { l: baseLch.L, c: baseLch.C, h: baseLch.h },
+        hex: rgbToHex(oklabToRgb(oklchToOklab(baseLch.L, baseLch.C, baseLch.h).L, oklchToOklab(baseLch.L, baseLch.C, baseLch.h).a, oklchToOklab(baseLch.L, baseLch.C, baseLch.h).b))
+    });
+
+    // Add enabled additional colors
+    state.colors.forEach((c, idx) => {
+        if (c.inGradient) {
+            // Recalculate LCH for this color based on its slider
+            const { type, distance } = state.relation;
+            const total = state.colors.length;
+
+            function getRelHue(baseHue, idx, tot, t, dist){
+                const step = 360 / (tot + 1);
+                switch(t){
+                  case 'custom': return (baseHue + (idx + 1) * step + (dist - 30)) % 360;
+                  case 'analogous': return (baseHue + (idx + 1) * dist) % 360;
+                  case 'complementary': return (baseHue + 180 + idx * dist) % 360;
+                  case 'split':
+                    if (idx === 0) return (baseHue + 180 - dist) % 360;
+                    if (idx === 1) return (baseHue + 180 + dist) % 360;
+                    return (baseHue + 180 + (idx - 1) * dist) % 360;
+                  case 'triadic': return (baseHue + (idx + 1) * 120 + idx * dist) % 360;
+                  case 'tetradic': return (baseHue + (idx + 1) * 90 + idx * dist) % 360;
+                  case 'warmcool': return (baseHue + 180 + idx * dist) % 360;
+                  default: return baseHue;
+                }
+            }
+
+            const h = getRelHue(baseLch.h, idx, total, type, distance);
+            const roleMult = ROLE_CHROMA_MULT[c.role] ?? 1;
+            const l = baseLch.L;
+            const cVal = baseLch.C * roleMult;
+
+            // Adjust hue by slider
+            const finalH = (h + (c.slider - 0.5) * 360) % 360;
+            const adj = adjustForMode(l, cVal);
+
+            colors.push({
+                lch: { l: adj.L, c: adj.C, h: finalH >= 0 ? finalH : finalH + 360 },
+                hex: rgbToHex(oklabToRgb(oklchToOklab(adj.L, adj.C, finalH >= 0 ? finalH : finalH + 360).L, oklchToOklab(adj.L, adj.C, finalH >= 0 ? finalH : finalH + 360).a, oklchToOklab(adj.L, adj.C, finalH >= 0 ? finalH : finalH + 360).b))
+            });
+        }
+    });
+
+    return colors;
+}
+
 export function generateSliderGradient(role, index){
   const baseLCH = getBaseLCH();
   // We need to know the 'center' hue for this specific slider from the relation system

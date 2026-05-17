@@ -89,8 +89,11 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
       }
 
       // 4. DARK MODE ADJUST (LAST MASK LAYER)
+      // Note: This damping happens AFTER Neon/Pastel/Ink-Save boosts.
       if (isDarkMode) {
-          p.c *= (0.7 + 0.25 * (1 - p.l));
+          // Standard damping for dark backgrounds
+          p.c *= (0.65 + 0.35 * (1 - p.l));
+
           if (mode.darkModeBoost) {
               if (p.h > 40 && p.h < 120) p.h += 12;
               if (p.h > 200 && p.h < 280) p.h -= 12;

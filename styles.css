@@ -329,6 +329,10 @@ button.btn-danger:hover { background: var(--danger); color: white; }
   gap: 16px;
 }
 
+.swatches.compact-grid {
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+}
+
 .swatch {
   position: relative;
   aspect-ratio: 1;

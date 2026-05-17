@@ -17,6 +17,9 @@
 - [x] 2.1. Light Mode Boost (Korekta "Olive Mud") - **ZREALIZOWANO** (Shift hue dla żółtego w jasnych tonach)
 - [x] 2.2. Centralizacja matematyki - **ZREALIZOWANO** (Usunięcie duplikacji w Glass/Gradients)
 - [x] 2.3. Debugowanie UI: Naprawa importu setLightModeBoost w ui.controls.palettes.js - **ZREALIZOWANO**
+- [x] 2.4. Podgląd tła działa niezależnie od motywu panelu - **ZREALIZOWANO**
+- [x] 2.5. Przycisk "Ustaw jako bubble" i "Dodaj do gradientu" w panelu - **ZREALIZOWANO**
+- [x] 2.6. Suwak jasności tła dla gradientów - **ZREALIZOWANO**
 
 ## 3. KONTRAST (engine.contrast.js)
 - [x] 3.1. Pełne wsparcie APCA (WBC, Lc) - **ZREALIZOWANO**
@@ -32,6 +35,8 @@
 - [x] 5.1. Naprawa renderowania widoku Glass - **ZREALIZOWANO**
 - [x] 5.2. Naprawa renderowania widoku Gradients - **ZREALIZOWANO**
 - [x] 5.3. Poprawa przełączania widoków (Whitelist w core.js) - **ZREALIZOWANO**
+- [x] 5.4. Mniejszy font dla kontrastu W/B na swatchach - **ZREALIZOWANO**
+- [x] 5.5. Równa wielkość kafelków w paletach funkcyjnych/badge - **ZREALIZOWANO**
 
 ## 6. UI - CONTROLS (ui.controls.*)
 - [x] 6.1. Obsługa Hex/RGB/OKLCH input - **ZREALIZOWANO**

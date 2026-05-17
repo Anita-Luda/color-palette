@@ -75,6 +75,7 @@ export function renderSwatch(swatch, opts = {}){
   const contrastEl = el('div', 'swatch-contrast', `${info.ratio} ${info.level}`);
 
   const whiteBlackContrast = el('div', 'swatch-wb-contrast');
+  whiteBlackContrast.style.fontSize = '0.6rem';
   whiteBlackContrast.innerHTML = `<span class="c-w">W: ${contrast.light.ratio}</span><span class="c-b">B: ${contrast.dark.ratio}</span>`;
 
   d.append(stepEl, hexEl, contrastEl, whiteBlackContrast);
@@ -108,7 +109,7 @@ export function renderSwatch(swatch, opts = {}){
 }
 
 export function renderScale(scale, opts = {}){
-  const grid = el('div', 'swatches');
+  const grid = el('div', opts.compact ? 'swatches compact-grid' : 'swatches');
   scale.forEach(s => {
       const node = renderSwatch(s, opts);
       if (node) grid.appendChild(node);

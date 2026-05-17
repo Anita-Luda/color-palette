@@ -2,8 +2,12 @@
 // Perceptual Gradient Preview View
 
 import { generateScaleForLCH } from '../engine/engine.scales.js';
+import { getColorsForGradient } from '../engine/engine.gradients.js';
+import { getState } from '../engine/engine.core.js';
+import { oklchToOklab, oklabToRgb, rgbToHex } from '../engine/engine.math.js';
 
 export function renderGradientsView(lch) {
+    const state = getState();
     const wrap = document.createElement('div');
     wrap.style.padding = '32px';
 
@@ -14,16 +18,32 @@ export function renderGradientsView(lch) {
     container.style.flexDirection = 'column';
     container.style.gap = '40px';
 
-    // 1. Full Scale Gradient
+    // 1. Multi-color Gradient (from selected colors)
+    const multiColors = getColorsForGradient();
+    if (multiColors.length > 1) {
+        container.appendChild(createGradientRow('Multi-color Gradient', multiColors));
+    }
+
+    // 2. Full Scale Gradient
     container.appendChild(createGradientRow('Tonal Ramp (0-1000)', scale));
 
-    // 2. High-key Gradient
+    // 3. High-key Gradient
     const highKey = scale.filter(s => s.step <= 300);
     container.appendChild(createGradientRow('High-Key (0-300)', highKey));
 
-    // 3. Shadow Gradient
+    // 4. Shadow Gradient
     const shadows = scale.filter(s => s.step >= 700);
     container.appendChild(createGradientRow('Shadows (700-1000)', shadows));
+
+    // Apply Background Brightness
+    const isDark = state.mode.background === 'dark';
+    const brightness = isDark ? state.mode.gradientBgBrightness.dark : state.mode.gradientBgBrightness.light;
+    const bgL = brightness;
+    const bgHex = rgbToHex(oklabToRgb(oklchToOklab(bgL, lch.C * 0.2, lch.h).L, oklchToOklab(bgL, lch.C * 0.2, lch.h).a, oklchToOklab(bgL, lch.C * 0.2, lch.h).b));
+
+    wrap.style.background = bgHex;
+    wrap.style.borderRadius = '24px';
+    wrap.style.margin = '24px';
 
     wrap.appendChild(container);
     return wrap;
