@@ -79,5 +79,17 @@ export function renderContrastView() {
         const lch = p.scale.find(s=>s.isBase) || p.scale[50];
         frag.appendChild(renderGridForLCH(lch, `Kontrast: Kolor ${p.index+1}`));
     });
+
+    const functional = getFunctionalPalettes();
+    Object.entries(functional).forEach(([name, p]) => {
+        const lch = p.scale.find(s => s.isBase) || p.scale[Math.floor(p.scale.length / 2)];
+        frag.appendChild(renderGridForLCH(lch, `Kontrast: ${name.toUpperCase()}`));
+    });
+
+    getBadgePalettes().forEach(p => {
+        const lch = p.scale.find(s => s.isBase) || p.scale[Math.floor(p.scale.length / 2)];
+        frag.appendChild(renderGridForLCH(lch, `Kontrast: BADGE ${p.index + 1}`));
+    });
+
     return frag;
 }

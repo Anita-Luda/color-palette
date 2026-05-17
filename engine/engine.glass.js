@@ -4,6 +4,7 @@
 import { EngineState } from './engine.core.js';
 import { getBaseLCH, generateScaleForLCH } from './engine.scales.js';
 import { getAdditionalPalettes } from './engine.palettes.js';
+import { oklchToOklab, oklabToRgb, rgbToHex } from './engine.math.js';
 
 export function generateGlassData(targetLch) {
     const lch = targetLch || getBaseLCH();
@@ -49,26 +50,8 @@ export function generateGlassData(targetLch) {
         return {
             ...c,
             bgHex,
-            glassFillHex: lchToHex_local(glassFillL, lch.C * 0.5, lch.h), // Softened
-            glassBorderHex: lchToHex_local(glassBorderL, lch.C * 0.8, lch.h)
+            glassFillHex: rgbToHex(oklabToRgb(oklchToOklab(glassFillL, lch.C * 0.5, lch.h).L, oklchToOklab(glassFillL, lch.C * 0.5, lch.h).a, oklchToOklab(glassFillL, lch.C * 0.5, lch.h).b)),
+            glassBorderHex: rgbToHex(oklabToRgb(oklchToOklab(glassBorderL, lch.C * 0.8, lch.h).L, oklchToOklab(glassBorderL, lch.C * 0.8, lch.h).a, oklchToOklab(glassBorderL, lch.C * 0.8, lch.h).b))
         };
     });
-}
-
-function lchToHex_local(L, C, H) {
-    // Simplified conversion for fast preview
-    const hr = H * Math.PI / 180;
-    const a = Math.cos(hr) * C;
-    const b = Math.sin(hr) * C;
-
-    const l_ = L + 0.3963377774*a + 0.2158037573*b;
-    const m_ = L - 0.1055613458*a - 0.0638541728*b;
-    const s_ = L - 0.0894841775*a - 1.2914855480*b;
-    const l = Math.max(0, l_**3), m = Math.max(0, m_**3), s = Math.max(0, s_**3);
-    let r =  4.0767416621*l - 3.3077115913*m + 0.2309699292*s;
-    let g = -1.2684380046*l + 2.6097574011*m - 0.3413193965*s;
-    let b2= -0.0041960863*l - 0.7034186147*m + 1.7076147010*s;
-
-    const f = (c) => Math.round(Math.max(0, Math.min(1, c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055)) * 255);
-    return `#${((1<<24)+(f(r)<<16)+(f(g)<<8)+f(b2)).toString(16).slice(1)}`;
 }

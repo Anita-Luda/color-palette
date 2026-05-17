@@ -28,6 +28,8 @@ export function updateSidebarLayout() {
 
     const boostToggle = $('boost-toggle');
     if (boostToggle) boostToggle.checked = state.mode.darkModeBoost;
+    const lmBoostToggle = $('light-mode-boost-toggle');
+    if (lmBoostToggle) lmBoostToggle.checked = state.mode.lightModeBoost;
     const neonToggle = $('neon-toggle');
     if (neonToggle) neonToggle.checked = state.mode.neonBoost;
     const pastelToggle = $('pastel-toggle');
@@ -43,6 +45,11 @@ export function updateSidebarLayout() {
 
     const labelShaping = $('label-shaping');
     if (labelShaping) labelShaping.textContent = `Chroma Shaping: ${state.mode.chromaShapingFactor.toFixed(2)}`;
+
+    const lockL = $('lock-l-toggle');
+    if (lockL) lockL.checked = state.locks.L;
+    const lockC = $('lock-c-toggle');
+    if (lockC) lockC.checked = state.locks.C;
 
     document.querySelectorAll('input[name="interpMode"]').forEach(r => {
         r.checked = (r.value === state.mode.interpolation);

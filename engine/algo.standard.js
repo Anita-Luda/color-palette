@@ -13,14 +13,18 @@ export function generateStandardScale(baseLch, steps, isDarkMode) {
 
         // V9 Sigmoidal Transition: Smooth entry into sRGB gamut.
         // chromaShapingFactor (0.5 - 1.5) modulates the steepness of the curve.
-        const k = 4.0 * shaping;
+        const k = 6.0 * shaping;
         const sigmoid = (x) => 1 / (1 + Math.exp(-k * (x - 0.5)));
 
         const normalizedDist = (L > baseLch.L)
             ? (L - baseLch.L) / (1 - baseLch.L || 0.01)
             : (baseLch.L - L) / (baseLch.L || 0.01);
 
-        const falloff = 1 - sigmoid(normalizedDist * 2 - 0.5);
+        // Map sigmoid to ensure falloff is exactly 1.0 at normalizedDist=0 and 0.0 at normalizedDist=1
+        const s0 = sigmoid(-0.5);
+        const s1 = sigmoid(0.5);
+        const t = (sigmoid(normalizedDist - 0.5) - s0) / (s1 - s0);
+        const falloff = Math.max(0, 1 - t);
 
         const { chromaScale, lBias } = getPerceptualCompensation({ L, C: baseLch.C, h: baseLch.h });
 

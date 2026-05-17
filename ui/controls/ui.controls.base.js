@@ -28,8 +28,22 @@ export function onBaseChange(){
   const pick = pickInput?.value || '';
 
   let rgb = parseHexOrRgb(txt);
-  if (txt && !rgb) txtInput.style.borderColor = 'red';
-  else if (txtInput) txtInput.style.borderColor = '';
+
+  // Requirement 6.3: Explicit error message for invalid HEX/RGB
+  if (txt && !rgb) {
+      txtInput.style.borderColor = 'var(--accent-danger, #ff4444)';
+      const msg = document.getElementById('base-error-msg') || document.createElement('div');
+      msg.id = 'base-error-msg';
+      msg.textContent = 'Błędny format HEX/RGB';
+      msg.style.color = '#ff4444';
+      msg.style.fontSize = '0.7rem';
+      msg.style.marginTop = '4px';
+      if (!msg.parentNode) txtInput.parentNode.appendChild(msg);
+  } else if (txtInput) {
+      txtInput.style.borderColor = '';
+      const msg = document.getElementById('base-error-msg');
+      if (msg) msg.remove();
+  }
 
   if (!rgb) rgb = parseHexOrRgb(pick);
   if (!rgb) return;

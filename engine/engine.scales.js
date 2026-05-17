@@ -38,6 +38,9 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
   if (scaleMode === 'fixed') {
       const offset = anchorStep % 10;
       actualSteps = steps.map(s => s + offset).filter(s => s >= 0 && s <= 1000);
+      // Ensure 0 and 1000 are present if possible for full tonal range
+      if (!actualSteps.includes(0)) actualSteps.unshift(0);
+      if (!actualSteps.includes(1000)) actualSteps.push(1000);
       actualSteps = [...new Set(actualSteps)].sort((a,b)=>a-b);
   } else if (scaleMode === 'asymmetric') {
       const targetCount = steps.length;
@@ -66,7 +69,7 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
   const isAnyBoost = mode.darkModeBoost || mode.neonBoost || mode.pastelBoost ||
                      mode.glassmorphismBoost || mode.inkSaveMode || mode.spectralBalance;
 
-  return rawScale.map(swatch => {
+  return rawScale.map((swatch, idx) => {
       const isBaseStep = Math.abs(swatch.step - anchorStep) < 0.1;
 
       // 1. DESIGN BOOSTS (IDEAL LCH)
@@ -107,13 +110,28 @@ export function generateScaleForLCH(lch, steps = DEFAULT_STEPS, forceExcludeAnch
       if (isBaseStep && !isDarkMode && !isAnyBoost && sourceHex) p.hex = sourceHex;
       p.isBase = isBaseStep;
 
-      if (scaleMode === 'asymmetric') {
-          if (isBaseStep) p.displayStep = 500;
-          else {
-              const idx = actualSteps.indexOf(swatch.step);
-              p.displayStep = Math.round((idx / (actualSteps.length - 1)) * 1000);
+      // Requirement 1.10: Proportional numbers (e.g. 428) even in Asym mode
+      p.displayStep = swatch.step;
+
+      // "Prog" metadata for UI filtering
+      // If scale was generated with 101 steps, every 10th is a "100" prog.
+      // If generated with 11 steps (functional), every step is a "100" prog.
+      if (rawScale.length >= 101) {
+          // Special case for Absolute mode to keep nice numbers if possible
+          if (scaleMode === 'absolute') {
+              p.isProg100 = (Math.round(swatch.step) % 100 === 0);
+              p.isProg50 = (Math.round(swatch.step) % 50 === 0);
+          } else {
+              // For Fixed and Asymmetric, the progi are based on indices of the shifted/distributed scale
+              const baseShift = (scaleMode === 'fixed') ? (actualSteps.indexOf(0) === 0 ? 0 : 1) : 0;
+              const adjustedIdx = idx - baseShift;
+              p.isProg100 = (adjustedIdx >= 0 && adjustedIdx % 10 === 0);
+              p.isProg50 = (adjustedIdx >= 0 && adjustedIdx % 5 === 0);
           }
-      } else p.displayStep = swatch.step;
+      } else {
+          p.isProg100 = true;
+          p.isProg50 = true;
+      }
 
       return p;
   });

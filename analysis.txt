@@ -1,16 +1,25 @@
-# Analiza Rozwojowa: V9 - Perfekcja Tonalna i Orchestracja
+# ANALIZA ROZWOJOWA - SYSTEM COLOR V9 -> V10
 
-## Kierunek V9: Stabilność poprzez Sigmoidy
-Wersja V9 to przełom w obsłudze barw o wysokim nasyceniu przy krawędziach gamutu (Yellow, Cyan). Zastąpienie interpolacji liniowej funkcją sigmoidalną wyeliminowało "progi" wizualne, tworząc aksamitnie płynne palety niezależnie od barwy bazowej.
+## 1. Architektura i Silnik (Nowe możliwości)
+- **Advanced Perceptual Boosts:** Rozszerzenie mechanizmu "Light Mode Boost" na inne problematyczne zakresy (np. błękit przechodzący w fiolet w cieniach). Wprowadzenie krzywych korekcyjnych Hue zamiast prostych offsetów.
+- **Spectral Color Mixing:** Wprowadzenie mieszania spektralnego (np. Mixbox) dla naturalnych przejść kolorystycznych.
+- **Web Workers:** Przeniesienie obliczeń silnika do osobnego wątku dla zapewnienia płynności przy masowych aktualizacjach (np. przy granulacji 1).
 
-### Kluczowe Innowacje
+## 2. Automatyzacja i CI/CD
+- **Visual Regression Testing:** Wykorzystanie obecnego skryptu `verify_v9.py` jako fundamentu pod testy regresji wizualnej. Automatyczne porównywanie zrzutów z "master" i oznaczanie odchyleń ΔE powyżej progu.
+- **Headless Server Integration:** Integracja z serwerem CI do automatycznej weryfikacji każdego commitu.
 
-1. **Sigmoidalne Wygładzanie Tonalne**: Nowy model nasycenia w algorytmie Standard zapobiega gwałtownemu "wejściu" w gamut sRGB, co było główną przyczyną artefaktów w poprzednich wersjach.
-2. **DisplayStep Architecture**: Rozdzielenie logiki obliczeniowej (step) od prezentacyjnej (displayStep) pozwoliło na idealne centrowanie koloru bazowego w skali Asymmetric oraz na utrzymanie spójnych badgy (100, 50) w skomplikowanych rozkładach.
-3. **Absolute Masking**: Architektura warstwowa, w której Dark Mode jest ostatnią operacją, gwarantuje, że projektant zawsze pracuje w bezpiecznych zakresach jasności i nasycenia, nawet łącząc ekstremalne boosty.
+## 3. Integracje Ekosystemu
+- **Figma Sync v2:** Wykorzystanie pluginu do natywnego mapowania zmiennych OKLCH na Figma Variables (z fallbackiem do HEX/P3).
+- **Design Tokens (JSON):** Pełna zgodność z formatem DTCG (Design Tokens Community Group).
 
-## Dalszy Rozwój
+## 4. Zaawansowane Funkcje Projektowe
+- **Auto-Contrast Generation:** System dobierający jasność (L) swatcha na podstawie zadanego celu APCA (np. Lc 75), co eliminuje ręczne próbowanie.
+- **Gamut Visualization 3D:** Widok 3D (Three.js) pozwalający na wizualizację palety wewnątrz bryły koloru, co ułatwia debugowanie mapowania gamutu.
 
-- **Variable CSS Export (with Alpha)**: Automatyczne generowanie kodu CSS wykorzystującego warstwową architekturę Glass UI.
-- **Adaptive Contrast Steps**: Rozwinięcie algorytmu o dynamiczne przesuwanie jasności kroków tak, aby automatycznie osiągały zadane progi WCAG AA/AAA bez ingerencji projektanta.
-- **Motion-Safe Gradients**: Optymalizacja skali pod kątem eliminacji efektu "banding" w nowoczesnych interfejsach animowanych.
+## 5. UI/UX i Współpraca
+- **Multi-State Preview:** Podgląd całej palety w kontekście różnych motywów interfejsu (nie tylko Dark/Light, ale też High Contrast czy Night Shift).
+- **History & Versioning:** Lokalny system historii zmian w silniku z możliwością powrotu do poprzednich ustawień algorytmu.
+
+## Podsumowanie
+Wersja V9 dostarczyła solidną matematykę (OKLCH, APCA) oraz stabilność renderowania. V10 powinna iść w stronę automatyzacji (CI/CD), jeszcze większej precyzji percepcyjnej (Hue Curves) i głębszej integracji z procesem projektowym (Figma/Tailwind).

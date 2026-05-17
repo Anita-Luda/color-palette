@@ -5,7 +5,7 @@ export function applyBoosts(swatch, baseLch, mode) {
     let { l, c, h } = swatch;
 
     // --- 1. LIGHT MODE BOOST: Correcting "Olive Mud" in Yellow shades ---
-    if (mode.palette === 'light') {
+    if (mode.lightModeBoost) {
         // Shift yellows/greens towards warmer orange in shades to avoid green-shift
         if (h > 60 && h < 140 && l < 0.5) {
             const weight = (0.5 - l) * 2;

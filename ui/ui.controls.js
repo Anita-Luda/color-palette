@@ -14,16 +14,15 @@ import { setupExportControls } from './controls/ui.controls.export.js';
 
 const $ = id => document.getElementById(id);
 
-function refreshUI() {
+function refreshUI(differential = false) {
   updateSidebarLayout();
-  renderAllPalettes();
+  renderAllPalettes(differential);
   renderSliders();
   renderWarnings();
   updateContrastInfos();
   updateContrastSidebarLabels();
 
   import('./ui.gradients.js').then(m => m.renderAllGradients());
-  import('./ui.messages.js').then(m => m.renderMessages());
 }
 window.refreshUI = refreshUI;
 
@@ -125,12 +124,16 @@ function setupAddManualColor() {
     manualBtn.addEventListener('click', () => {
         const val = manualInput.value;
         const rgb = parseHexOrRgb(val);
-        if (!rgb) { msgBox.textContent = 'Błędny format.'; return; }
+        if (!rgb) {
+            import('./ui.messages.js').then(m => m.renderMessages(msgBox, 'error', 'Błędny format koloru (użyj HEX lub RGB).'));
+            return;
+        }
         const lch = oklabToOklch(rgbToOklab(rgb.r, rgb.g, rgb.b));
         addManualColor(val, lch, 0.5);
         manualInput.value = '';
         clearGradientCache();
         refreshUI();
+        import('./ui.messages.js').then(m => m.renderMessages(msgBox, 'success', 'Dodano pomyślnie.'));
     });
   }
 }

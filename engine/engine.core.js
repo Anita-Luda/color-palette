@@ -16,6 +16,7 @@ export const EngineState = {
     gamutProfile: 'srgb',    // srgb | p3 | rec2020
     chromaShapingFactor: 1.0,
     darkModeBoost: false,    // post-processing boost
+    lightModeBoost: false,   // post-processing light mode correction
     neonBoost: false,        // post-processing neon effect
     pastelBoost: false,      // post-processing pastel effect
     glassmorphismBoost: false, // glassmorphism optimization
@@ -112,6 +113,10 @@ export function setDarkModeBoost(enabled) {
   EngineState.mode.darkModeBoost = Boolean(enabled);
 }
 
+export function setLightModeBoost(enabled) {
+  EngineState.mode.lightModeBoost = Boolean(enabled);
+}
+
 export function setNeonBoost(enabled) {
   EngineState.mode.neonBoost = Boolean(enabled);
 }
@@ -137,7 +142,7 @@ export function setPerceptualPolish(enabled) {
 }
 
 export function setView(view) {
-  if (view !== 'palettes' && view !== 'contrast') return;
+  if (view !== 'palettes' && view !== 'contrast' && view !== 'glass' && view !== 'gradients') return;
   EngineState.mode.view = view;
 }
 

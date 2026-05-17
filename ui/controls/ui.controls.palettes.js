@@ -51,6 +51,7 @@ export function setupPalettesControls() {
     // Boosts
     const toggles = {
         'boost-toggle': setDarkModeBoost,
+        'light-mode-boost-toggle': setLightModeBoost,
         'neon-toggle': setNeonBoost,
         'pastel-toggle': setPastelBoost,
         'glass-toggle': setGlassmorphismBoost,
@@ -87,7 +88,7 @@ export function setupPalettesControls() {
         const label = $('label-shaping');
         if (label) label.textContent = `Chroma Shaping: ${Number(e.target.value).toFixed(2)}`;
         clearGradientCache();
-        renderAllPalettes(true);
+        if (window.refreshUI) window.refreshUI(true);
     });
 
     // Granularity
@@ -102,8 +103,33 @@ export function setupPalettesControls() {
 
     // Relations
     $('harmony')?.addEventListener('change', e => {
-        setRelation(e.target.value);
+        const type = e.target.value;
+        setRelation(type);
+
+        // Relation Enforcement
+        const state = getState();
+        let limit = 10;
+        if (type === 'complementary') limit = 1;
+        if (type === 'triadic' || type === 'split') limit = 2;
+        if (type === 'tetradic') limit = 3;
+
+        if (state.colors.length > limit) {
+            if (confirm(`Relacja ${type} obsługuje optymalnie do ${limit} dodatkowych kolorów. Czy zredukować liczbę kolorów?`)) {
+                setColorCount(limit);
+            }
+        }
+
         clearGradientCache();
+        if (window.refreshUI) window.refreshUI();
+    });
+
+    // Locks (Global for now, as per engine)
+    $('lock-l-toggle')?.addEventListener('change', e => {
+        setLock('L', e.target.checked);
+        if (window.refreshUI) window.refreshUI();
+    });
+    $('lock-c-toggle')?.addEventListener('change', e => {
+        setLock('C', e.target.checked);
         if (window.refreshUI) window.refreshUI();
     });
 
@@ -116,7 +142,22 @@ export function setupPalettesControls() {
     });
 
     // Add Color
-    $('addColor')?.addEventListener('click', () => { addColor(); clearGradientCache(); if (window.refreshUI) window.refreshUI(); });
+    $('addColor')?.addEventListener('click', () => {
+        const state = getState();
+        const type = state.relation.type;
+        let limit = 10;
+        if (type === 'complementary') limit = 1;
+        if (type === 'triadic' || type === 'split') limit = 2;
+        if (type === 'tetradic') limit = 3;
+
+        if (state.colors.length >= limit) {
+            alert(`Relacja ${type} obsługuje maksymalnie ${limit} dodatkowych kolorów.`);
+            return;
+        }
+        addColor();
+        clearGradientCache();
+        if (window.refreshUI) window.refreshUI();
+    });
     $('addGrayBtn')?.addEventListener('click', () => { addGrayPalette(); clearGradientCache(); if (window.refreshUI) window.refreshUI(); });
 
     // Batch
@@ -168,7 +209,7 @@ export function createSliderCard(c) {
   slider.type = 'range'; slider.min = 0; slider.max = 1; slider.step = 0.001; slider.value = c.slider;
   slider.addEventListener('input', e => {
     setColorSlider(c.index, Number(e.target.value));
-    renderAllPalettes(true);
+    if (window.refreshUI) window.refreshUI(true);
     import('../ui.render.js').then(m => m.updateSidebarPreviews());
   });
 

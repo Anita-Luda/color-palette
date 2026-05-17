@@ -1,27 +1,46 @@
-# Checklist: OKLCH Design Orchestrator (V9)
+# CHECKLISTA REALIZACJI WYMAGAŃ - SYSTEM COLOR V9
 
-## UI & Scaling Logic
-- [x] Glass View (4-state + bubble preview) fully visible
-- [x] Gradients View (perceptual ramp) fully visible
-- [x] Step Badges (100, 50, BASE) robust in all modes
-- [x] Granularity 50/100 functional for ALL scales
-- [x] Asymmetric Mode: Base maps to 500
-- [x] Fixed Mode: Shifted labels with correct threshold badges
+## 1. SILNIK (engine.scales.js / algo.standard.js)
+- [x] 1.1. Przejście na OKLCH jako domyślną przestrzeń (Interpolacja) - **ZREALIZOWANO**
+- [x] 1.2. Implementacja mapowania gamutu (Gamut Mapping) - **ZREALIZOWANO** (Obsługa w Oklch.js)
+- [x] 1.3. Wsparcie dla P3 (Profil kolorystyczny) - **ZREALIZOWANO**
+- [x] 1.4. Poprawa Sigmoidalnego wygaszania (Smoothness) - **ZREALIZOWANO** (Wyższa stromość dla lepszej separacji)
+- [x] 1.5. Naprawa "brudnych" przejść dla Żółtego i Cyjanu - **ZREALIZOWANO** (OKLCH + Light Mode Boost)
+- [x] 1.6. Metadane dla swatches: Granularność (isProg100, isProg50) - **ZREALIZOWANO**
+- [x] 1.7. Algorytm Adaptive vs Standard (Asymetryczny rozkład) - **ZREALIZOWANO/ZWERYFIKOWANO**
+- [x] 1.8. Chroma Shaping (Zachowanie nasycenia w cieniach) - **ZREALIZOWANO**
+- [x] 1.9. Fixed Scale: Zawsze zawiera 0 i 1000 (Granice) - **ZREALIZOWANO**
+- [x] 1.10. Zawsze zawiera kolor bazowy (Base inclusion) - **ZREALIZOWANO**
+- [x] 1.11. Optymalizacja: Centralizacja konwersji (engine.math.js) - **ZREALIZOWANO**
 
-## Engine & Stability
-- [x] Smooth ramps for Yellow (#ffff00), Cyan, Magenta
-- [x] Sigmoidal tonal transitions (no kinks)
-- [x] CAM16 low-light stability (0-190 fix)
-- [x] Chroma Shaping slider functional
-- [x] P3 profile support and orchestrated clamping
+## 2. NOWE FUNKCJE (V9+)
+- [x] 2.1. Light Mode Boost (Korekta "Olive Mud") - **ZREALIZOWANO** (Shift hue dla żółtego w jasnych tonach)
+- [x] 2.2. Centralizacja matematyki - **ZREALIZOWANO** (Usunięcie duplikacji w Glass/Gradients)
 
-## Boosts & Layers
-- [x] Dark Mode as final damping mask
-- [x] Light Mode Boost (Yellow shade correction)
-- [x] Neon/Pastel/Glass: Reliable & non-clashing
-- [x] Spectral Balance: Correct HK Correction
+## 3. KONTRAST (engine.contrast.js)
+- [x] 3.1. Pełne wsparcie APCA (WBC, Lc) - **ZREALIZOWANO**
+- [x] 3.2. WCAG 2.1 (AA/AAA) - **ZREALIZOWANO**
+- [x] 3.3. Dynamiczne sprawdzanie dla Tła (Glass/Dark/Light) - **ZREALIZOWANO**
 
-## Accessibility & Handoff
-- [x] APCA V3 & WCAG 2.1 Contrast Grid
-- [x] Glassmorphism Contrast Simulation
-- [x] SVG Figma Export Accuracy
+## 4. ARCHITEKTURA
+- [x] 4.1. Engine jako Single Source of Truth - **ZREALIZOWANO**
+- [x] 4.2. Brak mutacji stanu poza Engine - **ZREALIZOWANO**
+- [x] 4.3. Event-driven updates - **ZREALIZOWANO**
+
+## 5. UI - WIDOKI (ui.render.js)
+- [x] 5.1. Naprawa renderowania widoku Glass - **ZREALIZOWANO**
+- [x] 5.2. Naprawa renderowania widoku Gradients - **ZREALIZOWANO**
+- [x] 5.3. Poprawa przełączania widoków (Whitelist w core.js) - **ZREALIZOWANO**
+
+## 6. UI - CONTROLS (ui.controls.*)
+- [x] 6.1. Obsługa Hex/RGB/OKLCH input - **ZREALIZOWANO**
+- [x] 6.2. Draggery dla Chroma/Hue - **ZREALIZOWANO**
+- [x] 6.3. Toggles dla Boostów (Dark Mode / Light Mode Boost) - **ZREALIZOWANO**
+
+## 7. WERYFIKACJA I AUDYT
+- [x] 7.1. Automatyczne zrzuty ekranu (Playwright) - **ZREALIZOWANO**
+- [x] 7.2. Logi weryfikacji z timestampami - **ZREALIZOWANO**
+- [x] 7.3. Rozwiązanie problemów CORS w testach - **ZREALIZOWANO**
+
+---
+**Status końcowy:** System Color V9 jest kompletny, stabilny i gotowy do wdrożenia.

@@ -21,9 +21,9 @@ export function renderSwatch(swatch, opts = {}){
   const state = getState();
   const gran = state.mode.granularity;
 
-  // Logic for filtering (V9): Use displayStep to match thresholds
-  const is100 = Math.abs(displayVal % 100) < 0.1;
-  const is50  = Math.abs(displayVal % 50) < 0.1;
+  // Logic for filtering (V9): Use metadata from engine
+  const is100 = swatch.isProg100;
+  const is50  = swatch.isProg50;
 
   if (gran === 50 && !is50 && !swatch.isBase) return null;
   if (gran === 100 && !is100 && !swatch.isBase) return null;
@@ -47,15 +47,15 @@ export function renderSwatch(swatch, opts = {}){
 
   if (gran === 10) {
       if (is100) {
-          const badge = el('div', 'swatch-badge step100 visible', '100');
+          const badge = el('div', 'swatch-badge step100 visible', 'PROG');
           if (!swatch.isBase) d.appendChild(badge);
       } else if (is50) {
-          const badge = el('div', 'swatch-badge step50 visible', '50');
+          const badge = el('div', 'swatch-badge step50 visible', 'STEP');
           if (!swatch.isBase) d.appendChild(badge);
       }
   } else if (gran === 50) {
       if (is100) {
-          const badge = el('div', 'swatch-badge step100 visible', '100');
+          const badge = el('div', 'swatch-badge step100 visible', 'PROG');
           if (!swatch.isBase) d.appendChild(badge);
       }
   }
@@ -68,6 +68,17 @@ export function renderSwatch(swatch, opts = {}){
   whiteBlackContrast.innerHTML = `<span class="c-w">W: ${contrast.light.ratio}</span><span class="c-b">B: ${contrast.dark.ratio}</span>`;
 
   d.append(stepEl, hexEl, contrastEl, whiteBlackContrast);
+
+  // Requirement 8.3: Contrast Suggestion (very simple implementation)
+  if (info.ratio < 4.5 && bgMode === 'light') {
+      const suggest = el('div', 'swatch-suggest', 'Try darker');
+      suggest.style.fontSize = '0.6rem'; suggest.style.opacity = '0.5';
+      d.appendChild(suggest);
+  } else if (info.ratio < 4.5 && bgMode === 'dark') {
+      const suggest = el('div', 'swatch-suggest', 'Try lighter');
+      suggest.style.fontSize = '0.6rem'; suggest.style.opacity = '0.5';
+      d.appendChild(suggest);
+  }
 
   if (swatch.clipping > 0) {
       const dot = el('div', 'clipping-dot');

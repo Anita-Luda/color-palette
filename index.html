@@ -152,6 +152,10 @@
             <label for="boost-toggle" style="margin-bottom: 0; cursor: pointer;">Dark Mode Boost (Korekta jasnych tonów)</label>
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="checkbox" id="light-mode-boost-toggle" style="width: auto;">
+            <label for="light-mode-boost-toggle" style="margin-bottom: 0; cursor: pointer;">Light Mode Boost (Korekta "Olive Mud")</label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
             <input type="checkbox" id="neon-toggle" style="width: auto;">
             <label for="neon-toggle" style="margin-bottom: 0; cursor: pointer;">Neon Boost (Maksymalne nasycenie)</label>
           </div>
@@ -216,6 +220,16 @@
         </div>
 
         <label>Relacja kolorystyczna</label>
+        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <input type="checkbox" id="lock-l-toggle" style="width: auto;">
+            <label for="lock-l-toggle" style="margin-bottom: 0; font-size: 0.65rem;">Lock L</label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <input type="checkbox" id="lock-c-toggle" style="width: auto;">
+            <label for="lock-c-toggle" style="margin-bottom: 0; font-size: 0.65rem;">Lock C</label>
+          </div>
+        </div>
         <select id="harmony">
           <option value="custom">Custom</option>
           <option value="analogous">Analogous</option>
