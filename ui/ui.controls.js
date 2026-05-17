@@ -148,7 +148,7 @@ function setupReorder() {
     const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
     const targetCard = e.target.closest('.color-card');
     if (targetCard) {
-      import('../../engine/engine.core.js').then(m => {
+      import('../engine/engine.core.js').then(m => {
           m.reorderColors(fromIndex, parseInt(targetCard.dataset.index));
           clearGradientCache();
           refreshUI();
