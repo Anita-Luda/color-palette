@@ -16,6 +16,7 @@
 ## 2. NOWE FUNKCJE (V9+)
 - [x] 2.1. Light Mode Boost (Korekta "Olive Mud") - **ZREALIZOWANO** (Shift hue dla żółtego w jasnych tonach)
 - [x] 2.2. Centralizacja matematyki - **ZREALIZOWANO** (Usunięcie duplikacji w Glass/Gradients)
+- [x] 2.3. Debugowanie UI: Naprawa importu setLightModeBoost w ui.controls.palettes.js - **ZREALIZOWANO**
 
 ## 3. KONTRAST (engine.contrast.js)
 - [x] 3.1. Pełne wsparcie APCA (WBC, Lc) - **ZREALIZOWANO**
@@ -41,6 +42,7 @@
 - [x] 7.1. Automatyczne zrzuty ekranu (Playwright) - **ZREALIZOWANO**
 - [x] 7.2. Logi weryfikacji z timestampami - **ZREALIZOWANO**
 - [x] 7.3. Rozwiązanie problemów CORS w testach - **ZREALIZOWANO**
+- [x] 7.4. Specyficzna weryfikacja dla żółtego (#ffff00) - **ZREALIZOWANO** (Widoczne w user_request_*.png)
 
 ---
-**Status końcowy:** System Color V9 jest kompletny, stabilny i gotowy do wdrożenia.
+**Status końcowy:** System Color V9 jest kompletny, stabilny i w pełni zweryfikowany pod kątem wymagań technicznych i wizualnych.

@@ -2,7 +2,7 @@
 import {
     setColorCount, addColor, addGrayPalette, addManualColor,
     setColorSlider, setPaletteMode, setScaleMode, setAlgorithmMode,
-    setDarkModeBoost, setNeonBoost, setPastelBoost, setGlassmorphismBoost,
+    setDarkModeBoost, setLightModeBoost, setNeonBoost, setPastelBoost, setGlassmorphismBoost,
     setInkSaveMode, setSpectralBalance, setPerceptualPolish, setInterpolationMode,
     setGamutProfile, setChromaShapingFactor, setGranularity, setView,
     updateColorRole, removeColor, setBackgroundSource, setGlassBackgroundSource,

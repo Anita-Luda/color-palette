@@ -5,7 +5,7 @@ Niniejszy raport podsumowuje zmiany wprowadzone w Systemie Color V9, mające na 
 
 ## 1. Naprawione błędy i optymalizacje
 - **Yellow Blowout:** Rozwiązano problem "brudnego" żółtego koloru poprzez przejście na model OKLCH oraz wdrożenie "Light Mode Boost", który koryguje odcień (Hue) w stronę cieplejszą dla jasnych tonów.
-- **UI Rendering:** Naprawiono błędy w renderowaniu widoków Glass i Gradients. Problem wynikał z braku tych widoków na białej liście stanów oraz błędnych referencji do kontekstu renderowania.
+- **UI Rendering:** Naprawiono błędy w renderowaniu widoków Glass i Gradients. Problem wynikał z braku tych widoków na białej liście stanów oraz błędnych referencji do kontekstu renderowania. Naprawiono również błąd `ReferenceError: setLightModeBoost is not defined` w `ui/controls/ui.controls.palettes.js` poprzez dodanie brakującego importu.
 - **Refaktoryzacja Math:** Usunięto zduplikowane funkcje konwersji kolorów z `engine/engine.glass.js` i `engine/engine.gradients.js`. Całość matematyki została przeniesiona do centralnego modułu `engine/engine.math.js`.
 - **Sigmoidalne Przejścia:** Dostosowano parametry funkcji sigmoidalnej w `engine/algo.standard.js` dla uzyskania płynniejszych przejść przy zachowaniu odpowiedniej separacji barw.
 
