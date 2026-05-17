@@ -24,7 +24,14 @@ export function generateStandardScale(baseLch, steps, isDarkMode) {
         const s0 = sigmoid(-0.5);
         const s1 = sigmoid(0.5);
         const t = (sigmoid(normalizedDist - 0.5) - s0) / (s1 - s0);
-        const falloff = Math.max(0, 1 - t);
+
+        // V9.1 Linear Blend for high-chroma base colors to prevent "blowout"
+        // If base color is very saturated, we use a more linear falloff to avoid sudden jumps
+        const linearFalloff = Math.max(0, 1 - normalizedDist);
+        const sigmoidalFalloff = Math.max(0, 1 - t);
+
+        const falloffMix = Math.min(1.0, baseLch.C * 4.0); // 0.25 chroma = full sigmoidal, higher = mix linear
+        const falloff = (sigmoidalFalloff * (1 - falloffMix)) + (linearFalloff * falloffMix);
 
         const { chromaScale, lBias } = getPerceptualCompensation({ L, C: baseLch.C, h: baseLch.h });
 

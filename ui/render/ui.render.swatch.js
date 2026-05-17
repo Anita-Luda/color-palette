@@ -25,8 +25,11 @@ export function renderSwatch(swatch, opts = {}){
   const is100 = swatch.isProg100;
   const is50  = swatch.isProg50;
 
-  if (gran === 50 && !is50 && !swatch.isBase) return null;
-  if (gran === 100 && !is100 && !swatch.isBase) return null;
+  // For compact views (Functional/Badge), we don't filter by global granularity
+  if (!opts.compact) {
+    if (gran === 50 && !is50 && !swatch.isBase) return null;
+    if (gran === 100 && !is100 && !swatch.isBase) return null;
+  }
 
   d.style.background = swatch.hex;
 
@@ -45,7 +48,7 @@ export function renderSwatch(swatch, opts = {}){
       d.appendChild(badge);
   }
 
-  if (gran === 10) {
+  if (gran === 10 || opts.compact) {
       if (is100) {
           const badge = el('div', 'swatch-badge step100 visible', 'PROG');
           if (!swatch.isBase) d.appendChild(badge);
@@ -57,6 +60,13 @@ export function renderSwatch(swatch, opts = {}){
       if (is100) {
           const badge = el('div', 'swatch-badge step100 visible', 'PROG');
           if (!swatch.isBase) d.appendChild(badge);
+      }
+  } else if (gran === 100) {
+      // In Gradation 100, we don't necessarily show badges unless requested,
+      // but let's show PROG if it's the 100-step (which is always true in Grad 100 mode)
+      if (is100 && !swatch.isBase) {
+           const badge = el('div', 'swatch-badge step100 visible', 'PROG');
+           d.appendChild(badge);
       }
   }
 

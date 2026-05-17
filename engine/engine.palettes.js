@@ -11,11 +11,19 @@ import {
 } from "./engine.scales.js";
 import { rgbToHex } from "./engine.math.js";
 /* ---------- MAIN PALETTE ---------- */
+function getStepsForGranularity(gran) {
+    if (gran === 10) return Array.from({length: 101}, (_, i) => i * 10);
+    if (gran === 50) return Array.from({length: 21}, (_, i) => i * 50);
+    if (gran === 100) return Array.from({length: 11}, (_, i) => i * 100);
+    return Array.from({length: 101}, (_, i) => i * 10);
+}
+
 export function getMainPalette(){
   const baseLch = getBaseLCH();
   const baseHex = rgbToHex(EngineState.base.rgb);
+  const steps = getStepsForGranularity(EngineState.mode.granularity);
   return {
-    scale: generateScaleForLCH(baseLch, undefined, false, baseHex),
+    scale: generateScaleForLCH(baseLch, steps, false, baseHex),
     mode: EngineState.mode.scale
   };
 }
@@ -72,10 +80,11 @@ export function getAdditionalPalettes(){
       h: hue
     };
 
+    const steps = getStepsForGranularity(EngineState.mode.granularity);
     return {
       index: c.index,
       role: c.role,
-      scale: generateScaleForLCH(lch, undefined, false, c.manualHex)
+      scale: generateScaleForLCH(lch, steps, false, c.manualHex)
     };
   });
 }

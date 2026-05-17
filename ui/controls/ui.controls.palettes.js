@@ -6,7 +6,7 @@ import {
     setInkSaveMode, setSpectralBalance, setPerceptualPolish, setInterpolationMode,
     setGamutProfile, setChromaShapingFactor, setGranularity, setView,
     updateColorRole, removeColor, setBackgroundSource, setGlassBackgroundSource,
-    getState, setRelation, setRelationDistance
+    getState, setRelation, setRelationDistance, setLock
 } from '../../engine/engine.core.js';
 import { clearGradientCache } from '../../engine/engine.gradients.js';
 import { rgbToOklab, oklabToOklch, rgbToHex } from '../../engine/engine.math.js';
