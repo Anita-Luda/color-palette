@@ -251,7 +251,16 @@
           <option value="warmcool">Warm / cool</option>
         </select>
 
-        <div id="batchContainer"></div>
+        <label for="relationDistance">Dystans relacji (30°)</label>
+        <input type="range" id="relationDistance" min="0" max="180" value="30">
+
+        <div id="batchContainer" style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px;">
+            <label>Dodaj wiele kolorów</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="number" id="colorCount" value="3" min="1" max="12">
+                <button id="applyCount">Aplikuj</button>
+            </div>
+        </div>
       </div>
     </section>
 

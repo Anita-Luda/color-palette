@@ -1,6 +1,6 @@
 // ui/ui.render.js
 import { getState } from '../engine/engine.core.js';
-import { getMainPalette } from '../engine/engine.palettes.js';
+import { getMainPalette, getAdditionalPalettes } from '../engine/engine.palettes.js';
 import { renderMain, renderAdditional, renderFunctional, renderBadge } from './render/ui.render.palettes.js';
 import { renderContrastView } from './render/ui.render.contrast.js';
 import { renderGlassView } from './ui.glass.js';

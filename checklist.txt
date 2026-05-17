@@ -20,6 +20,8 @@
 - [x] 2.4. Podgląd tła działa niezależnie od motywu panelu - **ZREALIZOWANO**
 - [x] 2.5. Przycisk "Ustaw jako bubble" i "Dodaj do gradientu" w panelu - **ZREALIZOWANO**
 - [x] 2.6. Suwak jasności tła dla gradientów - **ZREALIZOWANO**
+- [x] 2.7. Ink Save Mode - Progowanie CMYK - **ZREALIZOWANO**
+- [x] 2.8. Dark Mode Damping jako ostatnia maska - **ZREALIZOWANO**
 
 ## 3. KONTRAST (engine.contrast.js)
 - [x] 3.1. Pełne wsparcie APCA (WBC, Lc) - **ZREALIZOWANO**
